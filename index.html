@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agenda Álbum de Formatura</title>
+    
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #f9f9f9; }
+        .container { max-width: 500px; margin: 40px auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; margin-bottom: 20px; }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin-top: 5px; box-sizing: border-box; }
+        button { margin-top: 20px; width: 100%; background-color: #007bff; color: #fff; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        #mensagem { text-align: center; margin-top: 15px; font-weight: bold; }
+        .sucesso { color: green; }
+        .erro { color: red; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Agenda Álbum de Formatura</h1>
+        <p>Selecione uma data e horário disponíveis para a visita.</p>
+        
+        <form id="form-agendamento">
+            <label>Nome do Formando:</label>
+            <input type="text" id="formando" required />
+
+            <label>Nome do Responsável:</label>
+            <input type="text" id="responsavel" required />
+
+            <label>Endereço Completo:</label>
+            <textarea id="endereco" required></textarea>
+
+            <label>Telefone (opcional):</label>
+            <input type="tel" id="telefone" />
+
+            <label>Selecione o Dia:</label>
+            <select id="dia" required>
+                <option value="">-- Carregando dias... --</option>
+            </select>
+
+            <label>Selecione o Horário:</label>
+            <select id="horario" required disabled>
+                <option value="">-- Escolha um dia primeiro --</option>
+            </select>
+
+            <button type="submit">Agendar</button>
+        </form>
+
+        <p id="mensagem"></p>
+    </div>
+
+    <script type="module">
+        // =================================================================
+        // 1. CONFIGURAÇÕES DO FIREBASE
+        // =================================================================
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+        import { getDatabase, ref, get, set, child } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+
+        // Sua configuração do console, com a adição do databaseURL
+        const firebaseConfig = {
+            apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU", 
+            authDomain: "agenda-album-de-formatura.firebaseapp.com",
+            databaseURL: "https://agenda-album-de-formatura-default-rtdb.firebaseio.com", 
+            projectId: "agenda-album-de-formatura",
+            storageBucket: "agenda-album-de-formatura.firebasestorage.app",
+            messagingSenderId: "29604114447",
+            appId: "1:29604114447:web:bac79aba4c4aa945c8737a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // =================================================================
+        // 2. REGRAS DE HORÁRIO
+        // 0=Domingo, 1=Segunda, 2=Terça, ..., 6=Sábado
+        // =================================================================
+        const horariosPorDiaDaSemana = {
+            2: ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"], // Terça
+            3: ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"], // Quarta
+            4: ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"], // Quinta
+            5: ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"], // Sexta
+            6: ["09:00", "10:00", "11:00", "12:00", "13:00"] // Sábado (Horário de fim: 13:00)
+        };
+
+        const diaSelect = document.getElementById('dia');
+        const horarioSelect = document.getElementById('horario');
+        const mensagem = document.getElementById('mensagem');
+
+        // =================================================================
+        // 3. FUNÇÃO PARA FORMATAR E GERAR DATAS DISPONÍVEIS (SEMANAL)
+        // CORREÇÃO: Usa ajuste de fuso horário (GMT-3) para cálculo correto.
+        // =================================================================
+        function gerarDatasDisponiveis() {
+            const datasDisponiveis = [];
+            
+            // Cria a data/hora atual no fuso de São Paulo (GMT-3)
+            const dataAtual = new Date();
+            const utc = dataAtual.getTime() + (dataAtual.getTimezoneOffset() * 60000);
+            const hojeBase = new Date(utc - (3600000 * 3)); // 3600000ms * 3h = 3 horas de offset
+
+            // Zera o horário para garantir que a iteração comece no início do dia
+            hojeBase.setHours(0, 0, 0, 0);
+
+            // 1. Calcula o próximo Sábado (dia 6)
+            const diasParaSabado = (6 - hojeBase.getDay() + 7) % 7; 
+            const dataLimite = new Date(hojeBase);
+            dataLimite.setDate(hojeBase.getDate() + diasParaSabado);
+            dataLimite.setHours(23, 59, 59, 999); 
+            
+            
+            // Itera no máximo 7 dias a partir de hoje
+            for (let i = 0; i < 7; i++) { 
+                const dataCandidata = new Date(hojeBase);
+                dataCandidata.setDate(hojeBase.getDate() + i);
+
+                // Se a data candidata for posterior ao final do Sábado, para o loop
+                if (dataCandidata.getTime() > dataLimite.getTime()) {
+                    break;
+                }
+
+                const diaSemana = dataCandidata.getDay(); 
+
+                // Adiciona a data se for um dia útil (Terça a Sábado)
+                if (horariosPorDiaDaSemana.hasOwnProperty(diaSemana)) {
+                    
+                    const dataKey = dataCandidata.toISOString().slice(0, 10);
+                    
+                    const nomeDia = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][diaSemana];
+
+                    datasDisponiveis.push({
+                        value: dataKey, 
+                        display: `${nomeDia}, ${dataCandidata.toLocaleDateString('pt-BR')}`
+                    });
+                }
+            }
+            return datasDisponiveis;
+        }
+
+
+        // =================================================================
+        // 4. PREENCHE O SELECT DE DIAS E TRATA A MUDANÇA
+        // =================================================================
+        async function preencherDias() {
+            diaSelect.innerHTML = '<option value="">-- Escolha um dia --</option>';
+            const datas = gerarDatasDisponiveis();
+
+            if (datas.length === 0) {
+                // Se nenhum dia apareceu, mostra uma mensagem clara
+                diaSelect.innerHTML = '<option value="">Nenhum dia de Terça a Sábado disponível nesta semana.</option>';
+                return;
+            }
+
+            datas.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.value;
+                opt.textContent = d.display;
+                diaSelect.appendChild(opt);
+            });
+        }
+
+        // Chamada inicial para popular os dias
+        preencherDias();
+
+
+        diaSelect.addEventListener('change', async () => {
+            horarioSelect.innerHTML = '<option value="">-- Escolha um horário --</option>';
+            horarioSelect.disabled = true;
+
+            const dataSelecionada = diaSelect.value;
+            if (!dataSelecionada) return;
+
+            // Variável de controle para checar se a data selecionada é HOJE
+            const dataAtualString = new Date().toISOString().slice(0, 10);
+            const isToday = dataSelecionada === dataAtualString;
+
+            // CRÍTICO: Obtém o dia da semana correto usando o formato YYYY/MM/DD
+            const dataKeySemHifen = dataSelecionada.replace(/-/g, '/');
+            const diaSemana = new Date(dataKeySemHifen).getDay(); 
+
+            // GARANTIDO: Pega os horários exatos para o dia da semana selecionado
+            const horariosPermitidos = horariosPorDiaDaSemana[diaSemana] || [];
+
+            // 2. Busca horários já agendados para ESSA data no Firebase
+            const snapshot = await get(child(ref(db), `agendamentos/${dataSelecionada}`));
+            const agendados = snapshot.exists() ? Object.keys(snapshot.val()) : [];
+            
+            // 3. Adiciona apenas os horários livres
+            horariosPermitidos.forEach(h => {
+                
+                // Checagem de horário passado SÓ se o dia selecionado for HOJE.
+                if (isToday) {
+                    const horaAtual = new Date().getHours();
+                    const minutoAtual = new Date().getMinutes();
+                    
+                    const horarioMinutos = parseInt(h.split(':')[0]) * 60 + parseInt(h.split(':')[1]);
+                    const agoraMinutos = horaAtual * 60 + minutoAtual;
+
+                    // Se o horário em minutos for anterior ou igual ao momento atual (para dar tempo de clicar)
+                    if (horarioMinutos <= agoraMinutos) { 
+                        return; 
+                    }
+                }
+                
+                if (!agendados.includes(h.replace(':', ''))) { // Compara removendo ':' para usar como chave do Firebase
+                    const opt = document.createElement('option');
+                    opt.value = h;
+                    opt.textContent = h;
+                    horarioSelect.appendChild(opt);
+                }
+            });
+
+            horarioSelect.disabled = false;
+        });
+
+        // =================================================================
+        // 5. SUBMISSÃO DO FORMULÁRIO
+        // =================================================================
+        document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formando = document.getElementById('formando').value.trim();
+            const responsavel = document.getElementById('responsavel').value.trim();
+            const endereco = document.getElementById('endereco').value.trim();
+            const telefone = document.getElementById('telefone').value.trim();
+            const data = diaSelect.value;
+            const horario = horarioSelect.value;
+            
+            mensagem.textContent = '';
+            mensagem.className = '';
+
+            if (!formando || !responsavel || !endereco || !data || !horario) {
+                mensagem.textContent = 'Por favor, preencha todos os campos obrigatórios.';
+                mensagem.classList.add('erro');
+                return;
+            }
+
+            // A chave do Firebase não aceita ":"
+            const horarioKey = horario.replace(':', ''); 
+            
+            // Caminho para o agendamento: agendamentos/YYYY-MM-DD/HHMM
+            const agendamentoRef = ref(db, `agendamentos/${data}/${horarioKey}`);
+            
+            try {
+                // 1. Verificação final de bloqueio (garantia de concorrência)
+                const snapshot = await get(agendamentoRef);
+                if (snapshot.exists()) {
+                    mensagem.textContent = 'Este horário já foi agendado por outro usuário. Escolha outro.';
+                    mensagem.classList.add('erro');
+                    return;
+                }
+
+                // 2. Salva o agendamento
+                await set(agendamentoRef, {
+                    formando,
+                    responsavel,
+                    endereco,
+                    telefone: telefone || 'Não informado',
+                    data: data,
+                    horario: horario,
+                    timestamp: new Date().toISOString()
+                });
+
+                mensagem.textContent = `Agendamento confirmado para ${data} às ${horario}!`;
+                mensagem.classList.add('sucesso');
+                document.getElementById('form-agendamento').reset();
+                horarioSelect.innerHTML = '';
+                horarioSelect.disabled = true;
+                
+                // Recarrega a lista de horários para refletir o agendamento
+                preencherDias(); 
+
+            } catch (error) {
+                console.error("Erro ao salvar no Firebase:", error);
+                mensagem.textContent = 'Erro ao confirmar o agendamento. Tente novamente.';
+                mensagem.classList.add('erro');
+            }
+        });
+    </script>
+</body>
+</html>
