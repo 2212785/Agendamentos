@@ -7,15 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* ===================================================================
-        ALTERAÇÕES DE LAYOUT AQUI: 
-        1. Configura o corpo (body) para receber a imagem de fundo.
-        2. Centraliza o conteúdo.
+        ESTILOS DE FUNDO PARA A IMAGEM DE FORMATURA
         ===================================================================
         */
         body { 
             font-family: 'Inter', sans-serif; 
             
-            /* **ALTERAÇÃO AQUI:** Ajustando para o caminho mais simples (Raiz do Projeto) */
+            /* Caminho ajustado para a raiz, conforme discutido. */
             background-image: url('formatura.jpg'); 
             
             background-size: cover; /* Cobre toda a área */
@@ -44,7 +42,9 @@
             <div class="text-xl font-bold">Agenda de Visitas</div>
             <div id="nav-links">
                 <button onclick="navigate('index')" class="nav-item px-4 py-2 rounded-lg transition duration-200 bg-blue-700">Agendar Visita</button>
-                <button onclick="navigate('agenda')" class="nav-item px-4 py-2 rounded-lg transition duration-200">Minha Agenda</button>
+                
+                <button onclick="checkPassword()" class="nav-item px-4 py-2 rounded-lg transition duration-200">Minha Agenda</button>
+                
             </div>
         </nav>
     </header>
@@ -82,6 +82,28 @@
         // Constantes da Aplicação
         const SEU_NOME = 'Evanio Martins';
         const COLLECTION_PATH = `artifacts/${appId}/public/data/agendamentos`;
+        
+        // -------------------------------------------------------------
+        // NOVO CÓDIGO: SENHA E FUNÇÃO DE VERIFICAÇÃO DE ACESSO
+        // -------------------------------------------------------------
+        const ADMIN_PASSWORD = 'minhaagenda2025'; // <<--- SUA SENHA SECRETA AQUI!
+
+        window.checkPassword = () => {
+            // Solicita a senha ao usuário
+            const enteredPassword = window.prompt("Por favor, digite a senha de administrador para acessar a agenda:");
+            
+            // Compara a senha digitada
+            if (enteredPassword === ADMIN_PASSWORD) {
+                // Se a senha estiver correta, navega para a agenda (função original)
+                navigate('agenda');
+            } else if (enteredPassword !== null) {
+                // Se digitou algo errado
+                alert("Senha incorreta. Acesso negado.");
+            }
+            // Se o usuário clicar em Cancelar, nada acontece.
+        };
+        // -------------------------------------------------------------
+
         const DATAS_FIXAS = [
             '2025-10-31', // Sexta-feira
             '2025-11-01', // Sábado
@@ -488,6 +510,7 @@
     </script>
 </body>
 </html>
+
 
 
 
