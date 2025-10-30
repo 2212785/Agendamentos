@@ -441,24 +441,29 @@
             }
         }
 
-        // --- Novo Bloco de Inicialização Robusto ---
+        // --- Novo Bloco de Inicialização Robusto com Limite de Tentativas ---
         
-        // Chamada da função de inicialização após o carregamento da janela
         window.onload = () => {
-            // Função que tenta ler a configuração do Firebase e inicializar o app
+            const MAX_ATTEMPTS = 10;
+            let attempts = 0;
+
             function attemptInit() {
-                // Tenta ler a configuração mais recente (pode ter sido injetada após um atraso)
+                attempts++;
+                
+                // Tenta ler a configuração mais recente
                 const configStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
                 const config = configStr ? JSON.parse(configStr) : null;
 
                 if (config) {
                     // Configuração encontrada, inicia o Firebase
                     initFirebase(config);
-                } else {
-                    // Se a configuração ainda estiver faltando (e o erro estiver sendo mostrado),
-                    // tenta novamente após um breve atraso.
-                    console.warn("Configuração do Firebase ausente, tentando novamente em 500ms...");
+                } else if (attempts < MAX_ATTEMPTS) {
+                    // Tenta novamente após um breve atraso (500ms).
+                    console.warn(`Configuração do Firebase ausente, tentando novamente em 500ms... Tentativa ${attempts}/${MAX_ATTEMPTS}`);
                     setTimeout(attemptInit, 500);
+                } else {
+                    // Falha total após o limite de tentativas. Exibe o erro.
+                    renderErro("Erro fatal: As configurações do Firebase falharam ao carregar após várias tentativas. Por favor, recarregue a página.");
                 }
             }
 
@@ -468,5 +473,6 @@
     </script>
 </body>
 </html>
+
 
 
