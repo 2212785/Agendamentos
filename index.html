@@ -78,6 +78,7 @@
         let agendamentos = [];
         let currentView = 'index';
         let errorMessage = '';
+        let isFirebaseInitialized = false; // <<< NOVA VARIÁVEL DE CONTROLE
 
         // Constantes da Aplicação
         const SEU_NOME = 'Evanio Martins';
@@ -142,7 +143,7 @@
 
             app = initializeApp(config);
             auth = getAuth(app);
-            db = getFirestore(app);
+            db = getFirestore(app); // DB ESTÁ DEFINIDO AQUI!
 
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
@@ -150,9 +151,10 @@
                     document.getElementById('user-id-display').textContent = userId;
                     fetchAgendamentos(); // Inicia a escuta após a autenticação
                     
-                    // Garante que o usuário veja a página de agendamento após o login SÓ SE ESTIVER NA TELA DE CARREGAMENTO/ERRO INICIAL
-                    if (currentView === 'index' || currentView === 'erro') {
+                    // ONDE FAZER: AGORA SÓ NAVEGAMOS APÓS O LOGIN/LOAD COMPLETO
+                    if (!isFirebaseInitialized) { // Se ainda não renderizou a primeira vez
                             navigate('index'); 
+                            isFirebaseInitialized = true; // Marca como inicializado
                     }
                 } else {
                     // Tenta autenticar
@@ -217,8 +219,8 @@
         // =================================================================
 
         function fetchAgendamentos() {
-            // CORREÇÃO: Verifica se a instância do Firestore está disponível
-            if (!db || !userId) return;
+            // VERIFICAÇÃO JÁ EXISTENTE E CORRETA
+            if (!db || !userId) return; 
 
             const agendamentosRef = collection(db, COLLECTION_PATH);
             const q = query(agendamentosRef, orderBy('data_hora'));
@@ -240,7 +242,7 @@
         async function salvarAgendamento(event) {
             event.preventDefault();
             
-            // CORREÇÃO: Verifica se a instância do Firestore está disponível
+            // VERIFICAÇÃO MANTIDA E MELHORADA PARA EVITAR O ERRO
             if (!db) {
                 renderErro("Erro ao salvar no banco de dados: A conexão com o Firestore não foi estabelecida. Tente recarregar a página.");
                 return;
@@ -274,19 +276,17 @@
             };
 
             try {
-                // AQUI O ERRO OCORRIA SE 'db' FOSSE 'null'
                 const agendamentosRef = collection(db, COLLECTION_PATH);
                 await addDoc(agendamentosRef, novoAgendamento);
                 navigate('sucesso');
             } catch (e) {
                 console.error("Erro ao adicionar documento: ", e);
-                // NOTA: A mensagem de erro original agora será capturada aqui, mas o 'if (!db)' acima deve prevenir a maioria dos casos.
                 renderErro(`Erro ao salvar no banco de dados: ${e.message}`);
             }
         }
 
         async function excluirAgendamento(id) {
-            // CORREÇÃO: Adicionando verificação para 'db' aqui também.
+            // VERIFICAÇÃO MANTIDA
             if (!db) {
                 renderErro("Erro ao excluir: A conexão com o Firestore não foi estabelecida.");
                 return;
@@ -505,18 +505,12 @@
                     renderErro("Erro de Configuração (JSON Inválido): As informações do Firebase não estão no formato correto. Recarregue a página.");
                 }
             } else {
-                // NOVO: Solução para problema de timing do ambiente.
-                // O usuário confirmou que o aplicativo funciona ao clicar no botão 'Voltar para o Formulário'.
-                // Vamos simular esse clique (navigate('index')) após um pequeno atraso (500ms),
-                // dando tempo para o ambiente carregar a variável.
-                console.warn("Configuração do Firebase ausente. Simulação de clique de 'Voltar para o Formulário' em 500ms.");
-                
-                setTimeout(() => {
-                    // Chamamos a função de renderização principal.
-                    // Isso inicia o ciclo de renderização e, como a variável já deve ter carregado,
-                    // o onAuthStateChanged no initFirebase() pega o usuário e finaliza o carregamento.
-                    navigate('index');
-                }, 500); 
+                // ONDE FAZER: Removendo o setTimeout e o navigate('index') daqui. 
+                // A navegação agora só acontece dentro do onAuthStateChanged em initFirebase, 
+                // garantindo que o DB já esteja pronto.
+                console.warn("Configuração do Firebase ausente. Aguardando inicialização do ambiente.");
+                // Se a configuração estiver ausente, a inicialização não ocorrerá e a tela de carregamento permanecerá.
+                // Isso é intencional para forçar a configuração correta do ambiente.
             }
         }
 
