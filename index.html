@@ -458,8 +458,18 @@
                     renderErro("Erro de Configuração (JSON Inválido): As informações do Firebase não estão no formato correto. Recarregue a página.");
                 }
             } else {
-                // Se a variável global não for definida, mostra um erro claro
-                renderErro("Erro de Configuração: As variáveis de ambiente do Firebase não foram carregadas. Por favor, recarregue a página.");
+                // NOVO: Solução para problema de timing do ambiente.
+                // O usuário confirmou que o aplicativo funciona ao clicar no botão 'Voltar para o Formulário'.
+                // Vamos simular esse clique (navigate('index')) após um pequeno atraso (500ms),
+                // dando tempo para o ambiente carregar a variável.
+                console.warn("Configuração do Firebase ausente. Simulação de clique de 'Voltar para o Formulário' em 500ms.");
+                
+                setTimeout(() => {
+                    // Chamamos a função de renderização principal.
+                    // Isso inicia o ciclo de renderização e, como a variável já deve ter carregado,
+                    // o onAuthStateChanged no initFirebase() pega o usuário e finaliza o carregamento.
+                    navigate('index');
+                }, 500); 
             }
         }
 
