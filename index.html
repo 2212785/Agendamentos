@@ -4,10 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agendamento de Visita - Firestore</title>
-    <!-- Carrega Tailwind CSS para estilização -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+        /* ===================================================================
+        ALTERAÇÕES DE LAYOUT AQUI: 
+        1. Configura o corpo (body) para receber a imagem de fundo.
+        2. Centraliza o conteúdo.
+        ===================================================================
+        */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            
+            /* **ALTERAÇÃO AQUI:** Ajustando para o caminho mais simples (Raiz do Projeto) */
+            background-image: url('formatura.jpg'); 
+            
+            background-size: cover; /* Cobre toda a área */
+            background-position: center; /* Centraliza a imagem */
+            background-attachment: fixed; /* Opcional: faz a imagem ficar fixa ao rolar a página */
+        }
+        
         .nav-item:hover { background-color: #2563eb; color: white; }
         .container { max-width: 900px; }
         .delete-button { background-color: #ef4444; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: background-color 0.2s; }
@@ -24,7 +39,6 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <!-- Cabeçalho -->
     <header class="bg-blue-600 text-white shadow-lg">
         <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="text-xl font-bold">Agenda de Visitas</div>
@@ -35,22 +49,18 @@
         </nav>
     </header>
 
-    <!-- Conteúdo Principal -->
-    <main id="app-content" class="container mx-auto p-4 md:p-8 flex-grow">
-        <!-- O conteúdo será renderizado aqui pelo JavaScript -->
+    <main id="app-content" class="container mx-auto p-4 md:p-8 flex-grow flex items-center justify-center"> 
         <div class="text-center py-12">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
             <p class="mt-4 text-gray-600">Carregando sistema...</p>
         </div>
     </main>
 
-    <!-- Rodapé -->
     <footer class="bg-gray-200 text-center p-4 mt-8 text-sm text-gray-600">
         <p>&copy; 2025 Evanio Martins. Todos os direitos reservados. | Usuário: <span id="user-id-display" class="font-mono text-xs">Aguardando...</span></p>
         <p class="mt-2 text-xs text-red-600">Aviso: A função de envio de e-mail foi removida, pois requer um serviço de backend (como o Flask original). Para enviar e-mails, você precisará de uma API externa (ex: SendGrid, EmailJS).</p>
     </footer>
 
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -120,7 +130,7 @@
                     
                     // Garante que o usuário veja a página de agendamento após o login SÓ SE ESTIVER NA TELA DE CARREGAMENTO/ERRO INICIAL
                     if (currentView === 'index' || currentView === 'erro') {
-                         navigate('index'); 
+                            navigate('index'); 
                     }
                 } else {
                     // Tenta autenticar
@@ -279,7 +289,7 @@
                 : '<option value="" disabled>-- Não há horários disponíveis --</option>';
 
             const content = `
-                <div class="bg-white p-8 rounded-xl shadow-2xl">
+                <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl w-full max-w-lg"> 
                     <h1 class="text-3xl font-extrabold text-gray-800 mb-2">Agendamento de Visita</h1>
                     <p class="text-gray-600 mb-8">Olá! Para que possamos apresentar os álbuns de formatura, por favor, preencha os dados e escolha um horário disponível na lista abaixo.</p>
 
@@ -345,7 +355,7 @@
                 `).join('');
 
                 tableHtml = `
-                    <div class="overflow-x-auto bg-white p-6 rounded-xl shadow-2xl">
+                    <div class="overflow-x-auto bg-white bg-opacity-95 p-6 rounded-xl shadow-2xl">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
@@ -364,7 +374,7 @@
                     </div>
                 `;
             } else {
-                tableHtml = '<p class="text-lg text-gray-500 mt-4 p-4 bg-white rounded-lg shadow-md">Não há agendamentos futuros confirmados no momento.</p>';
+                tableHtml = '<p class="text-lg text-gray-500 mt-4 p-4 bg-white bg-opacity-95 rounded-lg shadow-md">Não há agendamentos futuros confirmados no momento.</p>';
             }
 
             const content = `
@@ -380,7 +390,7 @@
 
         function renderSucesso() {
             const content = `
-                <div class="bg-white p-8 rounded-xl shadow-2xl border-t-4 border-green-500">
+                <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl border-t-4 border-green-500">
                     <div class="flex items-center space-x-3 mb-6">
                         <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <h1 class="text-3xl font-extrabold text-gray-800">Agendamento Confirmado com Sucesso!</h1>
@@ -407,7 +417,7 @@
 
         function renderErro(message = errorMessage) {
             const content = `
-                <div class="bg-white p-8 rounded-xl shadow-2xl border-t-4 border-red-500">
+                <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl border-t-4 border-red-500">
                     <div class="flex items-center space-x-3 mb-6">
                         <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                         <h1 class="text-3xl font-extrabold text-gray-800">Erro no Agendamento</h1>
