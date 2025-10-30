@@ -81,8 +81,7 @@
         let isFirebaseInitialized = false; 
 
         // ========================================================================
-        // ONDE FAZER: Configuração do Firebase (Fallback)
-        // ESSA CONFIGURAÇÃO GARANTE QUE A APLICAÇÃO INICIE SE O AMBIENTE FALHAR
+        // Configuração do Firebase (Fallback)
         // ========================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU",
@@ -158,7 +157,7 @@
 
             app = initializeApp(config);
             auth = getAuth(app);
-            db = getFirestore(app); // DB É DEFINIDO AQUI!
+            db = getFirestore(app); 
 
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
@@ -166,11 +165,11 @@
                     document.getElementById('user-id-display').textContent = userId;
                     fetchAgendamentos(); // Inicia a escuta após a autenticação
                     
-                    // CORREÇÃO: SÓ NAVEGA PARA A TELA INICIAL APÓS O LOGIN E A CONFIGURAÇÃO DO DB
-                    if (!isFirebaseInitialized) {
+                    // A navegação inicial já foi tratada em startApp. Apenas navegamos se estivermos em uma tela de erro.
+                    if (currentView === 'erro') {
                             navigate('index'); 
-                            isFirebaseInitialized = true;
                     }
+                    isFirebaseInitialized = true;
                 } else {
                     // Tenta autenticar
                     try {
@@ -185,7 +184,10 @@
                         document.getElementById('user-id-display').textContent = userId;
                     } catch (error) {
                         console.error("Erro na autenticação:", error);
-                        renderErro('Não foi possível conectar ao sistema de autenticação. Tente recarregar a página.');
+                        // Se falhar, e for a primeira vez, avisa o usuário.
+                        if (!isFirebaseInitialized) {
+                            renderErro('Não foi possível conectar ao sistema de autenticação. Tente recarregar a página.');
+                        }
                     }
                 }
             });
@@ -257,7 +259,7 @@
         async function salvarAgendamento(event) {
             event.preventDefault();
             
-            // VERIFICAÇÃO DE SEGURANÇA MANTIDA (AQUI OCORRIA O ERRO ANTERIORMENTE)
+            // VERIFICAÇÃO DE SEGURANÇA MANTIDA
             if (!db) {
                 renderErro("Erro ao salvar no banco de dados: A conexão com o Firestore não foi estabelecida. Tente recarregar a página.");
                 return;
@@ -519,9 +521,16 @@
                     renderErro("Erro de Configuração (JSON Inválido): As informações do Firebase não estão no formato correto. Recarregue a página.");
                 }
             } else {
-                // ONDE FAZER: Se o ambiente falhar em fornecer a config, usamos a configuração padrão do código.
+                // SE O AMBIENTE FALHAR, USAMOS A CONFIGURAÇÃO EMBUTIDA
                 console.warn("Configuração do Firebase do ambiente ausente. Usando configuração embutida.");
                 initFirebase(firebaseConfig);
+            }
+            
+            // O QUE FOI ADICIONADO: Força a primeira renderização para exibir o formulário,
+            // independentemente do status da conexão do Firebase.
+            // A lógica de carregamento de dados e salvamento tem proteções contra 'db' nulo.
+            if (currentView === 'index') {
+                navigate('index');
             }
         }
 
