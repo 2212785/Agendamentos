@@ -217,6 +217,7 @@
         // =================================================================
 
         function fetchAgendamentos() {
+            // CORREÇÃO: Verifica se a instância do Firestore está disponível
             if (!db || !userId) return;
 
             const agendamentosRef = collection(db, COLLECTION_PATH);
@@ -239,6 +240,12 @@
         async function salvarAgendamento(event) {
             event.preventDefault();
             
+            // CORREÇÃO: Verifica se a instância do Firestore está disponível
+            if (!db) {
+                renderErro("Erro ao salvar no banco de dados: A conexão com o Firestore não foi estabelecida. Tente recarregar a página.");
+                return;
+            }
+
             const form = event.target;
             const dataHoraStr = form.data_hora.value;
             
@@ -267,16 +274,24 @@
             };
 
             try {
+                // AQUI O ERRO OCORRIA SE 'db' FOSSE 'null'
                 const agendamentosRef = collection(db, COLLECTION_PATH);
                 await addDoc(agendamentosRef, novoAgendamento);
                 navigate('sucesso');
             } catch (e) {
                 console.error("Erro ao adicionar documento: ", e);
+                // NOTA: A mensagem de erro original agora será capturada aqui, mas o 'if (!db)' acima deve prevenir a maioria dos casos.
                 renderErro(`Erro ao salvar no banco de dados: ${e.message}`);
             }
         }
 
         async function excluirAgendamento(id) {
+            // CORREÇÃO: Adicionando verificação para 'db' aqui também.
+            if (!db) {
+                renderErro("Erro ao excluir: A conexão com o Firestore não foi estabelecida.");
+                return;
+            }
+
             // Usamos uma modal simples no lugar de 'confirm()' (que é bloqueado)
             if (!window.confirm("Tem certeza que deseja excluir este agendamento?")) {
                  return;
