@@ -441,35 +441,30 @@
             }
         }
 
-        // --- Novo Bloco de Inicialização Robusto com Limite de Tentativas ---
-        
-        window.onload = () => {
-            const MAX_ATTEMPTS = 10;
-            let attempts = 0;
+        // --- Inicialização Imediata Robusta ---
 
-            function attemptInit() {
-                attempts++;
-                
-                // Tenta ler a configuração mais recente
-                const configStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
-                const config = configStr ? JSON.parse(configStr) : null;
+        function startApp() {
+            const configStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+            let config = null;
 
-                if (config) {
-                    // Configuração encontrada, inicia o Firebase
+            if (configStr) {
+                try {
+                    // Tenta analisar a string JSON
+                    config = JSON.parse(configStr);
                     initFirebase(config);
-                } else if (attempts < MAX_ATTEMPTS) {
-                    // Tenta novamente após um breve atraso (500ms).
-                    console.warn(`Configuração do Firebase ausente, tentando novamente em 500ms... Tentativa ${attempts}/${MAX_ATTEMPTS}`);
-                    setTimeout(attemptInit, 500);
-                } else {
-                    // Falha total após o limite de tentativas. Exibe o erro.
-                    renderErro("Erro fatal: As configurações do Firebase falharam ao carregar após várias tentativas. Por favor, recarregue a página.");
+                } catch (e) {
+                    // Se a string não for um JSON válido, mostra um erro claro
+                    console.error("Erro ao analisar a configuração do Firebase:", e);
+                    renderErro("Erro de Configuração (JSON Inválido): As informações do Firebase não estão no formato correto. Recarregue a página.");
                 }
+            } else {
+                // Se a variável global não for definida, mostra um erro claro
+                renderErro("Erro de Configuração: As variáveis de ambiente do Firebase não foram carregadas. Por favor, recarregue a página.");
             }
+        }
 
-            // Inicia a primeira tentativa de inicialização
-            attemptInit();
-        };
+        // Inicia a aplicação (Executa imediatamente)
+        startApp();
     </script>
 </body>
 </html>
