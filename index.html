@@ -1,30 +1,24 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agendamento de Visita - Firestore</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agenda Álbum de Formatura</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* ===================================================================
-        ESTILOS DE FUNDO PARA A IMAGEM DE FORMATURA
-        ===================================================================
-        */
+        /* Estilos básicos com Tailwind e CSS */
         body { 
             font-family: 'Inter', sans-serif; 
-            
-            /* Caminho ajustado para a raiz, conforme discutido. */
             background-image: url('formatura.jpg'); 
-            
-            background-size: cover; /* Cobre toda a área */
-            background-position: center; /* Centraliza a imagem */
-            background-attachment: fixed; /* Opcional: faz a imagem ficar fixa ao rolar a página */
+            background-size: cover; 
+            background-position: center; 
+            background-attachment: fixed;
         }
-        
-        .nav-item:hover { background-color: #2563eb; color: white; }
         .container { max-width: 900px; }
-        .delete-button { background-color: #ef4444; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: background-color 0.2s; }
-        .delete-button:hover { background-color: #dc2626; }
+        .nav-item:hover { background-color: #2563eb; color: white; }
+        /* Estilos do Formulário */
+        .form-card { max-width: 500px; }
         input[type="text"], input[type="email"], input[type="tel"], textarea, select {
             border: 1px solid #d1d5db;
             padding: 10px;
@@ -55,70 +49,43 @@
             <p class="mt-4 text-gray-600">Carregando sistema...</p>
         </div>
     </main>
-
+    
     <footer class="bg-gray-200 text-center p-4 mt-8 text-sm text-gray-600">
-        <p>&copy; 2025 Evanio Martins. Todos os direitos reservados. | Usuário: <span id="user-id-display" class="font-mono text-xs">Aguardando...</span></p>
-        <p class="mt-2 text-xs text-red-600">Aviso: A função de envio de e-mail foi removida, pois requer um serviço de backend (como o Flask original). Para enviar e-mails, você precisará de uma API externa (ex: SendGrid, EmailJS).</p>
+        <p>&copy; 2025 Evanio Martins. Todos os direitos reservados. | Status: <span id="status-display" class="font-mono text-xs">Aguardando...</span></p>
     </footer>
 
     <script type="module">
+        // =================================================================
+        // 1. CONFIGURAÇÕES DO FIREBASE (REALTIME DATABASE - RTDB)
+        // =================================================================
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        // REMOÇÃO: import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "..."
-        import { getFirestore, collection, onSnapshot, doc, addDoc, deleteDoc, query, orderBy, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        // Importações MUDADAS para Realtime Database
+        import { getDatabase, ref, onValue, set, remove, child, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // Variáveis Globais de Configuração (Fornecidas pelo ambiente Canvas)
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-        
-        // Instâncias do Firebase
-        let app;
-        // REMOÇÃO: let auth;
-        let db;
-        let userId = null;
-        let agendamentos = [];
-        let currentView = 'index';
-        let errorMessage = '';
-        let isFirebaseInitialized = false; 
-
-        // ========================================================================
-        // Configuração do Firebase (Fallback)
-        // ========================================================================
+        // Sua configuração real
         const firebaseConfig = {
-            apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU",
+            apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU", 
             authDomain: "agenda-album-de-formatura.firebaseapp.com",
-            databaseURL: "https://agenda-album-de-formatura-default-rtdb.firebaseio.com",
+            // CHAVE RTDB obrigatória e confirmada pelo seu console
+            databaseURL: "https://agenda-album-de-formatura-default-rtdb.firebaseio.com", 
             projectId: "agenda-album-de-formatura",
             storageBucket: "agenda-album-de-formatura.firebasestorage.app",
             messagingSenderId: "29604114447",
             appId: "1:29604114447:web:bac79aba4c4aa945c8737a"
         };
-        // ========================================================================
+        
+        // Instâncias do Firebase
+        let app;
+        let db; // Instância do RTDB
+        let agendamentos = {}; // Objeto para armazenar dados do RTDB
+        let currentView = 'index';
+        let errorMessage = '';
 
         // Constantes da Aplicação
         const SEU_NOME = 'Evanio Martins';
-        const COLLECTION_PATH = `artifacts/${appId}/public/data/agendamentos`;
+        // Caminho da coleção no RTDB. DEVE CORRESPONDER À REGRA DE SEGURANÇA!
+        const COLLECTION_PATH = 'agendamentos'; 
         
-        // -------------------------------------------------------------
-        // NOVO CÓDIGO: SENHA E FUNÇÃO DE VERIFICAÇÃO DE ACESSO
-        // -------------------------------------------------------------
-        const ADMIN_PASSWORD = 'minhaagenda2025'; // <<--- SUA SENHA SECRETA AQUI!
-
-        window.checkPassword = () => {
-            // Solicita a senha ao usuário
-            const enteredPassword = window.prompt("Por favor, digite a senha de administrador para acessar a agenda:");
-            
-            // Compara a senha digitada
-            if (enteredPassword === ADMIN_PASSWORD) {
-                // Se a senha estiver correta, navega para a agenda (função original)
-                navigate('agenda');
-            } else if (enteredPassword !== null) {
-                // Se digitou algo errado
-                alert("Senha incorreta. Acesso negado.");
-            }
-            // Se o usuário clicar em Cancelar, nada acontece.
-        };
-        // -------------------------------------------------------------
-
         const DATAS_FIXAS = [
             '2025-10-31', // Sexta-feira
             '2025-11-01', // Sábado
@@ -127,7 +94,20 @@
         ];
         const HORA_INICIO = 9;
         const HORA_FIM = 20; // Inclui 20:00h
+        const ADMIN_PASSWORD = 'minhaagenda2025';
 
+        // Variável auxiliar para navegação (já que o RTDB não tem onAuthStateChanged)
+        let isDBReady = false;
+
+        window.checkPassword = () => {
+            const enteredPassword = window.prompt("Por favor, digite a senha de administrador para acessar a agenda:");
+            if (enteredPassword === ADMIN_PASSWORD) {
+                navigate('agenda');
+            } else if (enteredPassword !== null) {
+                alert("Senha incorreta. Acesso negado.");
+            }
+        };
+        
         // Função para formatação de data e hora em Português
         const formatDateTime = (date, includeTime = true, includeYear = true) => {
             const options = { 
@@ -139,120 +119,79 @@
                 minute: includeTime ? '2-digit' : undefined,
                 hour12: false
             };
-            return new Date(date).toLocaleString('pt-BR', options)
-                .replace(/\b(\w)/g, l => l.toUpperCase()) // Capitaliza dias da semana e meses
-                .replace(',', ' -'); // Ajusta a separação entre dia e data
+            // Tratamento para TimeStamp de RTDB (que não é nativo)
+            const dateObj = (date instanceof Date) ? date : new Date(date);
+            
+            return dateObj.toLocaleString('pt-BR', options)
+                .replace(/\b(\w)/g, l => l.toUpperCase()) 
+                .replace(',', ' -'); 
         };
 
         // =================================================================
-        // 1. INICIALIZAÇÃO E GERAÇÃO DO ID LOCAL (SEM AUTENTICAÇÃO)
+        // 2. INICIALIZAÇÃO DO RTDB
         // =================================================================
 
         function initFirebase(config) {
-            if (!config) {
-                console.error("Erro: Configuração do Firebase não foi fornecida.");
-                renderErro("Erro fatal: As configurações do Firebase estão ausentes.");
-                return;
-            }
-
             try {
                 app = initializeApp(config);
-                db = getFirestore(app); 
+                db = getDatabase(app); 
+                isDBReady = true;
 
-                // SOLUÇÃO DEFINITIVA: FORÇAR GERAÇÃO DE ID LOCAL
+                // Não precisamos de login anônimo. Apenas forçamos a leitura e o uso do RTDB
+                fetchAgendamentosRTDB(); 
                 
-                // Tenta recuperar o ID da sessão anterior ou gera um novo
-                userId = localStorage.getItem('anonUserId') || crypto.randomUUID();
-                localStorage.setItem('anonUserId', userId); 
-                
-                document.getElementById('user-id-display').textContent = userId;
-                
-                // Inicia a escuta do banco de dados imediatamente
-                fetchAgendamentos(); 
-                
-                // Navegação para a tela inicial
-                if (!isFirebaseInitialized) {
-                    navigate('index'); 
-                    isFirebaseInitialized = true;
-                }
+                document.getElementById('status-display').textContent = 'Conectado ao RTDB';
+                navigate('index'); // Carrega o formulário
                 
             } catch (error) {
-                console.error("Erro na inicialização do Firebase:", error);
-                renderErro('Não foi possível conectar ao Firebase. Verifique sua chave API ou regras de segurança. Recarregue a página para tentar novamente.');
+                console.error("Erro fatal na inicialização do Firebase:", error);
+                document.getElementById('status-display').textContent = 'Erro de Conexão';
+                renderErro('Erro fatal: Não foi possível conectar ao Realtime Database. Verifique sua `databaseURL`.');
             }
         }
+
+        // =================================================================
+        // 3. OPERAÇÕES RTDB (CRUD)
+        // =================================================================
         
-        // =================================================================
-        // 2. LÓGICA DE AGENDAMENTO (GERAÇÃO E FILTRAGEM)
-        // =================================================================
+        function fetchAgendamentosRTDB() {
+            if (!isDBReady) return;
 
-        function obterHorariosDisponiveis() {
-            const horariosDisponiveis = [];
-            const agora = new Date();
-            // Acesso seguro a 'agendamentos' para evitar falhas se a conexão for lenta
-            const horariosReservados = agendamentos.map(a => a.data_hora.toDate().getTime());
-
-            for (const dataStr of DATAS_FIXAS) {
-                const [ano, mes, dia] = dataStr.split('-').map(Number);
+            const agendamentosRef = ref(db, COLLECTION_PATH);
+            
+            // onValue: Escuta em tempo real no Realtime Database
+            onValue(agendamentosRef, (snapshot) => {
+                agendamentos = snapshot.val() || {}; // RTDB retorna um objeto
                 
-                for (let hora = HORA_INICIO; hora <= HORA_FIM; hora++) {
-                    // Cria o objeto Date para a hora cheia
-                    const dataHoraCandidata = new Date(ano, mes - 1, dia, hora, 0, 0, 0);
-                    const timestampCandidato = dataHoraCandidata.getTime();
-                    
-                    // 1. Checa se o horário ainda não passou
-                    if (timestampCandidato > agora.getTime()) {
-                        // 2. Checa se o horário já foi reservado
-                        if (!horariosReservados.includes(timestampCandidato)) {
-                            
-                            const nomeDiaPt = formatDateTime(dataHoraCandidata, false, false);
-                            const horaMinuto = dataHoraCandidata.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
-                            
-                            horariosDisponiveis.push({
-                                // Exemplo de formato: "Sexta-feira, 31/10/2025 às 09:00"
-                                'display': `${nomeDiaPt} - ${dataHoraCandidata.toLocaleDateString('pt-BR')} às ${horaMinuto}`,
-                                'value': dataHoraCandidata.toISOString() // Formato ISO para envio
-                            });
-                        }
+                // Mapeia os dados do RTDB para um formato mais amigável para a UI (lista plana)
+                const agendamentosFormatados = [];
+                for (const dataKey in agendamentos) {
+                    for (const horarioKey in agendamentos[dataKey]) {
+                        const agendamento = agendamentos[dataKey][horarioKey];
+                        // O ID do documento é a combinação de data e horário (ex: 2025-10-31/0900)
+                        agendamento.id = `${dataKey}/${horarioKey}`; 
+                        // data_hora é o objeto Date para comparação
+                        agendamento.data_hora = new Date(agendamento.data + 'T' + agendamento.horario.replace(/(\d{2})(\d{2})/, '$1:$2') + ':00'); 
+                        agendamentosFormatados.push(agendamento);
                     }
                 }
-            }
-
-            return horariosDisponiveis;
-        }
-
-        // =================================================================
-        // 3. OPERAÇÕES FIREBASE (CRUD)
-        // =================================================================
-
-        function fetchAgendamentos() {
-            // VERIFICAÇÃO DE SEGURANÇA MANTIDA
-            if (!db || !userId) return; 
-
-            const agendamentosRef = collection(db, COLLECTION_PATH);
-            const q = query(agendamentosRef, orderBy('data_hora'));
-
-            // Escuta em tempo real (onSnapshot)
-            onSnapshot(q, (snapshot) => {
-                agendamentos = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-                // Garante que a tela será renderizada após a busca inicial
-                render();
+                // Ordena por data_hora (do mais antigo para o mais novo)
+                agendamentosFormatados.sort((a, b) => a.data_hora - b.data_hora);
+                
+                agendamentos = agendamentosFormatados;
+                render(); 
+                
             }, (error) => {
-                console.error("Erro ao buscar agendamentos:", error);
-                // NOTA: Se o erro for de PERMISSÃO, isso será exibido.
-                renderErro("Erro ao buscar agendamentos em tempo real. Verifique as Regras de Segurança do Firestore.");
+                console.error("Erro ao buscar agendamentos RTDB:", error);
+                renderErro("Erro ao buscar agendamentos em tempo real. Verifique as Regras de Segurança do Realtime Database.");
             });
         }
 
         async function salvarAgendamento(event) {
             event.preventDefault();
             
-            // VERIFICAÇÃO DE SEGURANÇA MANTIDA
-            if (!db) {
-                renderErro("Erro ao salvar no banco de dados: A conexão com o Firestore não foi estabelecida.");
+            if (!isDBReady) {
+                renderErro("Erro ao salvar: A conexão com o banco de dados não está pronta.");
                 return;
             }
 
@@ -265,9 +204,11 @@
             }
 
             const dataHoraObj = new Date(dataHoraStr);
+            const dataKey = dataHoraObj.toISOString().slice(0, 10); // YYYY-MM-DD
+            const horarioKey = dataHoraObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(':', ''); // HHMM
 
-            // Verifica novamente se o horário está disponível antes de salvar
-            const isReserved = agendamentos.some(a => a.data_hora.toDate().getTime() === dataHoraObj.getTime());
+            // 1. Verifica se o horário já está reservado
+            const isReserved = agendamentos.some(a => a.data_hora.getTime() === dataHoraObj.getTime());
             if (isReserved) {
                 renderErro("Este horário foi reservado por outro formando. Por favor, escolha outro.");
                 return;
@@ -276,49 +217,88 @@
             const novoAgendamento = {
                 nome_formando: form.nome_formando.value.trim(),
                 endereco: form.endereco.value.trim(),
-                data_hora: dataHoraObj, // Salva como Timestamp
+                data: dataKey,
+                horario: dataHoraObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false }),
                 email_cliente: form.email_cliente.value.trim(),
                 telefone: form.telefone.value.trim() || null,
-                criado_em: serverTimestamp(),
-                userId: userId, // Identifica quem criou o agendamento
+                criado_em: new Date().toISOString(),
+                // Como não tem autenticação, usamos o horário para tentar simular um ID de usuário único de sessão
+                sessionId: new Date().getTime().toString()
             };
 
             try {
-                const agendamentosRef = collection(db, COLLECTION_PATH);
-                await addDoc(agendamentosRef, novoAgendamento);
+                // Caminho no RTDB: agendamentos/YYYY-MM-DD/HHMM
+                const agendamentoRef = ref(db, `${COLLECTION_PATH}/${dataKey}/${horarioKey}`);
+                
+                // Set() sobrescreve se existir, garantindo a atomicidade
+                await set(agendamentoRef, novoAgendamento);
+                
                 navigate('sucesso');
+                
             } catch (e) {
-                console.error("Erro ao adicionar documento: ", e);
+                console.error("Erro ao adicionar documento RTDB: ", e);
                 renderErro(`Erro ao salvar no banco de dados: ${e.message}. Verifique as Regras de Segurança.`);
             }
         }
 
         async function excluirAgendamento(id) {
-            // VERIFICAÇÃO DE SEGURANÇA MANTIDA
-            if (!db) {
-                renderErro("Erro ao excluir: A conexão com o Firestore não foi estabelecida.");
+            if (!isDBReady) {
+                renderErro("Erro ao excluir: A conexão com o banco de dados não está pronta.");
                 return;
             }
 
-            // Usamos uma modal simples no lugar de 'confirm()' (que é bloqueado)
             if (!window.confirm("Tem certeza que deseja excluir este agendamento?")) {
                  return;
             }
 
             try {
-                const docRef = doc(db, COLLECTION_PATH, id);
-                await deleteDoc(docRef);
-                // A navegação para 'agenda' é automática via onSnapshot
+                // ID do RTDB é data/horario (ex: 2025-10-31/0900)
+                const docRef = ref(db, `${COLLECTION_PATH}/${id}`);
+                await remove(docRef);
+                
+                // onValue se encarrega de atualizar a lista
             } catch (e) {
-                console.error("Erro ao excluir documento: ", e);
+                console.error("Erro ao excluir documento RTDB: ", e);
                 renderErro(`Erro ao excluir o agendamento: ${e.message}`);
             }
         }
 
 
         // =================================================================
-        // 4. RENDERIZAÇÃO DA INTERFACE (VIEWS)
+        // 4. LÓGICA DE AGENDAMENTO E RENDERIZAÇÃO
         // =================================================================
+        
+        function obterHorariosDisponiveis() {
+            const horariosDisponiveis = [];
+            const agora = new Date();
+            
+            // Mapeia horários já reservados
+            const horariosReservados = agendamentos.map(a => a.data_hora.getTime());
+
+            for (const dataStr of DATAS_FIXAS) {
+                const [ano, mes, dia] = dataStr.split('-').map(Number);
+                
+                for (let hora = HORA_INICIO; hora <= HORA_FIM; hora++) {
+                    const dataHoraCandidata = new Date(ano, mes - 1, dia, hora, 0, 0, 0);
+                    const timestampCandidato = dataHoraCandidata.getTime();
+                    
+                    if (timestampCandidato > agora.getTime()) {
+                        if (!horariosReservados.includes(timestampCandidato)) {
+                            
+                            const nomeDiaPt = formatDateTime(dataHoraCandidata, false, false);
+                            const horaMinuto = dataHoraCandidata.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
+                            
+                            horariosDisponiveis.push({
+                                'display': `${nomeDiaPt} - ${dataHoraCandidata.toLocaleDateString('pt-BR')} às ${horaMinuto}`,
+                                'value': dataHoraCandidata.toISOString() // Formato ISO para envio
+                            });
+                        }
+                    }
+                }
+            }
+
+            return horariosDisponiveis;
+        }
 
         window.navigate = (view, error = '') => {
             currentView = view;
@@ -334,7 +314,7 @@
                 : '<option value="" disabled>-- Não há horários disponíveis --</option>';
 
             const content = `
-                <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl w-full max-w-lg"> 
+                <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl form-card w-full max-w-lg"> 
                     <h1 class="text-3xl font-extrabold text-gray-800 mb-2">Agendamento de Visita</h1>
                     <p class="text-gray-600 mb-8">Olá! Para que possamos apresentar os álbuns de formatura, por favor, preencha os dados e escolha um horário disponível na lista abaixo.</p>
 
@@ -381,14 +361,15 @@
         }
 
         function renderAgenda() {
-            const agendamentosFuturos = agendamentos.filter(a => a.data_hora.toDate().getTime() >= new Date().getTime());
+            // Filtra os agendamentos futuros e ordena
+            const agendamentosFuturos = agendamentos.filter(a => a.data_hora.getTime() >= new Date().getTime());
             
             let tableHtml = '';
 
             if (agendamentosFuturos.length > 0) {
                 const tableRows = agendamentosFuturos.map(a => `
                     <tr class="border-b hover:bg-gray-50">
-                        <td class="p-3 whitespace-nowrap font-medium">${formatDateTime(a.data_hora.toDate())}</td>
+                        <td class="p-3 whitespace-nowrap font-medium">${formatDateTime(a.data_hora)}</td>
                         <td class="p-3">${a.nome_formando}</td>
                         <td class="p-3">${a.endereco}</td>
                         <td class="p-3"><a href="mailto:${a.email_cliente}" class="text-blue-500 hover:text-blue-700">${a.email_cliente}</a></td>
@@ -449,7 +430,6 @@
                     
                     <ol class="list-decimal list-inside space-y-2 text-gray-700 ml-4">
                         <li>Seu agendamento foi **salvo** no sistema.</li>
-                        <li>Nós receberemos a notificação ao acessarmos a **Minha Agenda**.</li>
                         <li>O horário que você reservou foi **bloqueado** em tempo real e não está mais disponível para outros formandos.</li>
                     </ol>
                     <button onclick="navigate('index')" class="mt-8 bg-blue-500 text-white py-2 px-4 rounded-lg font-bold hover:bg-blue-600 transition duration-300">
@@ -499,28 +479,8 @@
         // --- Inicialização Imediata Robusta ---
 
         function startApp() {
-            const configStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
-            let config = null;
-
-            if (configStr) {
-                try {
-                    // Tenta analisar a string JSON fornecida pelo ambiente
-                    config = JSON.parse(configStr);
-                    initFirebase(config);
-                } catch (e) {
-                    console.error("Erro ao analisar a configuração do Firebase:", e);
-                    renderErro("Erro de Configuração (JSON Inválido): As informações do Firebase não estão no formato correto. Recarregue a página.");
-                }
-            } else {
-                // SE O AMBIENTE FALHAR, USAMOS A CONFIGURAÇÃO EMBUTIDA
-                console.warn("Configuração do Firebase do ambiente ausente. Usando configuração embutida.");
-                initFirebase(firebaseConfig);
-            }
-            
-            // Força a primeira renderização para exibir o formulário.
-            if (currentView === 'index' && !isFirebaseInitialized) {
-                navigate('index');
-            }
+            // Não precisamos mais de __firebase_config, pois a configuração está embutida
+            initFirebase(firebaseConfig);
         }
 
         // Inicia a aplicação (Executa imediatamente)
@@ -528,6 +488,7 @@
     </script>
 </body>
 </html>
+
 
 
 
