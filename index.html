@@ -58,7 +58,6 @@
 
         // Variáveis Globais de Configuração (Fornecidas pelo ambiente Canvas)
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
         // Instâncias do Firebase
@@ -102,42 +101,45 @@
         // 1. INICIALIZAÇÃO E AUTENTICAÇÃO DO FIREBASE
         // =================================================================
 
-        function initFirebase() {
-            if (firebaseConfig) {
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        document.getElementById('user-id-display').textContent = userId;
-                        fetchAgendamentos(); // Inicia a escuta após a autenticação
-                        // Garante que o usuário veja a página de agendamento após o login
-                        if (currentView === 'index') navigate('index'); 
-                    } else {
-                        // Tenta autenticar
-                        try {
-                            if (initialAuthToken) {
-                                const userCredential = await signInWithCustomToken(auth, initialAuthToken);
-                                userId = userCredential.user.uid;
-                            } else {
-                                // Se o token não estiver disponível, faz o login anônimo
-                                const userCredential = await signInAnonymously(auth);
-                                userId = userCredential.user.uid;
-                            }
-                            document.getElementById('user-id-display').textContent = userId;
-                        } catch (error) {
-                            console.error("Erro na autenticação:", error);
-                            renderErro('Não foi possível conectar ao sistema de autenticação. Tente recarregar a página.');
-                        }
-                    }
-                });
-            } else {
-                console.error("Configuração do Firebase não encontrada.");
-                // Renderiza o erro fatal, que é o caso onde o Canvas falha ao fornecer a configuração
+        function initFirebase(config) {
+            if (!config) {
+                console.error("Erro: Configuração do Firebase não foi fornecida.");
                 renderErro("Erro fatal: As configurações do Firebase estão ausentes.");
+                return;
             }
+
+            app = initializeApp(config);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    document.getElementById('user-id-display').textContent = userId;
+                    fetchAgendamentos(); // Inicia a escuta após a autenticação
+                    
+                    // Garante que o usuário veja a página de agendamento após o login SÓ SE ESTIVER NA TELA DE CARREGAMENTO/ERRO INICIAL
+                    if (currentView === 'index' || currentView === 'erro') {
+                         navigate('index'); 
+                    }
+                } else {
+                    // Tenta autenticar
+                    try {
+                        if (initialAuthToken) {
+                            const userCredential = await signInWithCustomToken(auth, initialAuthToken);
+                            userId = userCredential.user.uid;
+                        } else {
+                            // Se o token não estiver disponível, faz o login anônimo
+                            const userCredential = await signInAnonymously(auth);
+                            userId = userCredential.user.uid;
+                        }
+                        document.getElementById('user-id-display').textContent = userId;
+                    } catch (error) {
+                        console.error("Erro na autenticação:", error);
+                        renderErro('Não foi possível conectar ao sistema de autenticação. Tente recarregar a página.');
+                    }
+                }
+            });
         }
         
         // =================================================================
@@ -439,19 +441,32 @@
             }
         }
 
-        // Inicia a renderização
-        // O fetchAgendamentos chamará render() após a conexão inicial com o banco
+        // --- Novo Bloco de Inicialização Robusto ---
         
         // Chamada da função de inicialização após o carregamento da janela
         window.onload = () => {
-            initFirebase();
-            // Se a configuração estiver presente (o que geralmente acontece após um pequeno atraso),
-            // navegamos para 'index' para sair da tela de "Carregando sistema...".
-            // Se a configuração estiver ausente, a função initFirebase() chama renderErro() diretamente.
-            if (firebaseConfig) {
-                 navigate('index');
+            // Função que tenta ler a configuração do Firebase e inicializar o app
+            function attemptInit() {
+                // Tenta ler a configuração mais recente (pode ter sido injetada após um atraso)
+                const configStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+                const config = configStr ? JSON.parse(configStr) : null;
+
+                if (config) {
+                    // Configuração encontrada, inicia o Firebase
+                    initFirebase(config);
+                } else {
+                    // Se a configuração ainda estiver faltando (e o erro estiver sendo mostrado),
+                    // tenta novamente após um breve atraso.
+                    console.warn("Configuração do Firebase ausente, tentando novamente em 500ms...");
+                    setTimeout(attemptInit, 500);
+                }
             }
+
+            // Inicia a primeira tentativa de inicialização
+            attemptInit();
         };
     </script>
 </body>
 </html>
+
+
