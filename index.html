@@ -63,7 +63,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        // REMOÇÃO: import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "..."
         import { getFirestore, collection, onSnapshot, doc, addDoc, deleteDoc, query, orderBy, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // Variáveis Globais de Configuração (Fornecidas pelo ambiente Canvas)
@@ -72,7 +72,7 @@
         
         // Instâncias do Firebase
         let app;
-        let auth;
+        // REMOÇÃO: let auth;
         let db;
         let userId = null;
         let agendamentos = [];
@@ -145,7 +145,7 @@
         };
 
         // =================================================================
-        // 1. INICIALIZAÇÃO E AUTENTICAÇÃO DO FIREBASE
+        // 1. INICIALIZAÇÃO E GERAÇÃO DO ID LOCAL (SEM AUTENTICAÇÃO)
         // =================================================================
 
         function initFirebase(config) {
@@ -155,42 +155,31 @@
                 return;
             }
 
-            app = initializeApp(config);
-            auth = getAuth(app);
-            db = getFirestore(app); 
+            try {
+                app = initializeApp(config);
+                db = getFirestore(app); 
 
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
-                    document.getElementById('user-id-display').textContent = userId;
-                    fetchAgendamentos(); // Inicia a escuta após a autenticação
-                    
-                    // A navegação inicial já foi tratada em startApp. Apenas navegamos se estivermos em uma tela de erro.
-                    if (currentView === 'erro') {
-                            navigate('index'); 
-                    }
+                // SOLUÇÃO DEFINITIVA: FORÇAR GERAÇÃO DE ID LOCAL
+                
+                // Tenta recuperar o ID da sessão anterior ou gera um novo
+                userId = localStorage.getItem('anonUserId') || crypto.randomUUID();
+                localStorage.setItem('anonUserId', userId); 
+                
+                document.getElementById('user-id-display').textContent = userId;
+                
+                // Inicia a escuta do banco de dados imediatamente
+                fetchAgendamentos(); 
+                
+                // Navegação para a tela inicial
+                if (!isFirebaseInitialized) {
+                    navigate('index'); 
                     isFirebaseInitialized = true;
-                } else {
-                    // Tenta autenticar
-                    try {
-                        if (initialAuthToken) {
-                            const userCredential = await signInWithCustomToken(auth, initialAuthToken);
-                            userId = userCredential.user.uid;
-                        } else {
-                            // Se o token não estiver disponível, faz o login anônimo
-                            const userCredential = await signInAnonymously(auth);
-                            userId = userCredential.user.uid;
-                        }
-                        document.getElementById('user-id-display').textContent = userId;
-                    } catch (error) {
-                        console.error("Erro na autenticação:", error);
-                        // Se falhar, e for a primeira vez, avisa o usuário.
-                        if (!isFirebaseInitialized) {
-                            renderErro('Não foi possível conectar ao sistema de autenticação. Tente recarregar a página.');
-                        }
-                    }
                 }
-            });
+                
+            } catch (error) {
+                console.error("Erro na inicialização do Firebase:", error);
+                renderErro('Não foi possível conectar ao Firebase. Verifique sua chave API ou regras de segurança. Recarregue a página para tentar novamente.');
+            }
         }
         
         // =================================================================
@@ -200,6 +189,7 @@
         function obterHorariosDisponiveis() {
             const horariosDisponiveis = [];
             const agora = new Date();
+            // Acesso seguro a 'agendamentos' para evitar falhas se a conexão for lenta
             const horariosReservados = agendamentos.map(a => a.data_hora.toDate().getTime());
 
             for (const dataStr of DATAS_FIXAS) {
@@ -252,7 +242,8 @@
                 render();
             }, (error) => {
                 console.error("Erro ao buscar agendamentos:", error);
-                renderErro("Erro ao buscar agendamentos em tempo real.");
+                // NOTA: Se o erro for de PERMISSÃO, isso será exibido.
+                renderErro("Erro ao buscar agendamentos em tempo real. Verifique as Regras de Segurança do Firestore.");
             });
         }
 
@@ -261,7 +252,7 @@
             
             // VERIFICAÇÃO DE SEGURANÇA MANTIDA
             if (!db) {
-                renderErro("Erro ao salvar no banco de dados: A conexão com o Firestore não foi estabelecida. Tente recarregar a página.");
+                renderErro("Erro ao salvar no banco de dados: A conexão com o Firestore não foi estabelecida.");
                 return;
             }
 
@@ -298,7 +289,7 @@
                 navigate('sucesso');
             } catch (e) {
                 console.error("Erro ao adicionar documento: ", e);
-                renderErro(`Erro ao salvar no banco de dados: ${e.message}`);
+                renderErro(`Erro ao salvar no banco de dados: ${e.message}. Verifique as Regras de Segurança.`);
             }
         }
 
@@ -526,10 +517,8 @@
                 initFirebase(firebaseConfig);
             }
             
-            // O QUE FOI ADICIONADO: Força a primeira renderização para exibir o formulário,
-            // independentemente do status da conexão do Firebase.
-            // A lógica de carregamento de dados e salvamento tem proteções contra 'db' nulo.
-            if (currentView === 'index') {
+            // Força a primeira renderização para exibir o formulário.
+            if (currentView === 'index' && !isFirebaseInitialized) {
                 navigate('index');
             }
         }
