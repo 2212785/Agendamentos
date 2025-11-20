@@ -1,513 +1,530 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Agenda Álbum de Formatura</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Estilos básicos com Tailwind e CSS */
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-image: url('formatura.jpg'); 
-            background-size: cover; 
-            background-position: center; 
-            background-attachment: fixed;
-        }
-        .container { max-width: 900px; }
-        .nav-item:hover { background-color: #2563eb; color: white; }
-        /* Estilos do Formulário */
-        .form-card { max-width: 500px; }
-        input[type="text"], input[type="email"], input[type="tel"], textarea, select {
-            border: 1px solid #d1d5db;
-            padding: 10px;
-            border-radius: 8px;
-            width: 100%;
-            box-sizing: border-box;
-            margin-top: 4px;
-        }
-    </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agenda Álbum de Formatura</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos básicos com Tailwind e CSS */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-image: url('formatura.jpg'); 
+            background-size: cover; 
+            background-position: center; 
+            background-attachment: fixed;
+        }
+        .container { max-width: 900px; }
+        .nav-item:hover { background-color: #2563eb; color: white; }
+        /* Estilos do Formulário */
+        .form-card { max-width: 500px; }
+        input[type="text"], input[type="email"], input[type="tel"], textarea, select {
+            border: 1px solid #d1d5db;
+            padding: 10px;
+            border-radius: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 4px;
+        }
+    </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <header class="bg-blue-600 text-white shadow-lg">
-        <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="text-xl font-bold">Agenda de Visitas</div>
-            <div id="nav-links">
-                <button onclick="navigate('index')" class="nav-item px-4 py-2 rounded-lg transition duration-200 bg-blue-700">Agendar Visita</button>
-                
-                <button onclick="checkPassword()" class="nav-item px-4 py-2 rounded-lg transition duration-200">Minha Agenda</button>
-                
-            </div>
-        </nav>
-    </header>
+    <header class="bg-blue-600 text-white shadow-lg">
+        <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="text-xl font-bold">Agenda de Visitas</div>
+            <div id="nav-links">
+                <button onclick="navigate('index')" class="nav-item px-4 py-2 rounded-lg transition duration-200 bg-blue-700">Agendar Visita</button>
+                
+                <button onclick="checkPassword()" class="nav-item px-4 py-2 rounded-lg transition duration-200">Minha Agenda</button>
+                
+            </div>
+        </nav>
+    </header>
 
-    <main id="app-content" class="container mx-auto p-4 md:p-8 flex-grow flex items-center justify-center"> 
-        <div class="text-center py-12">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p class="mt-4 text-gray-600">Carregando sistema...</p>
-        </div>
-    </main>
-    
-    <footer class="bg-gray-200 text-center p-4 mt-8 text-sm text-gray-600">
-        <p>&copy; 2025 Evanio Martins. Todos os direitos reservados. | Status: <span id="status-display" class="font-mono text-xs">Aguardando...</span></p>
-    </footer>
+    <main id="app-content" class="container mx-auto p-4 md:p-8 flex-grow flex items-center justify-center"> 
+        <div class="text-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+            <p class="mt-4 text-gray-600">Carregando sistema...</p>
+        </div>
+    </main>
+    
+    <footer class="bg-gray-200 text-center p-4 mt-8 text-sm text-gray-600">
+        <p>&copy; 2025 Evanio Martins. Todos os direitos reservados. | Status: <span id="status-display" class="font-mono text-xs">Aguardando...</span></p>
+    </footer>
 
-    <script type="module">
-        // =================================================================
-        // 1. CONFIGURAÇÕES DO FIREBASE (REALTIME DATABASE - RTDB)
-        // =================================================================
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        // Importações MUDADAS para Realtime Database
-        import { getDatabase, ref, onValue, set, remove, child, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    <script type="module">
+        // =================================================================
+        // 1. CONFIGURAÇÕES DO FIREBASE (REALTIME DATABASE - RTDB)
+        // =================================================================
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        // Importações MUDADAS para Realtime Database
+        import { getDatabase, ref, onValue, set, remove, child, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // Sua configuração real
-        const firebaseConfig = {
-            apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU", 
-            authDomain: "agenda-album-de-formatura.firebaseapp.com",
-            // CHAVE RTDB obrigatória e confirmada pelo seu console
-            databaseURL: "https://agenda-album-de-formatura-default-rtdb.firebaseio.com", 
-            projectId: "agenda-album-de-formatura",
-            storageBucket: "agenda-album-de-formatura.firebasestorage.app",
-            messagingSenderId: "29604114447",
-            appId: "1:29604114447:web:bac79aba4c4aa945c8737a"
-        };
-        
-        // Instâncias do Firebase
-        let app;
-        let db; // Instância do RTDB
-        let agendamentos = {}; // Objeto para armazenar dados do RTDB
-        let currentView = 'index';
-        let errorMessage = '';
+        // Sua configuração real
+        const firebaseConfig = {
+            apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU", 
+            authDomain: "agenda-album-de-formatura.firebaseapp.com",
+            // CHAVE RTDB obrigatória e confirmada pelo seu console
+            databaseURL: "https://agenda-album-de-formatura-default-rtdb.firebaseio.com", 
+            projectId: "agenda-album-de-formatura",
+            storageBucket: "agenda-album-de-formatura.firebasestorage.app",
+            messagingSenderId: "29604114447",
+            appId: "1:29604114447:web:bac79aba4c4aa945c8737a"
+        };
+        
+        // Instâncias do Firebase
+        let app;
+        let db; // Instância do RTDB
+        let agendamentos = {}; // Objeto para armazenar dados do RTDB
+        let currentView = 'index';
+        let errorMessage = '';
 
-        // Constantes da Aplicação
-        const SEU_NOME = 'Evanio Martins';
-        // Caminho da coleção no RTDB. DEVE CORRESPONDER À REGRA DE SEGURANÇA!
-        const COLLECTION_PATH = 'agendamentos'; 
-        
-        const DATAS_FIXAS = [
-            '2025-11-11', // terça-feira
-            '2025-11-12', // quarta-feira
-            '2025-11-13', // quinta-feira
-            '2025-11-14', // sexta-feira
-            '2025-11-15', // **NOVO: SÁBADO**
-        ];
-        const HORA_INICIO = 9;
-        const HORA_FIM = 20; // Inclui 20:00h
-        const HORA_FIM_SABADO = 15; // **NOVO: 15:00h para sábado**
-        const ADMIN_PASSWORD = '2025';
+        // Constantes da Aplicação
+        const SEU_NOME = 'Evanio Martins';
+        // Caminho da coleção no RTDB. DEVE CORRESPONDER À REGRA DE SEGURANÇA!
+        const COLLECTION_PATH = 'agendamentos'; 
+        
+        // 🔑 ALTERAÇÕES ESSENCIAIS: DATAS FIXAS
+        // Hoje: 20/11/2025 (Quinta-feira)
+        // Amanhã: 21/11/2025 (Sexta-feira)
+        const DATAS_FIXAS = [
+            '2025-11-20',
+            '2025-11-21',
+        ];
+        
+        // 🔑 ALTERAÇÕES ESSENCIAIS: INTERVALOS DE TEMPO
+        const HORA_MAX_Geral = 20; // 20:00h
+        const MINUTO_MAX_Geral = 30; // 20:30h
+        
+        const ADMIN_PASSWORD = '2025';
 
-        // Variável auxiliar para navegação (já que o RTDB não tem onAuthStateChanged)
-        let isDBReady = false;
+        // Variável auxiliar para navegação (já que o RTDB não tem onAuthStateChanged)
+        let isDBReady = false;
 
-        window.checkPassword = () => {
-            const enteredPassword = window.prompt("Por favor, digite a senha de administrador para acessar a agenda:");
-            if (enteredPassword === ADMIN_PASSWORD) {
-                navigate('agenda');
-            } else if (enteredPassword !== null) {
-                alert("Senha incorreta. Acesso negado.");
-            }
-        };
-        
-        // Função para formatação de data e hora em Português
-        const formatDateTime = (date, includeTime = true, includeYear = true) => {
-            const options = { 
-                weekday: 'long', 
-                day: '2-digit', 
-                month: '2-digit', 
-                year: includeYear ? 'numeric' : undefined,
-                hour: includeTime ? '2-digit' : undefined, 
-                minute: includeTime ? '2-digit' : undefined,
-                hour12: false
-            };
-            // Tratamento para TimeStamp de RTDB (que não é nativo)
-            const dateObj = (date instanceof Date) ? date : new Date(date);
-            
-            return dateObj.toLocaleString('pt-BR', options)
-                .replace(/\b(\w)/g, l => l.toUpperCase()) 
-                .replace(',', ' -'); 
-        };
+        window.checkPassword = () => {
+            const enteredPassword = window.prompt("Por favor, digite a senha de administrador para acessar a agenda:");
+            if (enteredPassword === ADMIN_PASSWORD) {
+                navigate('agenda');
+            } else if (enteredPassword !== null) {
+                alert("Senha incorreta. Acesso negado.");
+            }
+        };
+        
+        // Função para formatação de data e hora em Português
+        const formatDateTime = (date, includeTime = true, includeYear = true) => {
+            const options = { 
+                weekday: 'long', 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: includeYear ? 'numeric' : undefined,
+                hour: includeTime ? '2-digit' : undefined, 
+                minute: includeTime ? '2-digit' : undefined,
+                hour12: false
+            };
+            // Tratamento para TimeStamp de RTDB (que não é nativo)
+            const dateObj = (date instanceof Date) ? date : new Date(date);
+            
+            return dateObj.toLocaleString('pt-BR', options)
+                .replace(/\b(\w)/g, l => l.toUpperCase()) 
+                .replace(',', ' -'); 
+        };
 
-        // =================================================================
-        // 2. INICIALIZAÇÃO DO RTDB
-        // =================================================================
+        // =================================================================
+        // 2. INICIALIZAÇÃO DO RTDB
+        // =================================================================
 
-        function initFirebase(config) {
-            try {
-                app = initializeApp(config);
-                db = getDatabase(app); 
-                isDBReady = true;
+        function initFirebase(config) {
+            try {
+                app = initializeApp(config);
+                db = getDatabase(app); 
+                isDBReady = true;
 
-                // Não precisamos de login anônimo. Apenas forçamos a leitura e o uso do RTDB
-                fetchAgendamentosRTDB(); 
-                
-                document.getElementById('status-display').textContent = 'Conectado ao RTDB';
-                navigate('index'); // Carrega o formulário
-                
-            } catch (error) {
-                console.error("Erro fatal na inicialização do Firebase:", error);
-                document.getElementById('status-display').textContent = 'Erro de Conexão';
-                renderErro('Erro fatal: Não foi possível conectar ao Realtime Database. Verifique sua `databaseURL`.');
-            }
-        }
+                // Não precisamos de login anônimo. Apenas forçamos a leitura e o uso do RTDB
+                fetchAgendamentosRTDB(); 
+                
+                document.getElementById('status-display').textContent = 'Conectado ao RTDB';
+                navigate('index'); // Carrega o formulário
+                
+            } catch (error) {
+                console.error("Erro fatal na inicialização do Firebase:", error);
+                document.getElementById('status-display').textContent = 'Erro de Conexão';
+                renderErro('Erro fatal: Não foi possível conectar ao Realtime Database. Verifique sua `databaseURL`.');
+            }
+        }
 
-        // =================================================================
-        // 3. OPERAÇÕES RTDB (CRUD)
-        // =================================================================
-        
-        function fetchAgendamentosRTDB() {
-            if (!isDBReady) return;
+        // =================================================================
+        // 3. OPERAÇÕES RTDB (CRUD)
+        // =================================================================
+        
+        function fetchAgendamentosRTDB() {
+            if (!isDBReady) return;
 
-            const agendamentosRef = ref(db, COLLECTION_PATH);
-            
-            // onValue: Escuta em tempo real no Realtime Database
-            onValue(agendamentosRef, (snapshot) => {
-                agendamentos = snapshot.val() || {}; // RTDB retorna um objeto
-                
-                // Mapeia os dados do RTDB para um formato mais amigável para a UI (lista plana)
-                const agendamentosFormatados = [];
-                for (const dataKey in agendamentos) {
-                    for (const horarioKey in agendamentos[dataKey]) {
-                        const agendamento = agendamentos[dataKey][horarioKey];
-                        // O ID do documento é a combinação de data e horário (ex: 2025-10-31/0900)
-                        agendamento.id = `${dataKey}/${horarioKey}`; 
-                        // data_hora é o objeto Date para comparação
-                        
-                        // 🔑 CORREÇÃO: Usa o valor de 'horario' (HH:MM) para construir a data.
-                        agendamento.data_hora = new Date(agendamento.data + 'T' + agendamento.horario + ':00'); 
-                        agendamentosFormatados.push(agendamento);
-                    }
-                }
-                // Ordena por data_hora (do mais antigo para o mais novo)
-                agendamentosFormatados.sort((a, b) => a.data_hora - b.data_hora);
-                
-                agendamentos = agendamentosFormatados;
-                render(); 
-                
-            }, (error) => {
-                console.error("Erro ao buscar agendamentos RTDB:", error);
-                renderErro("Erro ao buscar agendamentos em tempo real. Verifique as Regras de Segurança do Realtime Database.");
-            });
-        }
+            const agendamentosRef = ref(db, COLLECTION_PATH);
+            
+            // onValue: Escuta em tempo real no Realtime Database
+            onValue(agendamentosRef, (snapshot) => {
+                agendamentos = snapshot.val() || {}; // RTDB retorna um objeto
+                
+                // Mapeia os dados do RTDB para um formato mais amigável para a UI (lista plana)
+                const agendamentosFormatados = [];
+                for (const dataKey in agendamentos) {
+                    for (const horarioKey in agendamentos[dataKey]) {
+                        const agendamento = agendamentos[dataKey][horarioKey];
+                        // O ID do documento é a combinação de data e horário (ex: 2025-10-31/0900)
+                        agendamento.id = `${dataKey}/${horarioKey}`; 
+                        // data_hora é o objeto Date para comparação
+                        
+                        // 🔑 CORREÇÃO: Usa o valor de 'horario' (HH:MM) para construir a data.
+                        agendamento.data_hora = new Date(agendamento.data + 'T' + agendamento.horario + ':00'); 
+                        agendamentosFormatados.push(agendamento);
+                    }
+                }
+                // Ordena por data_hora (do mais antigo para o mais novo)
+                agendamentosFormatados.sort((a, b) => a.data_hora - b.data_hora);
+                
+                agendamentos = agendamentosFormatados;
+                render(); 
+                
+            }, (error) => {
+                console.error("Erro ao buscar agendamentos RTDB:", error);
+                renderErro("Erro ao buscar agendamentos em tempo real. Verifique as Regras de Segurança do Realtime Database.");
+            });
+        }
 
-        async function salvarAgendamento(event) {
-            event.preventDefault();
-            
-            if (!isDBReady) {
-                renderErro("Erro ao salvar: A conexão com o banco de dados não está pronta.");
-                return;
-            }
+        async function salvarAgendamento(event) {
+            event.preventDefault();
+            
+            if (!isDBReady) {
+                renderErro("Erro ao salvar: A conexão com o banco de dados não está pronta.");
+                return;
+            }
 
-            const form = event.target;
-            const dataHoraStr = form.data_hora.value;
-            
-            if (!dataHoraStr) {
-                renderErro("Por favor, selecione uma data e hora.");
-                return;
-            }
+            const form = event.target;
+            const dataHoraStr = form.data_hora.value;
+            
+            if (!dataHoraStr) {
+                renderErro("Por favor, selecione uma data e hora.");
+                return;
+            }
 
-            const dataHoraObj = new Date(dataHoraStr);
-            const dataKey = dataHoraObj.toISOString().slice(0, 10); // YYYY-MM-DD
-            // O horário é formatado para HHMM para ser usado como chave única no RTDB
-            const horarioKey = dataHoraObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(':', ''); 
+            const dataHoraObj = new Date(dataHoraStr);
+            const dataKey = dataHoraObj.toISOString().slice(0, 10); // YYYY-MM-DD
+            // O horário é formatado para HHMM para ser usado como chave única no RTDB
+            const horarioKey = dataHoraObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false }).replace(':', ''); 
 
-            // 1. Verifica se o horário já está reservado
-            const isReserved = agendamentos.some(a => a.data_hora.getTime() === dataHoraObj.getTime());
-            if (isReserved) {
-                renderErro("Este horário foi reservado por outro formando. Por favor, escolha outro.");
-                return;
-            }
+            // 1. Verifica se o horário já está reservado
+            const isReserved = agendamentos.some(a => a.data_hora.getTime() === dataHoraObj.getTime());
+            if (isReserved) {
+                renderErro("Este horário foi reservado por outro formando. Por favor, escolha outro.");
+                return;
+            }
 
-            const novoAgendamento = {
-                nome_formando: form.nome_formando.value.trim(),
-                endereco: form.endereco.value.trim(),
-                data: dataKey,
-                // Salva o horário em HH:MM para facilitar a leitura futura
-                horario: dataHoraObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false }),
-                email_cliente: form.email_cliente.value.trim(),
-                telefone: form.telefone.value.trim() || null,
-                criado_em: new Date().toISOString(),
-                // Como não tem autenticação, usamos o horário para tentar simular um ID de usuário único de sessão
-                sessionId: new Date().getTime().toString()
-            };
+            const novoAgendamento = {
+                nome_formando: form.nome_formando.value.trim(),
+                endereco: form.endereco.value.trim(),
+                data: dataKey,
+                // Salva o horário em HH:MM para facilitar a leitura futura
+                horario: dataHoraObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false }),
+                email_cliente: form.email_cliente.value.trim(),
+                telefone: form.telefone.value.trim() || null,
+                criado_em: new Date().toISOString(),
+                // Como não tem autenticação, usamos o horário para tentar simular um ID de usuário único de sessão
+                sessionId: new Date().getTime().toString()
+            };
 
-            try {
-                // Caminho no RTDB: agendamentos/YYYY-MM-DD/HHMM
-                const agendamentoRef = ref(db, `${COLLECTION_PATH}/${dataKey}/${horarioKey}`);
-                
-                // Set() sobrescreve se existir, garantindo a atomicidade
-                await set(agendamentoRef, novoAgendamento);
-                
-                navigate('sucesso');
-                
-            } catch (e) {
-                console.error("Erro ao adicionar documento RTDB: ", e);
-                renderErro(`Erro ao salvar no banco de dados: ${e.message}. Verifique as Regras de Segurança.`);
-            }
-        }
+            try {
+                // Caminho no RTDB: agendamentos/YYYY-MM-DD/HHMM
+                const agendamentoRef = ref(db, `${COLLECTION_PATH}/${dataKey}/${horarioKey}`);
+                
+                // Set() sobrescreve se existir, garantindo a atomicidade
+                await set(agendamentoRef, novoAgendamento);
+                
+                navigate('sucesso');
+                
+            } catch (e) {
+                console.error("Erro ao adicionar documento RTDB: ", e);
+                renderErro(`Erro ao salvar no banco de dados: ${e.message}. Verifique as Regras de Segurança.`);
+            }
+        }
 
-        async function excluirAgendamento(id) {
-            if (!isDBReady) {
-                renderErro("Erro ao excluir: A conexão com o banco de dados não está pronta.");
-                return;
-            }
+        async function excluirAgendamento(id) {
+            if (!isDBReady) {
+                renderErro("Erro ao excluir: A conexão com o banco de dados não está pronta.");
+                return;
+            }
 
-            if (!window.confirm("Tem certeza que deseja excluir este agendamento?")) {
-                 return;
-            }
+            if (!window.confirm("Tem certeza que deseja excluir este agendamento?")) {
+                 return;
+            }
 
-            try {
-                // ID do RTDB é data/horario (ex: 2025-10-31/0900)
-                const docRef = ref(db, `${COLLECTION_PATH}/${id}`);
-                await remove(docRef);
-                
-                // onValue se encarrega de atualizar a lista
-            } catch (e) {
-                console.error("Erro ao excluir documento RTDB: ", e);
-                renderErro(`Erro ao excluir o agendamento: ${e.message}`);
-            }
-        }
+            try {
+                // ID do RTDB é data/horario (ex: 2025-10-31/0900)
+                const docRef = ref(db, `${COLLECTION_PATH}/${id}`);
+                await remove(docRef);
+                
+                // onValue se encarrega de atualizar a lista
+            } catch (e) {
+                console.error("Erro ao excluir documento RTDB: ", e);
+                renderErro(`Erro ao excluir o agendamento: ${e.message}`);
+            }
+        }
 
 
-        // =================================================================
-        // 4. LÓGICA DE AGENDAMENTO E RENDERIZAÇÃO
-        // =================================================================
-        
-        function obterHorariosDisponiveis() {
-            const horariosDisponiveis = [];
-            const agora = new Date();
-            
-            // Mapeia horários já reservados
-            const horariosReservados = agendamentos.map(a => a.data_hora.getTime());
+        // =================================================================
+        // 4. LÓGICA DE AGENDAMENTO E RENDERIZAÇÃO
+        // =================================================================
+        
+        function obterHorariosDisponiveis() {
+            const horariosDisponiveis = [];
+            
+            // CÓPIA E AJUSTE DA HORA ATUAL PARA COMPARAÇÃO (REMOVER SEGUNDOS)
+            const agora = new Date();
+            agora.setSeconds(0, 0);
 
-            for (const dataStr of DATAS_FIXAS) {
-                const [ano, mes, dia] = dataStr.split('-').map(Number);
-                
-                // **NOVO: Definir horário final dinamicamente**
-                const dataHoraCandidataCheck = new Date(ano, mes - 1, dia);
-                const diaDaSemana = dataHoraCandidataCheck.getDay(); // 0=Dom, 1=Seg, ..., 6=Sáb
-                
-                // Se for Sábado (diaDaSemana === 6), o HORA_MAX será 15. Caso contrário, será 20.
-                const HORA_MAX = diaDaSemana === 6 ? HORA_FIM_SABADO : HORA_FIM;
-                // **FIM DA ALTERAÇÃO DENTRO DO LOOP**
-                
-                for (let hora = HORA_INICIO; hora <= HORA_MAX; hora++) {
-                    // 🔑 GERA SLOTS DE 30 EM 30 MINUTOS (0 e 30)
-                    for (const minuto of [0, 30]) {
-                        // Garante que o último horário seja HORA_MAX:00 (e não HORA_MAX:30)
-                        if (hora === HORA_MAX && minuto > 0) {
-                            continue;
-                        }
-                        
-                        const dataHoraCandidata = new Date(ano, mes - 1, dia, hora, minuto, 0, 0);
-                        const timestampCandidato = dataHoraCandidata.getTime();
-                        
-                        if (timestampCandidato > agora.getTime()) {
-                            if (!horariosReservados.includes(timestampCandidato)) {
-                                
-                                const nomeDiaPt = formatDateTime(dataHoraCandidata, false, false);
-                                const horaMinuto = dataHoraCandidata.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
-                                
-                                horariosDisponiveis.push({
-                                    'display': `${nomeDiaPt} - ${dataHoraCandidata.toLocaleDateString('pt-BR')} às ${horaMinuto}`,
-                                    'value': dataHoraCandidata.toISOString() // Formato ISO para envio
-                                });
-                            }
-                        }
-                    }
-                }
-            }
+            // Mapeia horários já reservados
+            const horariosReservados = agendamentos.map(a => a.data_hora.getTime());
 
-            return horariosDisponiveis;
-        }
+            for (const dataStr of DATAS_FIXAS) {
+                const [ano, mes, dia] = dataStr.split('-').map(Number);
+                
+                // 🔑 ALTERAÇÕES DO INTERVALO: Definir horário de início e fim dinamicamente
+                let HORA_INICIO, HORA_FIM, MINUTO_FIM;
+                
+                // Formata a data de hoje para comparação (YYYY-MM-DD)
+                const hojeStr = agora.toISOString().slice(0, 10);
 
-        window.navigate = (view, error = '') => {
-            currentView = view;
-            errorMessage = error;
-            render();
-        }
+                if (dataStr === hojeStr) {
+                    // Hoje (20/11/2025): 17:30h até 20:30h
+                    HORA_INICIO = 17;
+                    HORA_FIM = HORA_MAX_Geral; 
+                    MINUTO_FIM = MINUTO_MAX_Geral; 
+                } else {
+                    // Amanhã (21/11/2025): 09:00h até 20:30h
+                    HORA_INICIO = 9;
+                    HORA_FIM = HORA_MAX_Geral;
+                    MINUTO_FIM = MINUTO_MAX_Geral;
+                }
+                // FIM DAS ALTERAÇÕES DO INTERVALO
 
-        function renderIndex() {
-            const horarios = obterHorariosDisponiveis();
-            
-            const optionsHtml = horarios.length > 0
-                ? horarios.map(h => `<option value="${h.value}">${h.display}</option>`).join('')
-                : '<option value="" disabled>-- Não há horários disponíveis --</option>';
+                for (let hora = HORA_INICIO; hora <= HORA_FIM; hora++) {
+                    // GERA SLOTS DE 30 EM 30 MINUTOS (0 e 30)
+                    for (const minuto of [0, 30]) {
+                        
+                        const dataHoraCandidata = new Date(ano, mes - 1, dia, hora, minuto, 0, 0);
+                        const timestampCandidato = dataHoraCandidata.getTime();
 
-            const content = `
-                <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl form-card w-full max-w-lg"> 
-                    <h1 class="text-3xl font-extrabold text-gray-800 mb-2">Agendamento de Visita</h1>
-                    <p class="text-gray-600 mb-8">Olá! Para que possamos apresentar os álbuns de formatura, por favor, preencha os dados e escolha um horário disponível na lista abaixo.</p>
+                        // 🔑 CHECAGEM DO ÚLTIMO HORÁRIO (20:30h)
+                        if (hora === HORA_FIM && minuto > MINUTO_FIM) {
+                            continue; // Ignora 20:45, 21:00, etc.
+                        }
 
-                    <h2 class="text-2xl font-semibold text-blue-600 mb-6 border-b pb-2">Agende seu Horário</h2>
+                        // Checa se o horário já passou (para HOJE)
+                        if (timestampCandidato > agora.getTime()) {
+                            if (!horariosReservados.includes(timestampCandidato)) {
+                                
+                                const nomeDiaPt = formatDateTime(dataHoraCandidata, false, false);
+                                const horaMinuto = dataHoraCandidata.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
+                                
+                                horariosDisponiveis.push({
+                                    'display': `${nomeDiaPt} - ${dataHoraCandidata.toLocaleDateString('pt-BR')} às ${horaMinuto}`,
+                                    'value': dataHoraCandidata.toISOString() // Formato ISO para envio
+                                });
+                            }
+                        }
+                    }
+                }
+            }
 
-                    <form id="agendamento-form" class="space-y-6">
-                        <div>
-                            <label for="nome_formando" class="block text-sm font-medium text-gray-700">Nome Completo do Formando(a):</label>
-                            <input type="text" id="nome_formando" name="nome_formando" required placeholder="Ex: João da Silva">
-                        </div>
-                        
-                        <div>
-                            <label for="email_cliente" class="block text-sm font-medium text-gray-700">Seu E-mail (Para receber a confirmação):</label>
-                            <input type="email" id="email_cliente" name="email_cliente" required placeholder="Ex: joao@email.com">
-                        </div>
+            return horariosDisponiveis;
+        }
 
-                        <div>
-                            <label for="endereco" class="block text-sm font-medium text-gray-700">Endereço Completo para a Visita:</label>
-                            <textarea id="endereco" name="endereco" required placeholder="Ex: Rua das Flores, 123, Bairro Centro" rows="2"></textarea>
-                        </div>
+        window.navigate = (view, error = '') => {
+            currentView = view;
+            errorMessage = error;
+            render();
+        }
 
-                        <div>
-                            <label for="telefone" class="block text-sm font-medium text-gray-700">Seu Telefone (Opcional):</label>
-                            <input type="tel" id="telefone" name="telefone" placeholder="(DDD) 99999-9999">
-                        </div>
+        function renderIndex() {
+            const horarios = obterHorariosDisponiveis();
+            
+            const optionsHtml = horarios.length > 0
+                ? horarios.map(h => `<option value="${h.value}">${h.display}</option>`).join('')
+                : '<option value="" disabled>-- Não há horários disponíveis --</option>';
 
-                        <div>
-                            <label for="data_hora" class="block text-sm font-medium text-gray-700">Escolha a Data e Hora (Horários de ${HORA_INICIO}:00h às ${HORA_FIM}:00h, Sábados até ${HORA_FIM_SABADO}:00h):</label>
-                            <select id="data_hora" name="data_hora" required class="${horarios.length === 0 ? 'bg-gray-100 text-gray-500' : ''}" ${horarios.length === 0 ? 'disabled' : ''}>
-                                <option value="" disabled selected>-- Selecione um Horário --</option>
-                                ${optionsHtml}
-                            </select>
-                            ${horarios.length === 0 ? '<p class="mt-2 text-red-500 font-medium"><strong>Não há horários disponíveis nestas datas.</strong></p>' : ''}
-                        </div>
+            const content = `
+                <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl form-card w-full max-w-lg"> 
+                    <h1 class="text-3xl font-extrabold text-gray-800 mb-2">Agendamento de Visita</h1>
+                    <p class="text-gray-600 mb-8">Olá! Para que possamos apresentar os álbuns de formatura, por favor, preencha os dados e escolha um horário disponível na lista abaixo.</p>
 
-                        <button type="submit" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 transition duration-300">
-                            Confirmar Agendamento
-                        </button>
-                    </form>
-                </div>
-            `;
-            document.getElementById('app-content').innerHTML = content;
-            document.getElementById('agendamento-form').addEventListener('submit', salvarAgendamento);
-        }
+                    <h2 class="text-2xl font-semibold text-blue-600 mb-6 border-b pb-2">Agende seu Horário</h2>
 
-        function renderAgenda() {
-            // Filtra os agendamentos futuros e ordena
-            const agendamentosFuturos = agendamentos.filter(a => a.data_hora.getTime() >= new Date().getTime());
-            
-            let tableHtml = '';
+                    <form id="agendamento-form" class="space-y-6">
+                        <div>
+                            <label for="nome_formando" class="block text-sm font-medium text-gray-700">Nome Completo do Formando(a):</label>
+                            <input type="text" id="nome_formando" name="nome_formando" required placeholder="Ex: João da Silva">
+                        </div>
+                        
+                        <div>
+                            <label for="email_cliente" class="block text-sm font-medium text-gray-700">Seu E-mail (Para receber a confirmação):</label>
+                            <input type="email" id="email_cliente" name="email_cliente" required placeholder="Ex: joao@email.com">
+                        </div>
 
-            if (agendamentosFuturos.length > 0) {
-                const tableRows = agendamentosFuturos.map(a => `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="p-3 whitespace-nowrap font-medium">${formatDateTime(a.data_hora)}</td>
-                        <td class="p-3">${a.nome_formando}</td>
-                        <td class="p-3">${a.endereco}</td>
-                        <td class="p-3"><a href="mailto:${a.email_cliente}" class="text-blue-500 hover:text-blue-700">${a.email_cliente}</a></td>
-                        <td class="p-3">${a.telefone || '-'}</td>
-                        <td class="p-3">
-                            <button onclick="excluirAgendamento('${a.id}')" class="delete-button text-xs">Excluir</button>
-                        </td>
-                    </tr>
-                `).join('');
+                        <div>
+                            <label for="endereco" class="block text-sm font-medium text-gray-700">Endereço Completo para a Visita:</label>
+                            <textarea id="endereco" name="endereco" required placeholder="Ex: Rua das Flores, 123, Bairro Centro" rows="2"></textarea>
+                        </div>
 
-                tableHtml = `
-                    <div class="overflow-x-auto bg-white bg-opacity-95 p-6 rounded-xl shadow-2xl">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Data e Hora</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Formando</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Endereço</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">E-mail</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Telefone</th> 
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ação</th> 
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                ${tableRows}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            } else {
-                tableHtml = '<p class="text-lg text-gray-500 mt-4 p-4 bg-white bg-opacity-95 rounded-lg shadow-md">Não há agendamentos futuros confirmados no momento.</p>';
-            }
+                        <div>
+                            <label for="telefone" class="block text-sm font-medium text-gray-700">Seu Telefone (Opcional):</label>
+                            <input type="tel" id="telefone" name="telefone" placeholder="(DDD) 99999-9999">
+                        </div>
 
-            const content = `
-                <h1 class="text-3xl font-extrabold text-gray-800 mb-2">Agenda de Visitas Agendadas</h1>
-                <p class="text-gray-600 mb-6">Esta página lista todos os agendamentos confirmados em tempo real.</p>
-                ${tableHtml}
-            `;
-            document.getElementById('app-content').innerHTML = content;
+                        <div>
+                                                        <label for="data_hora" class="block text-sm font-medium text-gray-700">Escolha a Data e Hora (Hoje até 20:30h e Amanhã das 09:00h às 20:30h):</label>
+                            <select id="data_hora" name="data_hora" required class="${horarios.length === 0 ? 'bg-gray-100 text-gray-500' : ''}" ${horarios.length === 0 ? 'disabled' : ''}>
+                                <option value="" disabled selected>-- Selecione um Horário --</option>
+                                ${optionsHtml}
+                            </select>
+                            ${horarios.length === 0 ? '<p class="mt-2 text-red-500 font-medium"><strong>Não há horários disponíveis nestas datas.</strong></p>' : ''}
+                        </div>
 
-            // Expõe a função para o escopo global para ser acessada pelo HTML
-            window.excluirAgendamento = excluirAgendamento;
-        }
+                        <button type="submit" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 transition duration-300">
+                            Confirmar Agendamento
+                        </button>
+                    </form>
+                </div>
+            `;
+            document.getElementById('app-content').innerHTML = content;
+            document.getElementById('agendamento-form').addEventListener('submit', salvarAgendamento);
+        }
 
-        function renderSucesso() {
-            const content = `
-                <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl border-t-4 border-green-500">
-                    <div class="flex items-center space-x-3 mb-6">
-                        <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <h1 class="text-3xl font-extrabold text-gray-800">Agendamento Confirmado com Sucesso!</h1>
-                    </div>
-                    
-                    <p class="text-gray-600">Agradecemos por agendar sua visita. Os detalhes da data e hora foram salvos no sistema.</p>
-                    
-                    <hr class="my-6">
-                    
-                    <h2 class="text-xl font-semibold text-blue-600 mb-4">O que acontece agora?</h2>
-                    
-                    <ol class="list-decimal list-inside space-y-2 text-gray-700 ml-4">
-                        <li>Seu agendamento foi **salvo** no sistema.</li>
-                        <li>O horário que você reservou foi **bloqueado** em tempo real e não está mais disponível para outros formandos.</li>
-                    </ol>
-                    <button onclick="navigate('index')" class="mt-8 bg-blue-500 text-white py-2 px-4 rounded-lg font-bold hover:bg-blue-600 transition duration-300">
-                        Voltar para Agendamento
-                    </button>
-                </div>
-            `;
-            document.getElementById('app-content').innerHTML = content;
-        }
+        function renderAgenda() {
+            // Filtra os agendamentos futuros e ordena
+            const agendamentosFuturos = agendamentos.filter(a => a.data_hora.getTime() >= new Date().getTime());
+            
+            let tableHtml = '';
 
-        function renderErro(message = errorMessage) {
-            const content = `
-                <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl border-t-4 border-red-500">
-                    <div class="flex items-center space-x-3 mb-6">
-                        <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                        <h1 class="text-3xl font-extrabold text-gray-800">Erro no Agendamento</h1>
-                    </div>
-                    <p class="text-xl text-red-700 font-semibold mb-4">${message}</p>
-                    <p class="text-gray-600">Por favor, tente novamente.</p>
-                    <button onclick="navigate('index')" class="mt-8 bg-gray-500 text-white py-2 px-4 rounded-lg font-bold hover:bg-gray-600 transition duration-300">
-                        Voltar para o Formulário
-                    </button>
-                </div>
-            `;
-            document.getElementById('app-content').innerHTML = content;
-        }
+            if (agendamentosFuturos.length > 0) {
+                const tableRows = agendamentosFuturos.map(a => `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3 whitespace-nowrap font-medium">${formatDateTime(a.data_hora)}</td>
+                        <td class="p-3">${a.nome_formando}</td>
+                        <td class="p-3">${a.endereco}</td>
+                        <td class="p-3"><a href="mailto:${a.email_cliente}" class="text-blue-500 hover:text-blue-700">${a.email_cliente}</a></td>
+                        <td class="p-3">${a.telefone || '-'}</td>
+                        <td class="p-3">
+                            <button onclick="excluirAgendamento('${a.id}')" class="delete-button text-xs">Excluir</button>
+                        </td>
+                    </tr>
+                `).join('');
 
-        function render() {
-            switch (currentView) {
-                case 'index':
-                    renderIndex();
-                    break;
-                case 'agenda':
-                    renderAgenda();
-                    break;
-                case 'sucesso':
-                    renderSucesso();
-                    break;
-                case 'erro':
-                    renderErro();
-                    break;
-                default:
-                    renderIndex();
-            }
-        }
+                tableHtml = `
+                    <div class="overflow-x-auto bg-white bg-opacity-95 p-6 rounded-xl shadow-2xl">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Data e Hora</th>
+                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Formando</th>
+                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Endereço</th>
+                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">E-mail</th>
+                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Telefone</th> 
+                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ação</th> 
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else {
+                tableHtml = '<p class="text-lg text-gray-500 mt-4 p-4 bg-white bg-opacity-95 rounded-lg shadow-md">Não há agendamentos futuros confirmados no momento.</p>';
+            }
 
-        // --- Inicialização Imediata Robusta ---
+            const content = `
+                <h1 class="text-3xl font-extrabold text-gray-800 mb-2">Agenda de Visitas Agendadas</h1>
+                <p class="text-gray-600 mb-6">Esta página lista todos os agendamentos confirmados em tempo real.</p>
+                ${tableHtml}
+            `;
+            document.getElementById('app-content').innerHTML = content;
 
-        function startApp() {
-            // Não precisamos mais de __firebase_config, pois a configuração está embutida
-            initFirebase(firebaseConfig);
-        }
+            // Expõe a função para o escopo global para ser acessada pelo HTML
+            window.excluirAgendamento = excluirAgendamento;
+        }
 
-        // Inicia a aplicação (Executa imediatamente)
-        startApp();
-    </script>
+        function renderSucesso() {
+            const content = `
+                <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl border-t-4 border-green-500">
+                    <div class="flex items-center space-x-3 mb-6">
+                        <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <h1 class="text-3xl font-extrabold text-gray-800">Agendamento Confirmado com Sucesso!</h1>
+                    </div>
+                    
+                    <p class="text-gray-600">Agradecemos por agendar sua visita. Os detalhes da data e hora foram salvos no sistema.</p>
+                    
+                    <hr class="my-6">
+                    
+                    <h2 class="text-xl font-semibold text-blue-600 mb-4">O que acontece agora?</h2>
+                    
+                    <ol class="list-decimal list-inside space-y-2 text-gray-700 ml-4">
+                        <li>Seu agendamento foi **salvo** no sistema.</li>
+                        <li>O horário que você reservou foi **bloqueado** em tempo real e não está mais disponível para outros formandos.</li>
+                    </ol>
+                    <button onclick="navigate('index')" class="mt-8 bg-blue-500 text-white py-2 px-4 rounded-lg font-bold hover:bg-blue-600 transition duration-300">
+                        Voltar para Agendamento
+                    </button>
+                </div>
+            `;
+            document.getElementById('app-content').innerHTML = content;
+        }
+
+        function renderErro(message = errorMessage) {
+            const content = `
+                <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl border-t-4 border-red-500">
+                    <div class="flex items-center space-x-3 mb-6">
+                        <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <h1 class="text-3xl font-extrabold text-gray-800">Erro no Agendamento</h1>
+                    </div>
+                    <p class="text-xl text-red-700 font-semibold mb-4">${message}</p>
+                    <p class="text-gray-600">Por favor, tente novamente.</p>
+                    <button onclick="navigate('index')" class="mt-8 bg-gray-500 text-white py-2 px-4 rounded-lg font-bold hover:bg-gray-600 transition duration-300">
+                        Voltar para o Formulário
+                    </button>
+                </div>
+            `;
+            document.getElementById('app-content').innerHTML = content;
+        }
+
+        function render() {
+            switch (currentView) {
+                case 'index':
+                    renderIndex();
+                    break;
+                case 'agenda':
+                    renderAgenda();
+                    break;
+                case 'sucesso':
+                    renderSucesso();
+                    break;
+                case 'erro':
+                    renderErro();
+                    break;
+                default:
+                    renderIndex();
+            }
+        }
+
+        // --- Inicialização Imediata Robusta ---
+
+        function startApp() {
+            // Não precisamos mais de __firebase_config, pois a configuração está embutida
+            initFirebase(firebaseConfig);
+        }
+
+        // Inicia a aplicação (Executa imediatamente)
+        startApp();
+    </script>
 </body>
 </html>
-     
