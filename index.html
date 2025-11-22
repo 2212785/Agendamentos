@@ -86,17 +86,16 @@
         // Caminho da coleção no RTDB. DEVE CORRESPONDER À REGRA DE SEGURANÇA!
         const COLLECTION_PATH = 'agendamentos'; 
         
-        // 🔑 ALTERAÇÕES ESSENCIAIS: DATAS FIXAS
-        // Hoje: 20/11/2025 (Quinta-feira)
-        // Amanhã: 21/11/2025 (Sexta-feira)
+        // 🔑 DATAS FIXAS (26/11 a 28/11)
         const DATAS_FIXAS = [
-            '2025-11-20',
-            '2025-11-21',
+            '2025-11-26', // Quarta-feira
+            '2025-11-27', // Quinta-feira
+            '2025-11-28', // Sexta-feira
         ];
         
-        // 🔑 ALTERAÇÕES ESSENCIAIS: INTERVALOS DE TEMPO
-        const HORA_MAX_Geral = 20; // 20:00h
-        const MINUTO_MAX_Geral = 30; // 20:30h
+        // 🔑 INTERVALOS DE TEMPO (Máximo 21:00h)
+        const HORA_MAX_Geral = 21; // 21:00h
+        const MINUTO_MAX_Geral = 0; // O último horário é 21:00h
         
         const ADMIN_PASSWORD = '2025';
 
@@ -227,7 +226,7 @@
                 data: dataKey,
                 // Salva o horário em HH:MM para facilitar a leitura futura
                 horario: dataHoraObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false }),
-                email_cliente: form.email_cliente.value.trim(),
+                // 🔑 CAMPO E-MAIL FOI REMOVIDO DAQUI
                 telefone: form.telefone.value.trim() || null,
                 criado_em: new Date().toISOString(),
                 // Como não tem autenticação, usamos o horário para tentar simular um ID de usuário único de sessão
@@ -290,35 +289,27 @@
                 const [ano, mes, dia] = dataStr.split('-').map(Number);
                 
                 // 🔑 ALTERAÇÕES DO INTERVALO: Definir horário de início e fim dinamicamente
-                let HORA_INICIO, HORA_FIM, MINUTO_FIM;
+                let HORA_INICIO; 
+                const HORA_FIM = HORA_MAX_Geral; // 21h
                 
                 // Formata a data de hoje para comparação (YYYY-MM-DD)
                 const hojeStr = agora.toISOString().slice(0, 10);
 
-                if (dataStr === hojeStr) {
-                    // Hoje (20/11/2025): 17:30h até 20:30h
-                    HORA_INICIO = 17;
-                    HORA_FIM = HORA_MAX_Geral; 
-                    MINUTO_FIM = MINUTO_MAX_Geral; 
+                if (dataStr === '2025-11-26') {
+                    // Quarta (26/11/2025): A partir das 17:30h. Primeiro slot de hora cheia é 18:00h
+                    HORA_INICIO = 18; 
                 } else {
-                    // Amanhã (21/11/2025): 09:00h até 20:30h
+                    // Quinta e Sexta (27/11 e 28/11): 09:00h
                     HORA_INICIO = 9;
-                    HORA_FIM = HORA_MAX_Geral;
-                    MINUTO_FIM = MINUTO_MAX_Geral;
                 }
                 // FIM DAS ALTERAÇÕES DO INTERVALO
 
                 for (let hora = HORA_INICIO; hora <= HORA_FIM; hora++) {
-                    // GERA SLOTS DE 30 EM 30 MINUTOS (0 e 30)
-                    for (const minuto of [0, 30]) {
+                    // GERA SLOTS APENAS DE HORA EM HORA (00)
+                    for (const minuto of [0]) { // Apenas 0 minutos
                         
                         const dataHoraCandidata = new Date(ano, mes - 1, dia, hora, minuto, 0, 0);
                         const timestampCandidato = dataHoraCandidata.getTime();
-
-                        // 🔑 CHECAGEM DO ÚLTIMO HORÁRIO (20:30h)
-                        if (hora === HORA_FIM && minuto > MINUTO_FIM) {
-                            continue; // Ignora 20:45, 21:00, etc.
-                        }
 
                         // Checa se o horário já passou (para HOJE)
                         if (timestampCandidato > agora.getTime()) {
@@ -367,11 +358,6 @@
                         </div>
                         
                         <div>
-                            <label for="email_cliente" class="block text-sm font-medium text-gray-700">Seu E-mail (Para receber a confirmação):</label>
-                            <input type="email" id="email_cliente" name="email_cliente" required placeholder="Ex: joao@email.com">
-                        </div>
-
-                        <div>
                             <label for="endereco" class="block text-sm font-medium text-gray-700">Endereço Completo para a Visita:</label>
                             <textarea id="endereco" name="endereco" required placeholder="Ex: Rua das Flores, 123, Bairro Centro" rows="2"></textarea>
                         </div>
@@ -382,7 +368,7 @@
                         </div>
 
                         <div>
-                                                        <label for="data_hora" class="block text-sm font-medium text-gray-700">Escolha a Data e Hora (Hoje até 20:30h e Amanhã das 09:00h às 20:30h):</label>
+                            <label for="data_hora" class="block text-sm font-medium text-gray-700">Escolha a Data e Hora (26/11 a partir das 18:00h, 27/11 e 28/11 das 09:00h às 21:00h - Horários de Hora em Hora):</label>
                             <select id="data_hora" name="data_hora" required class="${horarios.length === 0 ? 'bg-gray-100 text-gray-500' : ''}" ${horarios.length === 0 ? 'disabled' : ''}>
                                 <option value="" disabled selected>-- Selecione um Horário --</option>
                                 ${optionsHtml}
@@ -412,8 +398,7 @@
                         <td class="p-3 whitespace-nowrap font-medium">${formatDateTime(a.data_hora)}</td>
                         <td class="p-3">${a.nome_formando}</td>
                         <td class="p-3">${a.endereco}</td>
-                        <td class="p-3"><a href="mailto:${a.email_cliente}" class="text-blue-500 hover:text-blue-700">${a.email_cliente}</a></td>
-                        <td class="p-3">${a.telefone || '-'}</td>
+                        <td class="p-3">--</td>                         <td class="p-3">${a.telefone || '-'}</td>
                         <td class="p-3">
                             <button onclick="excluirAgendamento('${a.id}')" class="delete-button text-xs">Excluir</button>
                         </td>
@@ -428,8 +413,7 @@
                                     <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Data e Hora</th>
                                     <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Formando</th>
                                     <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Endereço</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">E-mail</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Telefone</th> 
+                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">E-mail</th>                                     <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Telefone</th> 
                                     <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ação</th> 
                                 </tr>
                             </thead>
@@ -528,4 +512,3 @@
     </script>
 </body>
 </html>
-
