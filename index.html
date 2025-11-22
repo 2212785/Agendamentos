@@ -368,7 +368,7 @@
                         </div>
 
                         <div>
-                            <label for="data_hora" class="block text-sm font-medium text-gray-700">Escolha a Data e Hora (26/11 a partir das 18:00h, 27/11 e 28/11 das 09:00h às 21:00h - Horários de Hora em Hora):</label>
+                            <label for="data_hora" class="block text-sm font-medium text-gray-700">Escolha a Data e Hora:</label>
                             <select id="data_hora" name="data_hora" required class="${horarios.length === 0 ? 'bg-gray-100 text-gray-500' : ''}" ${horarios.length === 0 ? 'disabled' : ''}>
                                 <option value="" disabled selected>-- Selecione um Horário --</option>
                                 ${optionsHtml}
@@ -512,4 +512,5 @@
     </script>
 </body>
 </html>
+
 
