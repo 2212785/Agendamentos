@@ -80,6 +80,7 @@
         let agendamentos = {}; // Objeto para armazenar dados do RTDB
         let currentView = 'index';
         let errorMessage = '';
+        let currentSessionId = null; 
 
         // Constantes da Aplicação
         const SEU_NOME = 'Evanio Martins';
@@ -93,7 +94,7 @@
             '2025-11-30', // domingo
         ];
         
-        // 🔑 INTERVALOS DE TEMPO (Máximo 21:00h)
+        // 🔑 INTERVALOS DE TEMPO (Máximo 21:00h, para 21:00h o último)
         const HORA_MAX_Geral = 21; // 21:00h
         const MINUTO_MAX_Geral = 0; // O último horário é 21:00h
         
@@ -226,7 +227,6 @@
                 data: dataKey,
                 // Salva o horário em HH:MM para facilitar a leitura futura
                 horario: dataHoraObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false }),
-                // 🔑 CAMPO E-MAIL FOI REMOVIDO DAQUI
                 telefone: form.telefone.value.trim() || null,
                 criado_em: new Date().toISOString(),
                 // Como não tem autenticação, usamos o horário para tentar simular um ID de usuário único de sessão
@@ -289,25 +289,29 @@
                 const [ano, mes, dia] = dataStr.split('-').map(Number);
                 
                 // 🔑 ALTERAÇÕES DO INTERVALO: Definir horário de início e fim dinamicamente
-                let HORA_INICIO; 
+                let HORA_INICIO; 
                 const HORA_FIM = HORA_MAX_Geral; // 21h
                 
                 // Formata a data de hoje para comparação (YYYY-MM-DD)
                 const hojeStr = agora.toISOString().slice(0, 10);
 
-                if (dataStr === '2025-11-26') {
-                    // Quarta (26/11/2025): A partir das 17:30h. Primeiro slot de hora cheia é 18:00h
-                    HORA_INICIO = 18; 
+                if (dataStr === '2025-11-28') { // 🔑 Sexta-feira
+                    HORA_INICIO = 16; // 🔑 Inicia às 16:00h
                 } else {
-                    // Quinta e Sexta (27/11 e 28/11): 09:00h
+                    // Quarta, Quinta e Sábado/Domingo (Usando suas datas atuais)
                     HORA_INICIO = 9;
                 }
                 // FIM DAS ALTERAÇÕES DO INTERVALO
 
                 for (let hora = HORA_INICIO; hora <= HORA_FIM; hora++) {
-                    // GERA SLOTS APENAS DE HORA EM HORA (00)
-                    for (const minuto of [0]) { // Apenas 0 minutos
+                    // 🔑 MUDANÇA AQUI: GERA SLOTS DE 30 EM 30 MINUTOS (0 e 30)
+                    for (const minuto of [0, 30]) { 
                         
+                        // Garante que o último horário seja 21:00h, pulando 21:30
+                        if (hora === HORA_FIM && minuto > MINUTO_MAX_Geral) {
+                            continue; 
+                        }
+
                         const dataHoraCandidata = new Date(ano, mes - 1, dia, hora, minuto, 0, 0);
                         const timestampCandidato = dataHoraCandidata.getTime();
 
@@ -368,7 +372,7 @@
                         </div>
 
                         <div>
-                            <label for="data_hora" class="block text-sm font-medium text-gray-700">Escolha a Data e Hora:</label>
+                            <label for="data_hora" class="block text-sm font-medium text-gray-700">Escolha a Data e Hora (Slots de 30 em 30 minutos):</label>
                             <select id="data_hora" name="data_hora" required class="${horarios.length === 0 ? 'bg-gray-100 text-gray-500' : ''}" ${horarios.length === 0 ? 'disabled' : ''}>
                                 <option value="" disabled selected>-- Selecione um Horário --</option>
                                 ${optionsHtml}
@@ -398,7 +402,7 @@
                         <td class="p-3 whitespace-nowrap font-medium">${formatDateTime(a.data_hora)}</td>
                         <td class="p-3">${a.nome_formando}</td>
                         <td class="p-3">${a.endereco}</td>
-                        <td class="p-3">--</td>                         <td class="p-3">${a.telefone || '-'}</td>
+                        <td class="p-3">--</td>                         <td class="p-3">${a.telefone || '-'}</td>
                         <td class="p-3">
                             <button onclick="excluirAgendamento('${a.id}')" class="delete-button text-xs">Excluir</button>
                         </td>
@@ -413,7 +417,7 @@
                                     <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Data e Hora</th>
                                     <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Formando</th>
                                     <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Endereço</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">E-mail</th>                                     <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Telefone</th> 
+                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">E-mail</th>                                     <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Telefone</th> 
                                     <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ação</th> 
                                 </tr>
                             </thead>
@@ -469,7 +473,6 @@
                 <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl border-t-4 border-red-500">
                     <div class="flex items-center space-x-3 mb-6">
                         <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                        <h1 class="text-3xl font-extrabold text-gray-800">Erro no Agendamento</h1>
                     </div>
                     <p class="text-xl text-red-700 font-semibold mb-4">${message}</p>
                     <p class="text-gray-600">Por favor, tente novamente.</p>
@@ -512,6 +515,3 @@
     </script>
 </body>
 </html>
-
-
-
