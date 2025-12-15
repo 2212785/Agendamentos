@@ -80,23 +80,24 @@
         let agendamentos = {}; // Objeto para armazenar dados do RTDB
         let currentView = 'index';
         let errorMessage = '';
-        let currentSessionId = null; 
+        let currentSessionId = null; 
 
         // Constantes da Aplicação
         const SEU_NOME = 'Evanio Martins';
         // Caminho da coleção no RTDB. DEVE CORRESPONDER À REGRA DE SEGURANÇA!
         const COLLECTION_PATH = 'agendamentos'; 
         
-        // 🔑 DATAS FIXAS (28/11 a 30/11)
+        // 🔑 DATAS FIXAS ATUALIZADAS: 16/12/2025 a 19/12/2025
         const DATAS_FIXAS = [
-            '2025-11-28', // Sexta-feira
-            '2025-11-29', // Sábado
-            '2025-11-30', // domingo
+            '2025-12-16', // Terça-feira
+            '2025-12-17', // Quarta-feira
+            '2025-12-18', // Quinta-feira
+            '2025-12-19', // Sexta-feira
         ];
         
-        // 🔑 INTERVALOS DE TEMPO (Máximo 21:00h, para 21:00h o último)
-        const HORA_MAX_Geral = 21; // 21:00h
-        const MINUTO_MAX_Geral = 0; // O último horário é 21:00h
+        // 🔑 INTERVALOS DE TEMPO ATUALIZADOS: Fim às 20:30h
+        const HORA_MAX_Geral = 20; // 20:00h
+        const MINUTO_MAX_Geral = 30; // O último horário é 20:30h
         
         const ADMIN_PASSWORD = '2025';
 
@@ -288,28 +289,18 @@
             for (const dataStr of DATAS_FIXAS) {
                 const [ano, mes, dia] = dataStr.split('-').map(Number);
                 
-                // 🔑 ALTERAÇÕES DO INTERVALO: Definir horário de início e fim dinamicamente
-                let HORA_INICIO; 
-                const HORA_FIM = HORA_MAX_Geral; // 21h
-                
-                // Formata a data de hoje para comparação (YYYY-MM-DD)
-                const hojeStr = agora.toISOString().slice(0, 10);
-
-                if (dataStr === '2025-11-28') { // 🔑 Sexta-feira
-                    HORA_INICIO = 16; // 🔑 Inicia às 16:00h
-                } else {
-                    // Quarta, Quinta e Sábado/Domingo (Usando suas datas atuais)
-                    HORA_INICIO = 9;
-                }
-                // FIM DAS ALTERAÇÕES DO INTERVALO
+                // 🔑 HORA DE INÍCIO FIXA EM 09:00H PARA TODAS AS DATAS
+                const HORA_INICIO = 9; 
+                const HORA_FIM = HORA_MAX_Geral; // 20h
+                const HORA_FIM_COMPLETA = HORA_FIM + (MINUTO_MAX_Geral / 60); // 20.5
 
                 for (let hora = HORA_INICIO; hora <= HORA_FIM; hora++) {
-                    // 🔑 MUDANÇA AQUI: GERA SLOTS DE 30 EM 30 MINUTOS (0 e 30)
-                    for (const minuto of [0, 30]) { 
+                    // GERA SLOTS DE 30 EM 30 MINUTOS (0 e 30)
+                    for (const minuto of [0, 30]) { 
                         
-                        // Garante que o último horário seja 21:00h, pulando 21:30
-                        if (hora === HORA_FIM && minuto > MINUTO_MAX_Geral) {
-                            continue; 
+                        // 🔑 Garante que o último slot seja 20:30h (ou o limite definido)
+                        if (hora + (minuto / 60) > HORA_FIM_COMPLETA) {
+                            continue;
                         }
 
                         const dataHoraCandidata = new Date(ano, mes - 1, dia, hora, minuto, 0, 0);
@@ -357,161 +348,3 @@
 
                     <form id="agendamento-form" class="space-y-6">
                         <div>
-                            <label for="nome_formando" class="block text-sm font-medium text-gray-700">Nome Completo do formando/a:</label>
-                            <input type="text" id="nome_formando" name="nome_formando" required placeholder="Ex: João da Silva">
-                        </div>
-                        
-                        <div>
-                            <label for="endereco" class="block text-sm font-medium text-gray-700">Endereço Completo para a Visita:</label>
-                            <textarea id="endereco" name="endereco" required placeholder="Ex: Rua das Flores, 123, Bairro Centro" rows="2"></textarea>
-                        </div>
-
-                        <div>
-                            <label for="telefone" class="block text-sm font-medium text-gray-700">Seu Telefone (Opcional):</label>
-                            <input type="tel" id="telefone" name="telefone" placeholder="(DDD) 99999-9999">
-                        </div>
-
-                        <div>
-                            <label for="data_hora" class="block text-sm font-medium text-gray-700">Escolha a Data e Hora (Slots de 30 em 30 minutos):</label>
-                            <select id="data_hora" name="data_hora" required class="${horarios.length === 0 ? 'bg-gray-100 text-gray-500' : ''}" ${horarios.length === 0 ? 'disabled' : ''}>
-                                <option value="" disabled selected>-- Selecione um Horário --</option>
-                                ${optionsHtml}
-                            </select>
-                            ${horarios.length === 0 ? '<p class="mt-2 text-red-500 font-medium"><strong>Não há horários disponíveis nestas datas.</strong></p>' : ''}
-                        </div>
-
-                        <button type="submit" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 transition duration-300">
-                            Confirmar Agendamento
-                        </button>
-                    </form>
-                </div>
-            `;
-            document.getElementById('app-content').innerHTML = content;
-            document.getElementById('agendamento-form').addEventListener('submit', salvarAgendamento);
-        }
-
-        function renderAgenda() {
-            // Filtra os agendamentos futuros e ordena
-            const agendamentosFuturos = agendamentos.filter(a => a.data_hora.getTime() >= new Date().getTime());
-            
-            let tableHtml = '';
-
-            if (agendamentosFuturos.length > 0) {
-                const tableRows = agendamentosFuturos.map(a => `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="p-3 whitespace-nowrap font-medium">${formatDateTime(a.data_hora)}</td>
-                        <td class="p-3">${a.nome_formando}</td>
-                        <td class="p-3">${a.endereco}</td>
-                        <td class="p-3">--</td>                         <td class="p-3">${a.telefone || '-'}</td>
-                        <td class="p-3">
-                            <button onclick="excluirAgendamento('${a.id}')" class="delete-button text-xs">Excluir</button>
-                        </td>
-                    </tr>
-                `).join('');
-
-                tableHtml = `
-                    <div class="overflow-x-auto bg-white bg-opacity-95 p-6 rounded-xl shadow-2xl">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Data e Hora</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Formando</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Endereço</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">E-mail</th>                                     <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Telefone</th> 
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ação</th> 
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                ${tableRows}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            } else {
-                tableHtml = '<p class="text-lg text-gray-500 mt-4 p-4 bg-white bg-opacity-95 rounded-lg shadow-md">Não há agendamentos futuros confirmados no momento.</p>';
-            }
-
-            const content = `
-                <h1 class="text-3xl font-extrabold text-gray-800 mb-2">Agenda de Visitas Agendadas</h1>
-                <p class="text-gray-600 mb-6">Esta página lista todos os agendamentos confirmados em tempo real.</p>
-                ${tableHtml}
-            `;
-            document.getElementById('app-content').innerHTML = content;
-
-            // Expõe a função para o escopo global para ser acessada pelo HTML
-            window.excluirAgendamento = excluirAgendamento;
-        }
-
-        function renderSucesso() {
-            const content = `
-                <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl border-t-4 border-green-500">
-                    <div class="flex items-center space-x-3 mb-6">
-                        <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <h1 class="text-3xl font-extrabold text-gray-800">Agendamento Confirmado com Sucesso!</h1>
-                    </div>
-                    
-                    <p class="text-gray-600">Agradecemos por agendar sua visita. Os detalhes da data e hora foram salvos no sistema.</p>
-                    
-                    <hr class="my-6">
-                    
-                    <h2 class="text-xl font-semibold text-blue-600 mb-4">O que acontece agora?</h2>
-                    
-                    <ol class="list-decimal list-inside space-y-2 text-gray-700 ml-4">
-                        <li>Seu agendamento foi **salvo** no sistema.</li>
-                        <li>O horário que você reservou foi **bloqueado** em tempo real e não está mais disponível para outros formandos.</li>
-                    </ol>
-                    <button onclick="navigate('index')" class="mt-8 bg-blue-500 text-white py-2 px-4 rounded-lg font-bold hover:bg-blue-600 transition duration-300">
-                        Voltar para Agendamento
-                    </button>
-                </div>
-            `;
-            document.getElementById('app-content').innerHTML = content;
-        }
-
-        function renderErro(message = errorMessage) {
-            const content = `
-                <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl border-t-4 border-red-500">
-                    <div class="flex items-center space-x-3 mb-6">
-                        <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                    </div>
-                    <p class="text-xl text-red-700 font-semibold mb-4">${message}</p>
-                    <p class="text-gray-600">Por favor, tente novamente.</p>
-                    <button onclick="navigate('index')" class="mt-8 bg-gray-500 text-white py-2 px-4 rounded-lg font-bold hover:bg-gray-600 transition duration-300">
-                        Voltar para o Formulário
-                    </button>
-                </div>
-            `;
-            document.getElementById('app-content').innerHTML = content;
-        }
-
-        function render() {
-            switch (currentView) {
-                case 'index':
-                    renderIndex();
-                    break;
-                case 'agenda':
-                    renderAgenda();
-                    break;
-                case 'sucesso':
-                    renderSucesso();
-                    break;
-                case 'erro':
-                    renderErro();
-                    break;
-                default:
-                    renderIndex();
-            }
-        }
-
-        // --- Inicialização Imediata Robusta ---
-
-        function startApp() {
-            // Não precisamos mais de __firebase_config, pois a configuração está embutida
-            initFirebase(firebaseConfig);
-        }
-
-        // Inicia a aplicação (Executa imediatamente)
-        startApp();
-    </script>
-</body>
-</html>
