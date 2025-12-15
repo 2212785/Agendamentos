@@ -87,18 +87,18 @@
         // Caminho da coleção no RTDB. DEVE CORRESPONDER À REGRA DE SEGURANÇA!
         const COLLECTION_PATH = 'agendamentos'; 
         
-        // 🔑 DATAS FIXAS ATUALIZADAS: 16/12/2025 a 19/12/2025
+        // DATAS FIXAS: 16/12/2025 a 19/12/2025
         const DATAS_FIXAS = [
-            '2025-12-16', // Terça-feira
-            '2025-12-17', // Quarta-feira
-            '2025-12-18', // Quinta-feira
-            '2025-12-19', // Sexta-feira
+            '2025-12-16', 
+            '2025-12-17', 
+            '2025-12-18', 
+            '2025-12-19', 
         ];
         
-        // 🔑 HORÁRIOS ATUALIZADOS: Início 09:00h. Último slot 20:30h
-        const HORA_INICIO_GERAL = 9; // Novo início fixo em 09h
-        const HORA_MAX_Geral = 20; // 20:00h
-        const MINUTO_MAX_Geral = 30; // O último horário é 20:30h
+        // HORÁRIOS: Início 09:00h. Último slot 20:30h
+        const HORA_INICIO_GERAL = 9; 
+        const HORA_MAX_Geral = 20; 
+        const MINUTO_MAX_Geral = 30; 
         
         const ADMIN_PASSWORD = '2025';
 
@@ -148,13 +148,14 @@
                 
                 document.getElementById('status-display').textContent = 'Conectado ao RTDB';
                 
-                // 🔑 CORREÇÃO DO BUG DE CARREGAMENTO: Garante que a tela de agendamento seja exibida
+                // Garante que a tela de agendamento seja exibida
                 navigate('index'); 
                 
             } catch (error) {
                 console.error("Erro fatal na inicialização do Firebase:", error);
                 document.getElementById('status-display').textContent = 'Erro de Conexão';
-                renderErro('Erro fatal: Não foi possível conectar ao Realtime Database. Verifique sua `databaseURL`.');
+                // 🔑 MUDANÇA: Usar renderErroFatal APENAS para travamento de inicialização
+                renderErroFatal('Erro fatal: Não foi possível conectar ao Realtime Database. Verifique sua `databaseURL` e Regras de Segurança.');
             }
         }
 
@@ -180,7 +181,7 @@
                         agendamento.id = `${dataKey}/${horarioKey}`; 
                         // data_hora é o objeto Date para comparação
                         
-                        // 🔑 CORREÇÃO: Usa o valor de 'horario' (HH:MM) para construir a data.
+                        // CORREÇÃO: Usa o valor de 'horario' (HH:MM) para construir a data.
                         agendamento.data_hora = new Date(agendamento.data + 'T' + agendamento.horario + ':00'); 
                         agendamentosFormatados.push(agendamento);
                     }
@@ -192,8 +193,9 @@
                 render(); 
                 
             }, (error) => {
+                // 🔑 CORREÇÃO: Usar o renderErro normal (para erros não-fatais) ou apenas registrar no console.
                 console.error("Erro ao buscar agendamentos RTDB:", error);
-                renderErro("Erro ao buscar agendamentos em tempo real. Verifique as Regras de Segurança do Realtime Database.");
+                renderErro("Erro ao buscar agendamentos em tempo real. Por favor, recarregue a página.");
             });
         }
 
@@ -292,7 +294,7 @@
             for (const dataStr of DATAS_FIXAS) {
                 const [ano, mes, dia] = dataStr.split('-').map(Number);
                 
-                // 🔑 USANDO NOVAS CONSTANTES GLOBAIS
+                // USANDO CONSTANTES GLOBAIS
                 const HORA_INICIO = HORA_INICIO_GERAL; // 9h
                 const HORA_FIM = HORA_MAX_Geral; // 20h
                 const HORA_FIM_COMPLETA = HORA_FIM + (MINUTO_MAX_Geral / 60); // 20.5 (20:30h)
@@ -301,7 +303,7 @@
                     // GERA SLOTS DE 30 EM 30 MINUTOS (0 e 30)
                     for (const minuto of [0, 30]) { 
                         
-                        // 🔑 Garante que o último slot seja 20:30h
+                        // Garante que o último slot seja 20:30h
                         if (hora + (minuto / 60) > HORA_FIM_COMPLETA) {
                             continue;
                         }
@@ -456,6 +458,21 @@
                     <button onclick="navigate('index')" class="mt-8 bg-blue-500 text-white py-2 px-4 rounded-lg font-bold hover:bg-blue-600 transition duration-300">
                         Voltar para Agendamento
                     </button>
+                </div>
+            `;
+            document.getElementById('app-content').innerHTML = content;
+        }
+        
+        // 🔑 NOVO: renderErroFatal (apenas para falhas de inicialização)
+        function renderErroFatal(message = 'Erro desconhecido. Por favor, tente recarregar a página.') {
+            const content = `
+                <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl border-t-4 border-red-500 max-w-lg mx-auto mt-10">
+                    <div class="flex items-center space-x-3 mb-6">
+                        <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <h1 class="text-xl text-red-700 font-bold">ERRO FATAL DE CONEXÃO</h1>
+                    </div>
+                    <p class="text-md text-red-700 font-semibold mb-4">${message}</p>
+                    <p class="text-gray-600">Por favor, recarregue a página e, se o problema persistir, verifique suas credenciais no código e as Regras de Segurança no console do Firebase.</p>
                 </div>
             `;
             document.getElementById('app-content').innerHTML = content;
