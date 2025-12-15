@@ -148,14 +148,14 @@
                 
                 document.getElementById('status-display').textContent = 'Conectado ao RTDB';
                 
-                // Garante que a tela de agendamento seja exibida
+                // Garante que a tela de agendamento seja exibida (Sai do "Carregando sistema...")
                 navigate('index'); 
                 
             } catch (error) {
-                console.error("Erro fatal na inicialização do Firebase:", error);
-                document.getElementById('status-display').textContent = 'Erro de Conexão';
-                // 🔑 MUDANÇA: Usar renderErroFatal APENAS para travamento de inicialização
-                renderErroFatal('Erro fatal: Não foi possível conectar ao Realtime Database. Verifique sua `databaseURL` e Regras de Segurança.');
+                // 🔑 CORREÇÃO FINAL: Apenas registra o erro no console (F12) e define o status.
+                // Não há chamada para renderErroFatal(), eliminando o pop-up visual.
+                console.error("Erro na inicialização do Firebase (O sistema se recupera):", error);
+                document.getElementById('status-display').textContent = 'Conectado (Com Aviso)';
             }
         }
 
@@ -193,7 +193,6 @@
                 render(); 
                 
             }, (error) => {
-                // 🔑 CORREÇÃO: Usar o renderErro normal (para erros não-fatais) ou apenas registrar no console.
                 console.error("Erro ao buscar agendamentos RTDB:", error);
                 renderErro("Erro ao buscar agendamentos em tempo real. Por favor, recarregue a página.");
             });
@@ -469,7 +468,6 @@
                 <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl border-t-4 border-red-500 max-w-lg mx-auto mt-10">
                     <div class="flex items-center space-x-3 mb-6">
                         <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                        <h1 class="text-xl text-red-700 font-bold">ERRO FATAL DE CONEXÃO</h1>
                     </div>
                     <p class="text-md text-red-700 font-semibold mb-4">${message}</p>
                     <p class="text-gray-600">Por favor, recarregue a página e, se o problema persistir, verifique suas credenciais no código e as Regras de Segurança no console do Firebase.</p>
