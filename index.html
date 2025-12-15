@@ -128,9 +128,20 @@
             // Tratamento para TimeStamp de RTDB (que não é nativo)
             const dateObj = (date instanceof Date) ? date : new Date(date);
             
-            return dateObj.toLocaleString('pt-BR', options)
-                .replace(/\b(\w)/g, l => l.toUpperCase()) 
-                .replace(',', ' -'); 
+            // 🔑 MODIFICAÇÃO: Garante que apenas a primeira letra do dia da semana seja maiúscula
+            let formatted = dateObj.toLocaleString('pt-BR', options);
+            
+            // Separa o dia da semana (ex: 'terça-feira')
+            const weekday = formatted.split(',')[0].trim().toLowerCase();
+            
+            // Retorna no formato desejado: Terça-feira 16/12 às 15:00
+            const dayMonth = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+            const time = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
+            
+            // Capitaliza a primeira letra do dia da semana
+            const weekdayCapitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+            
+            return `${weekdayCapitalized} ${dayMonth} às ${time}`;
         };
 
         // =================================================================
@@ -152,8 +163,8 @@
                 navigate('index'); 
                 
             } catch (error) {
-                // 🔑 CORREÇÃO FINAL: Apenas registra o erro no console (F12) e define o status.
-                // Não há chamada para renderErroFatal(), eliminando o pop-up visual.
+                // CORREÇÃO FINAL: Apenas registra o erro no console (F12) e define o status. 
+                // Evita que o pop-up de erro visual apareça na inicialização.
                 console.error("Erro na inicialização do Firebase (O sistema se recupera):", error);
                 document.getElementById('status-display').textContent = 'Conectado (Com Aviso)';
             }
@@ -314,11 +325,11 @@
                         if (timestampCandidato > agora.getTime()) {
                             if (!horariosReservados.includes(timestampCandidato)) {
                                 
-                                const nomeDiaPt = formatDateTime(dataHoraCandidata, false, false);
-                                const horaMinuto = dataHoraCandidata.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
+                                // 🔑 USANDO formatDateTime ATUALIZADO
+                                const displayValue = formatDateTime(dataHoraCandidata);
                                 
                                 horariosDisponiveis.push({
-                                    'display': `${nomeDiaPt} - ${dataHoraCandidata.toLocaleDateString('pt-BR')} às ${horaMinuto}`,
+                                    'display': displayValue,
                                     'value': dataHoraCandidata.toISOString() // Formato ISO para envio
                                 });
                             }
@@ -367,7 +378,7 @@
                         </div>
 
                         <div>
-                            <label for="data_hora" class="block text-sm font-medium text-gray-700">Escolha a Data e Hora (Slots de 30 em 30 minutos):</label>
+                            <label for="data_hora" class="block text-sm font-medium text-gray-700">Escolha a Data e Hora da Visita:</label>
                             <select id="data_hora" name="data_hora" required class="${horarios.length === 0 ? 'bg-gray-100 text-gray-500' : ''}" ${horarios.length === 0 ? 'disabled' : ''}>
                                 <option value="" disabled selected>-- Selecione um Horário --</option>
                                 ${optionsHtml}
@@ -410,7 +421,7 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Data e Hora</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Formando</th>
+                                    <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Criança</th>
                                     <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Endereço</th>
                                     <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">E-mail</th>                                     <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Telefone</th> 
                                     <th class="p-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Ação</th> 
@@ -462,7 +473,7 @@
             document.getElementById('app-content').innerHTML = content;
         }
         
-        // 🔑 NOVO: renderErroFatal (apenas para falhas de inicialização)
+        // NOVO: renderErroFatal (apenas para falhas de inicialização)
         function renderErroFatal(message = 'Erro desconhecido. Por favor, tente recarregar a página.') {
             const content = `
                 <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl border-t-4 border-red-500 max-w-lg mx-auto mt-10">
@@ -523,5 +534,3 @@
     </script>
 </body>
 </html>
-
-
