@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Agenda Álbum de Formatura</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { 
@@ -67,21 +66,19 @@
         let app, db;
         let agendamentos = []; 
         let currentView = 'index';
-        let errorMessage = '';
         let isDBReady = false;
 
-        const ADMIN_PASSWORD = '2026';
+        const ADMIN_PASSWORD = '2025';
         const COLLECTION_PATH = 'agendamentos'; 
 
         // ---------------------------------------------------------
-        // NOVAS CONFIGURAÇÕES DE DATAS E HORÁRIOS (2026)
+        // DATAS: De hoje (21/01) até Sábado (24/01)
         // ---------------------------------------------------------
         const DATAS_FIXAS = [
-            '2026-01-21', // Quarta
+            '2026-01-21', // Hoje (Quarta)
             '2026-01-22', // Quinta
             '2026-01-23', // Sexta
-            '2026-01-24', // Sábado
-            
+            '2026-01-24'  // Sábado
         ];
 
         window.checkPassword = () => {
@@ -139,17 +136,9 @@
 
             const form = event.target;
             const dataHoraStr = form.data_hora.value;
-            if (!dataHoraStr) return;
-
             const dataHoraObj = new Date(dataHoraStr);
             const dataKey = dataHoraObj.toISOString().slice(0, 10);
             const horarioKey = dataHoraObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }).replace(':', '');
-
-            const isReserved = agendamentos.some(a => a.data_hora.getTime() === dataHoraObj.getTime());
-            if (isReserved) {
-                alert("Horário já reservado.");
-                return;
-            }
 
             const novoAgendamento = {
                 nome_formando: form.nome_formando.value.trim(),
@@ -164,7 +153,7 @@
                 await set(ref(db, `${COLLECTION_PATH}/${dataKey}/${horarioKey}`), novoAgendamento);
                 navigate('sucesso');
             } catch (e) {
-                alert("Erro ao salvar: " + e.message);
+                alert("Erro ao salvar.");
             }
         }
 
@@ -175,7 +164,7 @@
         };
 
         // ---------------------------------------------------------
-        // LÓGICA DE HORÁRIOS ATUALIZADA (REGRAS DE 21/01 A 24/01)
+        // LÓGICA DE HORÁRIOS: Hoje a partir das 18h, outros às 09h
         // ---------------------------------------------------------
         function obterHorariosDisponiveis() {
             const disponiveis = [];
@@ -185,14 +174,10 @@
             for (const dataStr of DATAS_FIXAS) {
                 const [ano, mes, dia] = dataStr.split('-').map(Number);
                 
-                let hInicio, hFim, mFim;
-
-                if (dataStr Quarta 21/01: 18:00 às 20:30
-                    hInicio = 18; hFim = 20; mFim = 30;
-                } else {
-                    // Quinta 22/01 até Sábado 24/01: 09:00 às 20:30
-                    hInicio = 9; hFim = 20; mFim = 30;
-                }
+                // Hoje (21/01) começa às 18:00, demais dias às 09:00
+                const hInicio = (dataStr === '2026-01-21') ? 18 : 9;
+                const hFim = 20;
+                const mFim = 30;
 
                 const totalMinutosFim = (hFim * 60) + mFim;
 
@@ -225,7 +210,7 @@
             document.getElementById('app-content').innerHTML = `
                 <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl form-card w-full"> 
                     <h1 class="text-3xl font-extrabold text-gray-800 mb-2">Agendamento de Visita</h1>
-                    <p class="text-gray-600 mb-8">Escolha um horário para apresentação do álbum de formatura.</p>
+                    <p class="text-gray-600 mb-8">Preencha os dados e escolha um horário disponível de 30 em 30 minutos.</p>
                     <form id="agendamento-form" class="space-y-6">
                         <input type="text" name="nome_formando" required placeholder="Nome Completo da criança">
                         <textarea name="endereco" required placeholder="Endereço Completo para a Visita" rows="2"></textarea>
@@ -268,7 +253,7 @@
             document.getElementById('app-content').innerHTML = `
                 <div class="bg-white p-8 rounded-xl shadow-2xl text-center">
                     <h2 class="text-2xl font-bold text-green-600 mb-4">Sucesso!</h2>
-                    <p class="text-gray-600 mb-6">Seu agendamento foi salvo e o horário bloqueado.</p>
+                    <p class="text-gray-600 mb-6">Seu agendamento foi salvo com sucesso.</p>
                     <button onclick="navigate('index')" class="bg-blue-500 text-white px-6 py-2 rounded-lg">Voltar</button>
                 </div>`;
         }
@@ -283,5 +268,3 @@
     </script>
 </body>
 </html>
-
-
