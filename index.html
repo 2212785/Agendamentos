@@ -175,7 +175,7 @@
         };
 
         // ---------------------------------------------------------
-        // LÓGICA DE HORÁRIOS ATUALIZADA (REGRAS DE 09/01 A 14/01)
+        // LÓGICA DE HORÁRIOS ATUALIZADA (REGRAS DE 21/01 A 24/01)
         // ---------------------------------------------------------
         function obterHorariosDisponiveis() {
             const disponiveis = [];
@@ -187,11 +187,10 @@
                 
                 let hInicio, hFim, mFim;
 
-                if (dataStr === '2026-01-09') {
-                    // Sexta 09/01: 18:00 às 20:30
+                if (dataStr Quarta 21/01: 18:00 às 20:30
                     hInicio = 18; hFim = 20; mFim = 30;
                 } else {
-                    // Sábado 10/01 até Quarta 14/01: 09:00 às 20:30
+                    // Quinta 22/01 até Sábado 24/01: 09:00 às 20:30
                     hInicio = 9; hFim = 20; mFim = 30;
                 }
 
@@ -284,4 +283,5 @@
     </script>
 </body>
 </html>
+
 
