@@ -71,14 +71,10 @@
         const ADMIN_PASSWORD = '2025';
         const COLLECTION_PATH = 'agendamentos'; 
 
-        // ---------------------------------------------------------
-        // DATAS: De (30/01) até Domingo (01/02)
-        // ---------------------------------------------------------
         const DATAS_FIXAS = [
             '2026-01-30', // Sexta-feira
             '2026-01-31', // Sábado
-            '2026-02-01', // domingo
-            
+            '2026-02-01'  // Domingo
         ];
 
         window.checkPassword = () => {
@@ -142,6 +138,7 @@
 
             const novoAgendamento = {
                 nome_formando: form.nome_formando.value.trim(),
+                numero_foto: form.numero_foto.value.trim(), // NOVO CAMPO
                 endereco: form.endereco.value.trim(),
                 data: dataKey,
                 horario: dataHoraObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
@@ -163,9 +160,6 @@
             }
         };
 
-        // ---------------------------------------------------------
-        // LÓGICA DE HORÁRIOS: Hoje a partir das 18h, outros às 09h
-        // ---------------------------------------------------------
         function obterHorariosDisponiveis() {
             const disponiveis = [];
             const agora = new Date();
@@ -173,18 +167,14 @@
 
             for (const dataStr of DATAS_FIXAS) {
                 const [ano, mes, dia] = dataStr.split('-').map(Number);
-                
-                // Hoje (21/01) começa às 18:00, demais dias às 09:00
-                const hInicio = (dataStr === '2026-01-21') ? 18 : 9;
+                const hInicio = 9;
                 const hFim = 20;
                 const mFim = 30;
-
                 const totalMinutosFim = (hFim * 60) + mFim;
 
                 for (let h = hInicio; h <= hFim; h++) {
                     for (const m of [0, 30]) {
                         if ((h * 60) + m > totalMinutosFim) continue;
-
                         const candidata = new Date(ano, mes - 1, dia, h, m, 0);
                         if (candidata > agora && !reservados.includes(candidata.getTime())) {
                             disponiveis.push({
@@ -210,15 +200,31 @@
             document.getElementById('app-content').innerHTML = `
                 <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl form-card w-full"> 
                     <h1 class="text-3xl font-extrabold text-gray-800 mb-2">Agendamento de Visita</h1>
-                    <p class="text-gray-600 mb-8">Preencha os dados e escolha um horário disponível de 30 em 30 minutos.</p>
+                    <p class="text-gray-600 mb-8">Preencha os dados abaixo para agendar a visita.</p>
                     <form id="agendamento-form" class="space-y-6">
-                        <input type="text" name="nome_formando" required placeholder="Nome Completo da criança">
-                        <textarea name="endereco" required placeholder="Endereço Completo para a Visita" rows="2"></textarea>
-                        <input type="tel" name="telefone" placeholder="Seu Telefone (Opcional)">
-                        <select name="data_hora" required>
-                            <option value="" disabled selected>-- Selecione um Horário --</option>
-                            ${options}
-                        </select>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Nome Completo da criança</label>
+                            <input type="text" name="nome_formando" required placeholder="Ex: João Silva">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Número da Foto (identificado no papel)</label>
+                            <input type="text" name="numero_foto" required placeholder="Ex: 52, 73, 40...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Endereço Completo para a Visita</label>
+                            <textarea name="endereco" required placeholder="Rua, número, bairro..." rows="2"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Seu Telefone (WhatsApp)</label>
+                            <input type="tel" name="telefone" placeholder="(00) 00000-0000">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Escolha o Horário</label>
+                            <select name="data_hora" required>
+                                <option value="" disabled selected>-- Selecione um Horário --</option>
+                                ${options}
+                            </select>
+                        </div>
                         <button type="submit" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 transition">Confirmar Agendamento</button>
                     </form>
                 </div>`;
@@ -228,22 +234,23 @@
         function renderAgenda() {
             const futuros = agendamentos.filter(a => a.data_hora >= new Date());
             const rows = futuros.map(a => `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="p-3 text-sm">${formatDateTime(a.data_hora)}</td>
-                    <td class="p-3 text-sm">${a.nome_formando}</td>
-                    <td class="p-3 text-sm">${a.endereco}</td>
-                    <td class="p-3 text-sm">${a.telefone || '-'}</td>
-                    <td class="p-3"><button onclick="excluirAgendamento('${a.id}')" class="text-red-500 text-xs font-bold">Excluir</button></td>
+                <tr class="border-b hover:bg-gray-50 text-xs sm:text-sm">
+                    <td class="p-3 font-medium">${formatDateTime(a.data_hora)}</td>
+                    <td class="p-3 text-blue-700 font-bold">${a.numero_foto || 'N/A'}</td>
+                    <td class="p-3">${a.nome_formando}</td>
+                    <td class="p-3">${a.endereco}</td>
+                    <td class="p-3">${a.telefone || '-'}</td>
+                    <td class="p-3 text-center"><button onclick="excluirAgendamento('${a.id}')" class="text-red-500 font-bold">Excluir</button></td>
                 </tr>`).join('');
 
             document.getElementById('app-content').innerHTML = `
-                <div class="bg-white bg-opacity-95 p-6 rounded-xl shadow-2xl w-full overflow-x-auto">
-                    <h1 class="text-2xl font-bold mb-4">Agenda Confirmada</h1>
-                    <table class="w-full text-left">
-                        <thead><tr class="bg-gray-100 text-xs uppercase">
-                            <th class="p-3">Data/Hora</th><th class="p-3">Criança</th><th class="p-3">Endereço</th><th class="p-3">Telefone</th><th class="p-3">Ação</th>
+                <div class="bg-white bg-opacity-95 p-4 rounded-xl shadow-2xl w-full overflow-x-auto">
+                    <h1 class="text-2xl font-bold mb-4">Agenda de Visitas</h1>
+                    <table class="w-full text-left border-collapse">
+                        <thead><tr class="bg-gray-100 text-[10px] uppercase">
+                            <th class="p-3">Data/Hora</th><th class="p-3">Foto Nº</th><th class="p-3">Criança</th><th class="p-3">Endereço</th><th class="p-3">Telefone</th><th class="p-3">Ação</th>
                         </tr></thead>
-                        <tbody>${rows || '<tr><td colspan="5" class="p-4 text-center">Nenhum agendamento.</td></tr>'}</tbody>
+                        <tbody>${rows || '<tr><td colspan="6" class="p-4 text-center">Nenhum agendamento encontrado.</td></tr>'}</tbody>
                     </table>
                     <button onclick="navigate('index')" class="mt-4 text-blue-600 font-bold">Voltar</button>
                 </div>`;
@@ -252,9 +259,10 @@
         function renderSucesso() {
             document.getElementById('app-content').innerHTML = `
                 <div class="bg-white p-8 rounded-xl shadow-2xl text-center">
-                    <h2 class="text-2xl font-bold text-green-600 mb-4">Sucesso!</h2>
-                    <p class="text-gray-600 mb-6">Seu agendamento foi salvo com sucesso.</p>
-                    <button onclick="navigate('index')" class="bg-blue-500 text-white px-6 py-2 rounded-lg">Voltar</button>
+                    <div class="text-green-500 text-5xl mb-4">✔</div>
+                    <h2 class="text-2xl font-bold text-green-600 mb-4">Agendado com Sucesso!</h2>
+                    <p class="text-gray-600 mb-6">O horário foi bloqueado e as informações foram enviadas para o sistema.</p>
+                    <button onclick="navigate('index')" class="bg-blue-500 text-white px-6 py-2 rounded-lg">Fazer novo agendamento</button>
                 </div>`;
         }
 
@@ -268,4 +276,3 @@
     </script>
 </body>
 </html>
-
