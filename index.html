@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Agenda Álbum de Formatura</title>
+    <title>Agenda Álbum de Formatura - Encerrado</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { 
@@ -15,15 +15,6 @@
         }
         .container { max-width: 900px; }
         .nav-item:hover { background-color: #2563eb; color: white; }
-        .form-card { max-width: 500px; }
-        input[type="text"], input[type="email"], input[type="tel"], textarea, select {
-            border: 1px solid #d1d5db;
-            padding: 10px;
-            border-radius: 8px;
-            width: 100%;
-            box-sizing: border-box;
-            margin-top: 4px;
-        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -32,7 +23,7 @@
         <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="text-xl font-bold">Agenda de Visitas</div>
             <div id="nav-links">
-                <button onclick="navigate('index')" class="nav-item px-4 py-2 rounded-lg transition duration-200 bg-blue-700">Agendar Visita</button>
+                <button onclick="navigate('index')" class="nav-item px-4 py-2 rounded-lg transition duration-200 bg-blue-700">Início</button>
                 <button onclick="checkPassword()" class="nav-item px-4 py-2 rounded-lg transition duration-200">Minha Agenda</button>
             </div>
         </nav>
@@ -41,12 +32,12 @@
     <main id="app-content" class="container mx-auto p-4 md:p-8 flex-grow flex items-center justify-center"> 
         <div class="text-center py-12">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p class="mt-4 text-gray-600">Carregando sistema...</p>
+            <p class="mt-4 text-gray-600">Carregando...</p>
         </div>
     </main>
     
     <footer class="bg-gray-200 text-center p-4 mt-8 text-sm text-gray-600">
-        <p>&copy; 2026 Evanio Martins. Todos os direitos reservados. | Status: <span id="status-display" class="font-mono text-xs">Aguardando...</span></p>
+        <p>&copy; 2026 Evanio Martins. Todos os direitos reservados. | Status: <span id="status-display" class="font-mono text-xs text-red-600">Agendamentos Encerrados</span></p>
     </footer>
 
     <script type="module">
@@ -71,12 +62,6 @@
         const ADMIN_PASSWORD = '2025';
         const COLLECTION_PATH = 'agendamentos'; 
 
-        const DATAS_FIXAS = [
-            '2026-01-30', // Sexta-feira
-            '2026-01-31', // Sábado
-            '2026-02-01'  // Domingo
-        ];
-
         window.checkPassword = () => {
             const enteredPassword = window.prompt("Digite a senha de administrador:");
             if (enteredPassword === ADMIN_PASSWORD) navigate('agenda');
@@ -88,8 +73,7 @@
             const weekday = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
             const dayMonth = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
             const time = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
-            const weekdayCapitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
-            return `${weekdayCapitalized} ${dayMonth} às ${time}`;
+            return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${dayMonth} às ${time}`;
         };
 
         function initFirebase(config) {
@@ -98,11 +82,10 @@
                 db = getDatabase(app); 
                 isDBReady = true;
                 fetchAgendamentosRTDB(); 
-                document.getElementById('status-display').textContent = 'Conectado ao RTDB';
+                document.getElementById('status-display').textContent = 'Encerrado (Consulta Liberada)';
                 navigate('index'); 
             } catch (error) {
-                console.error("Erro Firebase:", error);
-                document.getElementById('status-display').textContent = 'Erro na Conexão';
+                document.getElementById('status-display').textContent = 'Erro de Conexão';
             }
         }
 
@@ -126,148 +109,69 @@
             });
         }
 
-        async function salvarAgendamento(event) {
-            event.preventDefault();
-            if (!isDBReady) return;
-
-            const form = event.target;
-            const dataHoraStr = form.data_hora.value;
-            const dataHoraObj = new Date(dataHoraStr);
-            const dataKey = dataHoraObj.toISOString().slice(0, 10);
-            const horarioKey = dataHoraObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }).replace(':', '');
-
-            const novoAgendamento = {
-                nome_formando: form.nome_formando.value.trim(),
-                numero_foto: form.numero_foto.value.trim(),
-                endereco: form.endereco.value.trim(),
-                data: dataKey,
-                horario: dataHoraObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                telefone: form.telefone.value.trim() || null,
-                criado_em: new Date().toISOString()
-            };
-
-            try {
-                await set(ref(db, `${COLLECTION_PATH}/${dataKey}/${horarioKey}`), novoAgendamento);
-                navigate('sucesso');
-            } catch (e) {
-                alert("Erro ao salvar.");
-            }
-        }
-
         window.excluirAgendamento = async (id) => {
             if (window.confirm("Excluir agendamento?")) {
                 await remove(ref(db, `${COLLECTION_PATH}/${id}`));
             }
         };
 
-        function obterHorariosDisponiveis() {
-            const disponiveis = [];
-            const agora = new Date();
-            const reservados = agendamentos.map(a => a.data_hora.getTime());
-
-            for (const dataStr of DATAS_FIXAS) {
-                const [ano, mes, dia] = dataStr.split('-').map(Number);
-                
-                // Configuração base
-                let hInicio = 9;
-                let hFim = 20;
-                let mFim = 30;
-
-                // Regra específica para hoje (Sexta 30/01) - começa as 18h
-                if (dataStr === '2026-01-30') {
-                    hInicio = 18;
-                }
-
-                // REGRA SOLICITADA: Domingo (01/02) encerra as 11:00h
-                if (dataStr === '2026-02-01') {
-                    hFim = 11;
-                    mFim = 0;
-                }
-
-                const totalMinutosFim = (hFim * 60) + mFim;
-
-                for (let h = hInicio; h <= hFim; h++) {
-                    for (const m of [0, 30]) {
-                        if ((h * 60) + m > totalMinutosFim) continue;
-
-                        const candidata = new Date(ano, mes - 1, dia, h, m, 0);
-                        if (candidata > agora && !reservados.includes(candidata.getTime())) {
-                            disponiveis.push({
-                                display: formatDateTime(candidata),
-                                value: candidata.toISOString()
-                            });
-                        }
-                    }
-                }
-            }
-            return disponiveis;
-        }
-
         window.navigate = (view) => {
             currentView = view;
             render();
         };
 
+        // VIEW PRINCIPAL COM A MENSAGEM DE ENCERRAMENTO
         function renderIndex() {
-            const horarios = obterHorariosDisponiveis();
-            const options = horarios.map(h => `<option value="${h.value}">${h.display}</option>`).join('');
-
             document.getElementById('app-content').innerHTML = `
-                <div class="bg-white bg-opacity-95 p-8 rounded-xl shadow-2xl form-card w-full"> 
-                    <h1 class="text-3xl font-extrabold text-gray-800 mb-2">Agendamento de Visita</h1>
-                    <p class="text-gray-600 mb-8">Escolha um horário. Atenção: no domingo atenderemos apenas até as 11:00h.</p>
-                    <form id="agendamento-form" class="space-y-6">
-                        <input type="text" name="nome_formando" required placeholder="Nome Completo da criança">
-                        <input type="text" name="numero_foto" required placeholder="Número da Foto">
-                        <textarea name="endereco" required placeholder="Endereço para a Visita" rows="2"></textarea>
-                        <input type="tel" name="telefone" placeholder="Telefone WhatsApp">
-                        <select name="data_hora" required>
-                            <option value="" disabled selected>-- Selecione um Horário --</option>
-                            ${options}
-                        </select>
-                        <button type="submit" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 transition">Confirmar Agendamento</button>
-                    </form>
+                <div class="bg-white bg-opacity-95 p-10 rounded-2xl shadow-2xl max-w-lg w-full text-center border-t-8 border-blue-600"> 
+                    <div class="text-blue-600 text-6xl mb-6">👋</div>
+                    <h1 class="text-3xl font-extrabold text-gray-800 mb-4">Obrigado, Marília!</h1>
+                    <p class="text-lg text-gray-700 leading-relaxed mb-6">
+                        Gostaríamos de agradecer a todos os formandos e familiares pelo carinho e recepção. 
+                    </p>
+                    <div class="bg-blue-50 p-6 rounded-xl mb-6 border border-blue-100">
+                        <p class="text-blue-800 font-bold text-xl uppercase tracking-wide">
+                            Atenção
+                        </p>
+                        <p class="text-blue-700 mt-2 font-medium">
+                            Estamos encerrando nosso atendimento na cidade de Marília **hoje ao meio-dia**.
+                        </p>
+                    </div>
+                    <p class="text-gray-500 text-sm italic">
+                        Não estamos mais aceitando novos agendamentos pelo sistema. 
+                        Para informações sobre álbuns já adquiridos, entre em contato diretamente conosco.
+                    </p>
                 </div>`;
-            document.getElementById('agendamento-form').addEventListener('submit', salvarAgendamento);
         }
 
         function renderAgenda() {
-            const futuros = agendamentos.filter(a => a.data_hora >= new Date());
-            const rows = futuros.map(a => `
+            const rowHtml = agendamentos.map(a => `
                 <tr class="border-b hover:bg-gray-50 text-xs sm:text-sm">
                     <td class="p-3 font-medium">${formatDateTime(a.data_hora)}</td>
                     <td class="p-3 text-blue-700 font-bold">${a.numero_foto || '-'}</td>
                     <td class="p-3">${a.nome_formando}</td>
                     <td class="p-3">${a.endereco}</td>
-                    <td class="p-3">${a.telefone || '-'}</td>
                     <td class="p-3 text-center"><button onclick="excluirAgendamento('${a.id}')" class="text-red-500 font-bold">Excluir</button></td>
                 </tr>`).join('');
 
             document.getElementById('app-content').innerHTML = `
                 <div class="bg-white bg-opacity-95 p-4 rounded-xl shadow-2xl w-full overflow-x-auto">
-                    <h1 class="text-2xl font-bold mb-4">Agenda Confirmada</h1>
-                    <table class="w-full text-left">
+                    <div class="flex justify-between items-center mb-4">
+                        <h1 class="text-2xl font-bold">Relatório Final - Marília</h1>
+                        <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase">Agendamentos Suspensos</span>
+                    </div>
+                    <table class="w-full text-left border-collapse">
                         <thead><tr class="bg-gray-100 text-[10px] uppercase">
-                            <th class="p-3">Data/Hora</th><th class="p-3">Foto Nº</th><th class="p-3">Criança</th><th class="p-3">Endereço</th><th class="p-3">Telefone</th><th class="p-3">Ação</th>
+                            <th class="p-3">Data/Hora</th><th class="p-3">Foto Nº</th><th class="p-3">Criança</th><th class="p-3">Endereço</th><th class="p-3">Ação</th>
                         </tr></thead>
-                        <tbody>${rows || '<tr><td colspan="6" class="p-4 text-center">Nenhum agendamento.</td></tr>'}</tbody>
+                        <tbody>${rowHtml || '<tr><td colspan="5" class="p-4 text-center">Nenhum agendamento.</td></tr>'}</tbody>
                     </table>
                     <button onclick="navigate('index')" class="mt-4 text-blue-600 font-bold">Voltar</button>
                 </div>`;
         }
 
-        function renderSucesso() {
-            document.getElementById('app-content').innerHTML = `
-                <div class="bg-white p-8 rounded-xl shadow-2xl text-center">
-                    <h2 class="text-2xl font-bold text-green-600 mb-4">Sucesso!</h2>
-                    <p class="text-gray-600 mb-6">Horário bloqueado com sucesso.</p>
-                    <button onclick="navigate('index')" class="bg-blue-500 text-white px-6 py-2 rounded-lg">Voltar</button>
-                </div>`;
-        }
-
         function render() {
             if (currentView === 'agenda') renderAgenda();
-            else if (currentView === 'sucesso') renderSucesso();
             else renderIndex();
         }
 
@@ -275,4 +179,3 @@
     </script>
 </body>
 </html>
-
