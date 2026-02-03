@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sistema de Agendamento - Fotos de Formatura</title>
+    <title>Agendamento de Visita - Álbum de Formatura</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { 
@@ -18,79 +18,59 @@
 <body class="min-h-screen flex flex-col bg-slate-50">
 
     <header class="bg-blue-600 text-white shadow-lg">
-        <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="text-xl font-bold">Portal do Formando</div>
-            <div class="text-sm font-medium bg-blue-700 px-3 py-1 rounded-full">Agendamento Aberto</div>
+        <nav class="container mx-auto px-4 py-3">
+            <div class="text-xl font-bold text-center">Portal do Formando - Agendamento</div>
         </nav>
     </header>
 
-    <main id="app-content" class="container mx-auto p-4 md:p-8 flex-grow">
-        <div class="grid md:grid-cols-2 gap-8 items-start">
+    <main id="app-content" class="container mx-auto p-4 md:p-8 flex-grow flex items-center justify-center">
+        <div class="bg-white p-6 md:p-10 rounded-2xl shadow-2xl border-t-8 border-blue-600 w-full max-w-lg">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Reserve seu Horário</h2>
+            <p class="text-gray-500 mb-6 text-sm">Disponível até domingo, 08/02/2026.</p>
             
-            <div class="bg-white p-6 rounded-2xl shadow-2xl border-t-8 border-blue-600">
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">Marque sua Visita</h2>
-                <p class="text-gray-500 mb-6 text-sm">Preencha os dados abaixo para agendar a visualização do seu álbum.</p>
-                
-                <form id="form-agendamento" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nome Completo</label>
-                        <input type="text" id="nome" required class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Ex: João Silva">
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Data</label>
-                            <input type="date" id="data" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Horário</label>
-                            <input type="time" id="horario" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Número do Álbum / Foto</label>
-                        <input type="text" id="foto" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="Digite o número">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Endereço de Entrega/Visita</label>
-                        <textarea id="endereco" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" rows="2" placeholder="Rua, número, bairro..."></textarea>
-                    </div>
-
-                    <button type="submit" class="w-full bg-blue-600 text-white font-extrabold py-4 rounded-xl hover:bg-blue-700 transition-all shadow-lg active:scale-95">
-                        CONFIRMAR AGENDAMENTO
-                    </button>
-                </form>
-            </div>
-
-            <div class="bg-white p-6 rounded-2xl shadow-xl border-t-8 border-gray-300">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">Horários já Reservados</h2>
-                <div class="overflow-hidden rounded-xl border border-gray-100">
-                    <table class="w-full text-left">
-                        <thead class="bg-gray-100 text-[10px] uppercase text-gray-500 font-bold">
-                            <tr>
-                                <th class="p-3">Data/Hora</th>
-                                <th class="p-3">Formando</th>
-                                <th class="p-3">Foto</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabela-corpo">
-                            </tbody>
-                    </table>
+            <form id="form-agendamento" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nome Completo</label>
+                    <input type="text" id="nome" required class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Nome do formando">
                 </div>
-            </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Data da Visita</label>
+                        <input type="date" id="data" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Horário</label>
+                        <select id="horario" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                            <option value="">Selecione a data primeiro</option>
+                        </select>
+                    </div>
+                </div>
 
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Número do Álbum / Foto</label>
+                    <input type="text" id="foto" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: 73686">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Endereço Completo</label>
+                    <textarea id="endereco" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" rows="2" placeholder="Rua, número, bairro e cidade"></textarea>
+                </div>
+
+                <button type="submit" id="btn-salvar" class="w-full bg-blue-600 text-white font-extrabold py-4 rounded-xl hover:bg-blue-700 transition-all shadow-lg active:scale-95">
+                    CONFIRMAR AGENDAMENTO
+                </button>
+            </form>
         </div>
     </main>
     
-    <footer class="bg-gray-100 text-center p-6 mt-8 text-sm text-gray-500">
-        <p>&copy; 2026 Evanio Martins. Todos os direitos reservados.</p>
+    <footer class="bg-white bg-opacity-80 text-center p-4 text-xs text-gray-500">
+        <p>&copy; 2026 Evanio Martins. Agendamentos até 08/02/2026.</p>
     </footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU", 
@@ -106,46 +86,72 @@
         const db = getDatabase(app);
         const COLLECTION_PATH = 'agendamentos';
 
-        // Escutar dados do Firebase
-        onValue(ref(db, COLLECTION_PATH), (snapshot) => {
-            const data = snapshot.val() || {};
-            const formatados = [];
-            for (const dateKey in data) {
-                for (const hourKey in data[dateKey]) {
-                    formatados.push(data[dateKey][hourKey]);
-                }
-            }
-            // Ordenar por data
-            formatados.sort((a, b) => new Date(a.data + 'T' + a.horario) - new Date(b.data + 'T' + b.horario));
+        const inputData = document.getElementById('data');
+        const selectHorario = document.getElementById('horario');
+
+        // Configura data mínima (amanhã) e máxima (08/02/2026)
+        const hoje = new Date();
+        hoje.setDate(hoje.getDate() + 1);
+        const amanha = hoje.toISOString().split('T')[0];
+        
+        inputData.min = amanha;
+        inputData.max = "2026-02-08";
+
+        inputData.addEventListener('change', () => {
+            if (!inputData.value) return;
             
-            const corpo = document.getElementById('tabela-corpo');
-            corpo.innerHTML = formatados.length ? formatados.map(a => `
-                <tr class="border-b text-xs hover:bg-gray-50">
-                    <td class="p-3 font-bold text-blue-600">${a.data.split('-').reverse().join('/')} às ${a.horario}</td>
-                    <td class="p-3 font-medium text-gray-700">${a.nome_formando}</td>
-                    <td class="p-3 text-gray-500">#${a.numero_foto}</td>
-                </tr>`).join('') : '<tr><td colspan="3" class="p-6 text-center text-gray-400">Nenhum horário ocupado.</td></tr>';
+            // Garantir que a data seja lida corretamente sem erro de fuso horário
+            const [year, month, day] = inputData.value.split('-');
+            const dataSelecionada = new Date(year, month - 1, day);
+            const diaSemana = dataSelecionada.getDay(); // 0 = Domingo, 6 = Sábado
+            
+            selectHorario.innerHTML = '<option value="">Carregando...</option>';
+            
+            let inicio = 9;
+            let fim = (diaSemana === 0 || diaSemana === 6) ? 15 : 20;
+
+            selectHorario.innerHTML = '<option value="">Selecione o horário</option>';
+            for (let h = inicio; h <= fim; h++) {
+                const hora = `${h.toString().padStart(2, '0')}:00`;
+                const opt = document.createElement('option');
+                opt.value = hora;
+                opt.textContent = hora;
+                selectHorario.appendChild(opt);
+            }
         });
 
-        // Salvar Novo Agendamento
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('btn-salvar');
             
-            const data = document.getElementById('data').value;
-            const horario = document.getElementById('horario').value;
+            const data = inputData.value;
+            const horario = selectHorario.value;
             const nome = document.getElementById('nome').value;
             const foto = document.getElementById('foto').value;
             const endereco = document.getElementById('endereco').value;
 
+            btn.disabled = true;
+            btn.textContent = "VERIFICANDO...";
+
             try {
                 const path = `${COLLECTION_PATH}/${data}/${horario.replace(':', '-')}`;
-                await set(ref(db, path), {
-                    data, horario, nome_formando: nome, numero_foto: foto, endereco
-                });
-                alert("Agendamento realizado com sucesso!");
-                e.target.reset();
+                const snapshot = await get(ref(db, path));
+
+                if (snapshot.exists()) {
+                    alert("Desculpe, este horário já foi reservado. Por favor, escolha outro.");
+                } else {
+                    await set(ref(db, path), {
+                        data, horario, nome_formando: nome, numero_foto: foto, endereco, data_registro: new Date().toISOString()
+                    });
+                    alert("Agendamento realizado com sucesso!");
+                    e.target.reset();
+                    selectHorario.innerHTML = '<option value="">Selecione a data primeiro</option>';
+                }
             } catch (err) {
                 alert("Erro ao salvar: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "CONFIRMAR AGENDAMENTO";
             }
         });
     </script>
