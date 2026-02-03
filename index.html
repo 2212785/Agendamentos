@@ -94,4 +94,79 @@
             appId: "1:29604114447:web:bac79aba4c4aa945c8737a"
         };
         
-        const app = initializeApp(
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const COLLECTION_PATH = 'agendamentos';
+
+        const inputData = document.getElementById('data');
+        const selectHorario = document.getElementById('horario');
+        const modal = document.getElementById('success-modal');
+
+        // TRAVA MANUAL DAS DATAS: 04/02 a 08/02 de 2026
+        inputData.min = "2026-02-04";
+        inputData.max = "2026-02-08";
+
+        inputData.addEventListener('change', () => {
+            if (!inputData.value) return;
+            
+            // Corrige a leitura da data selecionada
+            const [year, month, day] = inputData.value.split('-');
+            const dataSelecionada = new Date(year, month - 1, day);
+            const diaSemana = dataSelecionada.getDay(); // 0: Dom, 6: Sáb
+            
+            let inicio = 9;
+            let fim = (diaSemana === 0 || diaSemana === 6) ? 15 : 20;
+
+            selectHorario.innerHTML = '<option value="">Escolha o horário</option>';
+            for (let h = inicio; h <= fim; h++) {
+                const hora = `${h.toString().padStart(2, '0')}:00`;
+                const opt = document.createElement('option');
+                opt.value = hora;
+                opt.textContent = hora;
+                selectHorario.appendChild(opt);
+            }
+        });
+
+        document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-salvar');
+            
+            const data = inputData.value;
+            const horario = selectHorario.value;
+            const nome = document.getElementById('nome').value;
+            const endereco = document.getElementById('endereco').value;
+
+            btn.disabled = true;
+            btn.textContent = "PROCESSANDO...";
+
+            try {
+                const path = `${COLLECTION_PATH}/${data}/${horario.replace(':', '-')}`;
+                const snapshot = await get(ref(db, path));
+
+                if (snapshot.exists()) {
+                    alert("Este horário já foi preenchido. Por favor, tente outro.");
+                } else {
+                    await set(ref(db, path), {
+                        data, horario, nome_formando: nome, endereco, data_registro: new Date().toISOString()
+                    });
+                    
+                    // Mostra o modal de sucesso
+                    modal.style.display = 'flex';
+                    e.target.reset();
+                    selectHorario.innerHTML = '<option value="">Selecione a data primeiro</option>';
+
+                    // Esconde o modal após 10 segundos
+                    setTimeout(() => {
+                        modal.style.display = 'none';
+                    }, 10000);
+                }
+            } catch (err) {
+                alert("Erro ao conectar com o banco de dados.");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "CONFIRMAR AGENDAMENTO";
+            }
+        });
+    </script>
+</body>
+</html>
