@@ -134,28 +134,7 @@
             });
         }
 
-        function renderIndex() {
-            document.getElementById('app-content').innerHTML = `
-                <div class="bg-white bg-opacity-95 p-10 rounded-2xl shadow-2xl max-w-lg w-full text-center border-t-8 border-blue-600"> 
-                    <div class="text-blue-600 text-6xl mb-6">👋</div>
-                    <h1 class="text-3xl font-extrabold text-gray-800 mb-4">Obrigado, Marília!</h1>
-                    <p class="text-lg text-gray-700 leading-relaxed mb-6">
-                        Gostaríamos de agradecer a todos os formandos e familiares pelo carinho e recepção. 
-                    </p>
-                    <div class="bg-blue-50 p-6 rounded-xl mb-6 border border-blue-100">
-                        <p class="text-blue-800 font-bold text-xl uppercase tracking-wide">
-                            Atenção
-                        </p>
-                        <p class="text-blue-700 mt-2 font-medium">
-                            Estamos encerrando nosso atendimento na cidade de Marília **hoje ao meio-dia**.
-                        </p>
-                    </div>
-                    <p class="text-gray-500 text-sm italic">
-                        Não estamos mais aceitando novos agendamentos pelo sistema. 
-                        Para informações sobre álbuns já adquiridos, entre em contato diretamente conosco.
-                    </p>
-                </div>`;
-        }
+               }
 
         function renderAgenda() {
             const rowHtml = agendamentos.map(a => `
@@ -206,3 +185,4 @@
     </script>
 </body>
 </html>
+
