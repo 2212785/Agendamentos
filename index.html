@@ -36,15 +36,15 @@
     </div>
 
     <header class="bg-blue-600 text-white shadow-lg">
-        <nav class="container mx-auto px-4 py-3">
-            <div class="text-xl font-bold text-center">Portal do Formando - Agendamento</div>
+        <nav class="container mx-auto px-4 py-3 text-center">
+            <div class="text-xl font-bold">Portal do Formando - Agendamento</div>
         </nav>
     </header>
 
     <main id="app-content" class="container mx-auto p-4 md:p-8 flex-grow flex items-center justify-center">
         <div class="bg-white p-6 md:p-10 rounded-2xl shadow-2xl border-t-8 border-blue-600 w-full max-w-md">
             <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center">Reserve seu Horário</h2>
-            <p class="text-blue-600 mb-6 text-sm text-center font-bold">Disponível apenas de 04/02 a 08/02/2026</p>
+            <p class="text-blue-600 mb-6 text-sm text-center font-bold">Datas disponíveis: 04/02 a 08/02/2026</p>
             
             <form id="form-agendamento" class="space-y-4">
                 <div>
@@ -58,7 +58,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Horário</label>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Horário Disponível</label>
                     <select id="horario" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                         <option value="">Selecione a data primeiro</option>
                     </select>
@@ -98,71 +98,48 @@
         const selectHorario = document.getElementById('horario');
         const modal = document.getElementById('success-modal');
 
-        // Validação manual da data ao mudar
-        inputData.addEventListener('change', () => {
-            const dataVal = inputData.value;
-            if (!dataVal) return;
-
-            // Datas limites em formato string para comparação simples
-            const minData = "2026-02-04";
-            const maxData = "2026-02-08";
-
-            if (dataVal < minData || dataVal > maxData) {
-                alert("Por favor, selecione uma data entre 04/02 e 08/02.");
-                inputData.value = "";
-                selectHorario.innerHTML = '<option value="">Selecione a data primeiro</option>';
-                return;
-            }
-
-            // Gerar horários
-            const [year, month, day] = dataVal.split('-');
+        // Função para carregar apenas horários livres
+        async function carregarHorariosLivres(dataSelecionada) {
+            selectHorario.innerHTML = '<option value="">Consultando horários...</option>';
+            
+            // 1. Identificar dia da semana
+            const [year, month, day] = dataSelecionada.split('-');
             const dataObj = new Date(year, month - 1, day);
-            const diaSemana = dataObj.getDay(); // 0: Dom, 6: Sab
+            const diaSemana = dataObj.getDay(); 
             
             let inicio = 9, fim = (diaSemana === 0 || diaSemana === 6) ? 15 : 20;
 
-            selectHorario.innerHTML = '<option value="">Escolha o horário</option>';
-            for (let h = inicio; h <= fim; h++) {
-                const hora = `${h.toString().padStart(2, '0')}:00`;
-                const opt = document.createElement('option');
-                opt.value = hora;
-                opt.textContent = hora;
-                selectHorario.appendChild(opt);
-            }
-        });
-
-        document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('btn-salvar');
-            
-            const data = inputData.value;
-            const horario = selectHorario.value;
-            const nome = document.getElementById('nome').value;
-            const endereco = document.getElementById('endereco').value;
-
-            btn.disabled = true;
-            btn.textContent = "PROCESSANDO...";
-
+            // 2. Buscar agendamentos existentes no banco para este dia
+            let ocupados = [];
             try {
-                const path = `${COLLECTION_PATH}/${data}/${horario.replace(':', '-')}`;
-                const snapshot = await get(ref(db, path));
-
+                const snapshot = await get(ref(db, `${COLLECTION_PATH}/${dataSelecionada}`));
                 if (snapshot.exists()) {
-                    alert("Este horário já foi preenchido. Por favor, escolha outro.");
-                } else {
-                    await set(ref(db, path), { data, horario, nome_formando: nome, endereco });
-                    modal.style.display = 'flex';
-                    e.target.reset();
-                    selectHorario.innerHTML = '<option value="">Selecione a data primeiro</option>';
-                    setTimeout(() => { modal.style.display = 'none'; }, 10000);
+                    ocupados = Object.keys(snapshot.val()); // Pega as chaves "09-00", "10-00", etc.
                 }
-            } catch (err) {
-                alert("Erro ao salvar.");
-            } finally {
-                btn.disabled = false;
-                btn.textContent = "CONFIRMAR AGENDAMENTO";
+            } catch (e) { console.error("Erro ao buscar ocupados", e); }
+
+            // 3. Gerar lista final apenas com os que não estão ocupados
+            selectHorario.innerHTML = '<option value="">Escolha um horário livre</option>';
+            let encontrouAlgum = false;
+
+            for (let h = inicio; h <= fim; h++) {
+                const horaFormatada = `${h.toString().padStart(2, '0')}:00`;
+                const chaveFirebase = `${h.toString().padStart(2, '0')}-00`;
+
+                if (!ocupados.includes(chaveFirebase)) {
+                    const opt = document.createElement('option');
+                    opt.value = horaFormatada;
+                    opt.textContent = horaFormatada;
+                    selectHorario.appendChild(opt);
+                    encontrouAlgum = true;
+                }
             }
-        });
-    </script>
-</body>
-</html>
+
+            if (!encontrouAlgum) {
+                selectHorario.innerHTML = '<option value="">Agenda lotada para este dia</option>';
+            }
+        }
+
+        inputData.addEventListener('change', () => {
+            const dataVal = inputData.value;
+            if (!dataVal) return;
