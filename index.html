@@ -3,32 +3,27 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Agenda Álbum de Formatura - Evanio Martins</title>
+    <title>Agenda Álbum de Formatura - Encerrado</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { 
             font-family: 'Inter', sans-serif; 
-            background-image: url('formatura.jpg'); 
+            background-image: url('https://images.unsplash.com/photo-1523050853063-9158946122a2?q=80&w=2070&auto=format&fit=crop'); 
             background-size: cover; 
             background-position: center; 
             background-attachment: fixed;
         }
         .container { max-width: 900px; }
         .nav-item:hover { background-color: #2563eb; color: white; }
-        .slot-booked { background-color: #fee2e2; color: #991b1b; cursor: not-allowed; }
-        .slot-available { background-color: #f0f9ff; color: #075985; cursor: pointer; }
-        .slot-available:hover { background-color: #bae6fd; }
-        .slot-selected { background-color: #0284c7 !important; color: white !important; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
     <header class="bg-blue-600 text-white shadow-lg">
         <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="text-xl font-bold cursor-pointer" onclick="navigate('index')">Agenda de Visitas</div>
-            <div id="nav-links" class="flex gap-2">
-                <button onclick="navigate('index')" class="nav-item px-4 py-2 rounded-lg transition duration-200">Início</button>
-                <button id="btn-agendar" onclick="navigate('novo')" class="nav-item px-4 py-2 rounded-lg transition duration-200 hidden">Agendar Visita</button>
+            <div class="text-xl font-bold">Agenda de Visitas</div>
+            <div id="nav-links">
+                <button onclick="navigate('index')" class="nav-item px-4 py-2 rounded-lg transition duration-200 bg-blue-700">Início</button>
                 <button onclick="checkPassword()" class="nav-item px-4 py-2 rounded-lg transition duration-200">Minha Agenda</button>
             </div>
         </nav>
@@ -37,17 +32,17 @@
     <main id="app-content" class="container mx-auto p-4 md:p-8 flex-grow flex items-center justify-center"> 
         <div class="text-center py-12">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p class="mt-4 text-gray-600">Carregando sistema...</p>
+            <p class="mt-4 text-gray-600">Carregando...</p>
         </div>
     </main>
     
     <footer class="bg-gray-200 text-center p-4 mt-8 text-sm text-gray-600">
-        <p>&copy; 2026 Evanio Martins. Todos os direitos reservados. | Status: <span id="status-display" class="font-mono text-xs">Verificando...</span></p>
+        <p>&copy; 2026 Evanio Martins. Todos os direitos reservados. | Status: <span id="status-display" class="font-mono text-xs text-red-600">Agendamentos Encerrados</span></p>
     </footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, onValue, set, remove, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU", 
@@ -63,19 +58,33 @@
         let agendamentos = []; 
         let currentView = 'index';
         let isDBReady = false;
-        let selectedSlot = null;
 
         const ADMIN_PASSWORD = '2025';
         const COLLECTION_PATH = 'agendamentos'; 
 
-        // Configurações de Horários
-        const OPEN_BOOKING_DATE = new Date('2026-02-03T18:00:00');
-        const END_BOOKING_DATE = new Date('2026-02-08T23:59:59');
-
+        // Funções Globais
         window.checkPassword = () => {
             const enteredPassword = window.prompt("Digite a senha de administrador:");
-            if (enteredPassword === ADMIN_PASSWORD) navigate('agenda');
-            else if (enteredPassword !== null) alert("Senha incorreta.");
+            if (enteredPassword === ADMIN_PASSWORD) {
+                navigate('agenda');
+            } else if (enteredPassword !== null) {
+                alert("Senha incorreta.");
+            }
+        };
+
+        window.navigate = (view) => {
+            currentView = view;
+            render();
+        };
+
+        window.excluirAgendamento = async (id) => {
+            if (window.confirm("Deseja realmente excluir este agendamento?")) {
+                try {
+                    await remove(ref(db, `${COLLECTION_PATH}/${id}`));
+                } catch (error) {
+                    alert("Erro ao excluir: " + error.message);
+                }
+            }
         };
         
         const formatDateTime = (date) => {
@@ -91,222 +100,109 @@
                 app = initializeApp(config);
                 db = getDatabase(app); 
                 isDBReady = true;
-                fetchAgendamentos(); 
-                updateSystemStatus();
+                fetchAgendamentosRTDB(); 
+                document.getElementById('status-display').textContent = 'Encerrado (Consulta Liberada)';
             } catch (error) {
                 document.getElementById('status-display').textContent = 'Erro de Conexão';
+                console.error(error);
             }
         }
 
-        function updateSystemStatus() {
-            const agora = new Date();
-            const statusEl = document.getElementById('status-display');
-            const btnAgendar = document.getElementById('btn-agendar');
-
-            if (agora < OPEN_BOOKING_DATE) {
-                statusEl.textContent = `Abre hoje às 18:00h`;
-                statusEl.className = "text-orange-600 font-bold";
-                btnAgendar.classList.add('hidden');
-            } else if (agora > END_BOOKING_DATE) {
-                statusEl.textContent = `Agendamentos Encerrados`;
-                statusEl.className = "text-red-600 font-bold";
-                btnAgendar.classList.add('hidden');
-            } else {
-                statusEl.textContent = `Agendamentos Liberados`;
-                statusEl.className = "text-green-600 font-bold";
-                btnAgendar.classList.remove('hidden');
-            }
-        }
-
-        function fetchAgendamentos() {
+        function fetchAgendamentosRTDB() {
+            if (!isDBReady) return;
             const agendamentosRef = ref(db, COLLECTION_PATH);
             onValue(agendamentosRef, (snapshot) => {
                 const data = snapshot.val() || {};
                 const formatados = [];
+                
+                // Percorre a estrutura de data/hora do Realtime Database
                 for (const dateKey in data) {
                     for (const hourKey in data[dateKey]) {
                         const item = data[dateKey][hourKey];
-                        item.dbPath = `${dateKey}/${hourKey}`;
+                        // Preserva a chave original para exclusão correta
+                        item.id = `${dateKey}/${hourKey}`;
+                        // Cria objeto Date para ordenação
                         item.data_hora = new Date(`${item.data}T${item.horario}:00`);
                         formatados.push(item);
                     }
                 }
+                
+                // Ordena por data e hora mais próxima
                 formatados.sort((a, b) => a.data_hora - b.data_hora);
                 agendamentos = formatados;
                 render();
             });
         }
 
-        window.navigate = (view) => {
-            currentView = view;
-            selectedSlot = null;
-            render();
-        };
-
-        window.selectSlot = (date, hour) => {
-            selectedSlot = { date, hour };
-            render();
-        };
-
-        window.salvarAgendamento = async (e) => {
-            e.preventDefault();
-            if (!selectedSlot) return alert("Selecione um horário.");
-
-            const formData = new FormData(e.target);
-            const dados = {
-                data: selectedSlot.date,
-                horario: selectedSlot.hour,
-                nome_formando: formData.get('nome'),
-                endereco: formData.get('endereco'),
-                telefone: formData.get('telefone'),
-                timestamp: Date.now()
-            };
-
-            try {
-                const path = `${COLLECTION_PATH}/${selectedSlot.date}/${selectedSlot.hour.replace(':', '')}`;
-                await set(ref(db, path), dados);
-                alert("Agendamento realizado com sucesso!");
-                navigate('index');
-            } catch (error) {
-                alert("Erro ao agendamento. Tente novamente.");
-            }
-        };
-
-        window.excluirAgendamento = async (path) => {
-            if (window.confirm("Deseja realmente excluir este agendamento?")) {
-                await remove(ref(db, `${COLLECTION_PATH}/${path}`));
-            }
-        };
-
         function renderIndex() {
-            const agora = new Date();
-            const isUpcoming = agora < OPEN_BOOKING_DATE;
-            const isClosed = agora > END_BOOKING_DATE;
-
             document.getElementById('app-content').innerHTML = `
                 <div class="bg-white bg-opacity-95 p-10 rounded-2xl shadow-2xl max-w-lg w-full text-center border-t-8 border-blue-600"> 
-                    <div class="text-blue-600 text-6xl mb-6">${isClosed ? '⌛' : '📸'}</div>
-                    <h1 class="text-3xl font-extrabold text-gray-800 mb-4">Álbum de Formatura</h1>
+                    <div class="text-blue-600 text-6xl mb-6">👋</div>
+                    <h1 class="text-3xl font-extrabold text-gray-800 mb-4">Obrigado, Marília!</h1>
                     <p class="text-lg text-gray-700 leading-relaxed mb-6">
-                        ${isUpcoming 
-                            ? `Os agendamentos serão liberados hoje, dia 03/02, às 18:00h. Prepare-se!` 
-                            : isClosed 
-                            ? `Obrigado a todos! O período de agendamentos para esta etapa foi encerrado.`
-                            : `Olá! Escolha o melhor dia e horário para receber nossa equipe e conhecer seu álbum de formatura.`}
+                        Gostaríamos de agradecer a todos os formandos e familiares pelo carinho e recepção. 
                     </p>
-                    ${!isUpcoming && !isClosed ? `
-                        <button onclick="navigate('novo')" class="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-700 transition transform hover:scale-105">
-                            Agendar Minha Visita
-                        </button>
-                    ` : ''}
-                </div>`;
-        }
-
-        function renderForm() {
-            const dates = ['2026-02-04', '2026-02-05', '2026-02-06', '2026-02-07', '2026-02-08'];
-            
-            let gridHtml = '';
-            dates.forEach(date => {
-                const d = new Date(date + 'T00:00:00');
-                const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-                const startH = 9;
-                const endH = isWeekend ? 15 : 20;
-
-                gridHtml += `<div class="mb-6">
-                    <h3 class="font-bold text-blue-800 border-b pb-1 mb-3 uppercase text-sm">${formatDateTime(d).split(' às ')[0]}</h3>
-                    <div class="grid grid-cols-4 sm:grid-cols-6 gap-2">`;
-                
-                for (let h = startH; h <= endH; h++) {
-                    const timeStr = h.toString().padStart(2, '0') + ':00';
-                    const isBooked = agendamentos.some(a => a.data === date && a.horario === timeStr);
-                    const isSelected = selectedSlot?.date === date && selectedSlot?.hour === timeStr;
-                    
-                    if (isBooked) {
-                        gridHtml += `<div class="slot-booked p-2 rounded text-center text-xs font-medium border border-red-100">Ocupado</div>`;
-                    } else {
-                        gridHtml += `<div onclick="selectSlot('${date}', '${timeStr}')" class="slot-available p-2 rounded text-center text-xs font-bold border border-blue-100 ${isSelected ? 'slot-selected' : ''}">${timeStr}</div>`;
-                    }
-                }
-                gridHtml += `</div></div>`;
-            });
-
-            document.getElementById('app-content').innerHTML = `
-                <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-3xl">
-                    <h2 class="text-2xl font-bold mb-6 text-gray-800">Novo Agendamento</h2>
-                    <div class="grid md:grid-cols-2 gap-8">
-                        <div>
-                            <p class="text-sm font-bold text-gray-500 mb-4 uppercase tracking-wider">1. Escolha o Horário</p>
-                            <div class="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                                ${gridHtml}
-                            </div>
-                        </div>
-                        <form onsubmit="salvarAgendamento(event)" class="space-y-4">
-                            <p class="text-sm font-bold text-gray-500 mb-4 uppercase tracking-wider">2. Seus Dados</p>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-1">Nome do Formando</label>
-                                <input type="text" name="nome" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 ring-blue-500 outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-1">Endereço Completo</label>
-                                <textarea name="endereco" required rows="2" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 ring-blue-500 outline-none"></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-1">WhatsApp de Contato</label>
-                                <input type="tel" name="telefone" required placeholder="(00) 00000-0000" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 ring-blue-500 outline-none">
-                            </div>
-                            <div class="pt-4">
-                                <p class="text-[10px] text-gray-400 mb-4">Ao agendar, você reserva este horário para a demonstração do álbum em sua residência.</p>
-                                <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition active:scale-95">Confirmar Agendamento</button>
-                                <button type="button" onclick="navigate('index')" class="w-full mt-2 text-gray-500 text-sm font-medium">Cancelar</button>
-                            </div>
-                        </form>
+                    <div class="bg-blue-50 p-6 rounded-xl mb-6 border border-blue-100">
+                        <p class="text-blue-800 font-bold text-xl uppercase tracking-wide">
+                            Atenção
+                        </p>
+                        <p class="text-blue-700 mt-2 font-medium">
+                            Estamos encerrando nosso atendimento na cidade de Marília **hoje ao meio-dia**.
+                        </p>
                     </div>
+                    <p class="text-gray-500 text-sm italic">
+                        Não estamos mais aceitando novos agendamentos pelo sistema. 
+                        Para informações sobre álbuns já adquiridos, entre em contato diretamente conosco.
+                    </p>
                 </div>`;
         }
 
         function renderAgenda() {
             const rowHtml = agendamentos.map(a => `
                 <tr class="border-b hover:bg-gray-50 text-xs sm:text-sm">
-                    <td class="p-3 font-medium text-blue-900">${formatDateTime(a.data_hora)}</td>
-                    <td class="p-3 font-bold">${a.nome_formando}</td>
+                    <td class="p-3 font-medium">${formatDateTime(a.data_hora)}</td>
+                    <td class="p-3 text-blue-700 font-bold">${a.numero_foto || '-'}</td>
+                    <td class="p-3">${a.nome_formando}</td>
                     <td class="p-3">${a.endereco}</td>
-                    <td class="p-3">${a.telefone}</td>
                     <td class="p-3 text-center">
-                        <button onclick="excluirAgendamento('${a.dbPath}')" class="text-red-500 hover:text-red-700">
-                            <Trash2 size={16} /> Excluir
-                        </button>
+                        <button onclick="excluirAgendamento('${a.id}')" class="text-red-500 hover:text-red-700 font-bold">Excluir</button>
                     </td>
                 </tr>`).join('');
 
             document.getElementById('app-content').innerHTML = `
-                <div class="bg-white bg-opacity-95 p-6 rounded-xl shadow-2xl w-full overflow-x-auto">
-                    <div class="flex justify-between items-center mb-6">
-                        <h1 class="text-2xl font-bold">Relatório de Visitas</h1>
-                        <div class="text-right">
-                            <p class="text-xs font-bold text-gray-400 uppercase">Total</p>
-                            <p class="text-2xl font-black text-blue-600">${agendamentos.length}</p>
-                        </div>
+                <div class="bg-white bg-opacity-95 p-4 rounded-xl shadow-2xl w-full overflow-x-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h1 class="text-2xl font-bold text-gray-800">Relatório Final - Marília</h1>
+                        <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold uppercase">Agendamentos Suspensos</span>
                     </div>
-                    <table class="w-full text-left border-collapse min-w-[600px]">
-                        <thead><tr class="bg-gray-100 text-[10px] uppercase text-gray-600">
-                            <th class="p-3">Data/Hora</th><th class="p-3">Formando</th><th class="p-3">Endereço</th><th class="p-3">Telefone</th><th class="p-3 text-center">Ações</th>
-                        </tr></thead>
-                        <tbody>${rowHtml || '<tr><td colspan="5" class="p-8 text-center text-gray-400">Nenhuma visita agendada até o momento.</td></tr>'}</tbody>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 text-[10px] uppercase text-gray-600">
+                                <th class="p-3">Data/Hora</th>
+                                <th class="p-3">Foto Nº</th>
+                                <th class="p-3">Formando</th>
+                                <th class="p-3">Endereço</th>
+                                <th class="p-3 text-center">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowHtml || '<tr><td colspan="5" class="p-4 text-center text-gray-500">Nenhum agendamento encontrado.</td></tr>'}
+                        </tbody>
                     </table>
                     <div class="mt-6 flex justify-between items-center">
-                        <button onclick="navigate('index')" class="text-blue-600 font-bold hover:underline">Voltar ao Início</button>
-                        <button onclick="window.print()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold">Imprimir Lista</button>
+                        <button onclick="navigate('index')" class="text-blue-600 hover:underline font-bold">← Voltar ao Início</button>
+                        <span class="text-gray-500 text-xs">Total de registros: ${agendamentos.length}</span>
                     </div>
                 </div>`;
         }
 
         function render() {
-            updateSystemStatus();
             if (currentView === 'agenda') renderAgenda();
-            else if (currentView === 'novo') renderForm();
             else renderIndex();
         }
 
+        // Inicialização
         initFirebase(firebaseConfig);
     </script>
 </body>
+</html>
