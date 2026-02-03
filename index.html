@@ -120,4 +120,55 @@
             document.getElementById('app-content').innerHTML = `
                 <div class="grid md:grid-cols-2 gap-8">
                     <div class="bg-white p-6 rounded-xl shadow-xl border-t-4 border-blue-600">
-                        <h2 class="text-xl font-
+                        <h2 class="text-xl font-bold mb-4 text-gray-800">Novo Agendamento</h2>
+                        <form onsubmit="salvarAgendamento(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Nome do Formando</label>
+                                <input type="text" name="nome" required class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Data</label>
+                                    <input type="date" name="data" required class="w-full p-2 border rounded-lg outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Horário</label>
+                                    <input type="time" name="horario" required class="w-full p-2 border rounded-lg outline-none">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Número da Foto (ou Álbum)</label>
+                                <input type="text" name="foto" required class="w-full p-2 border rounded-lg outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Endereço Completo</label>
+                                <textarea name="endereco" required class="w-full p-2 border rounded-lg outline-none" rows="2"></textarea>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-md">
+                                Confirmar Agendamento
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-xl border-t-4 border-gray-400">
+                        <h2 class="text-xl font-bold mb-4 text-gray-800">Horários Ocupados</h2>
+                        <div class="overflow-y-auto max-h-[400px]">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50">
+                                    <tr class="text-[10px] uppercase text-gray-500">
+                                        <th class="p-2">Data/Hora</th>
+                                        <th class="p-2">Formando</th>
+                                        <th class="p-2">Foto</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rowHtml || '<tr><td colspan="3" class="p-4 text-center text-gray-400">Nenhum horário reservado.</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>`;
+        }
+    </script>
+</body>
+</html>
