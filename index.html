@@ -32,7 +32,7 @@
         <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="text-xl font-bold">Agenda de Visitas</div>
             <div id="nav-links">
-                <button onclick="navigate('index')" class="nav-item px-4 py-2 rounded-lg transition duration-200 bg-blue-700">Agendar</button>
+                <button onclick="navigate('index')" class="nav-item px-4 py-2 rounded-lg transition duration-200 bg-blue-700 font-bold">Agendar Visita</button>
                 <button onclick="checkPassword()" class="nav-item px-4 py-2 rounded-lg transition duration-200">Minha Agenda</button>
             </div>
         </nav>
@@ -41,12 +41,12 @@
     <main id="app-content" class="container mx-auto p-4 md:p-8 flex-grow flex items-center justify-center"> 
         <div class="text-center py-12">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p class="mt-4 text-gray-600">Carregando horários disponíveis...</p>
+            <p class="mt-4 text-gray-600">Abrindo sistema de agendamentos...</p>
         </div>
     </main>
     
     <footer class="bg-gray-200 text-center p-4 mt-8 text-sm text-gray-600">
-        <p>&copy; 2026 Evanio Martins. Todos os direitos reservados. | Status: <span id="status-display" class="font-mono text-xs text-green-600">Agendamentos Abertos</span></p>
+        <p>&copy; 2026 Evanio Martins. Todos os direitos reservados. | Status: <span id="status-display" class="font-mono text-xs text-green-600">Agendamentos Liberados</span></p>
     </footer>
 
     <script type="module">
@@ -71,11 +71,8 @@
         const ADMIN_PASSWORD = '2025';
         const COLLECTION_PATH = 'agendamentos'; 
 
-        // CONFIGURAÇÃO DE DATAS: Hoje (03/02) até Domingo (08/02)
-        const DATAS_FIXAS = [
-            '2026-02-03', '2026-02-04', '2026-02-05', 
-            '2026-02-06', '2026-02-07', '2026-02-08'
-        ];
+        // CONFIGURAÇÃO DE DATAS: De hoje (03/02) até Domingo (08/02)
+        const DATAS_FIXAS =;
 
         window.checkPassword = () => {
             const enteredPassword = window.prompt("Digite a senha de administrador:");
@@ -166,22 +163,25 @@
 
             for (const dataStr of DATAS_FIXAS) {
                 const [ano, mes, dia] = dataStr.split('-').map(Number);
+                const dataBase = new Date(ano, mes - 1, dia);
+                const diaSemana = dataBase.getDay(); // 0=Dom, 6=Sab
+
                 let hInicio = 9;
                 let hFim = 20;
 
-                // Regras Específicas
-                if (dataStr === '2026-02-03') { // Hoje
-                    hInicio = 18;
-                } else {
-                    const d = new Date(ano, mes - 1, dia);
-                    if (d.getDay() === 0 |
+                // REGRAS DE HORÁRIO SOLICITADAS
+                if (dataStr === '2026-02-03') { 
+                    hInicio = 18; // Hoje começa às 18h
+                }
 
-| d.getDay() === 6) { // Sáb ou Dom
-                        hFim = 15;
-                    }
+                if (diaSemana === 0 |
+
+| diaSemana === 6) { 
+                    hFim = 15; // Sábado e Domingo terminam às 15h
                 }
 
                 for (let h = hInicio; h <= hFim; h++) {
+                    // "DE HORA EM HORA" -> Minuto sempre 00
                     const candidata = new Date(ano, mes - 1, dia, h, 0, 0);
                     if (candidata > agora &&!reservados.includes(candidata.getTime())) {
                         disponiveis.push({
@@ -205,19 +205,33 @@
 
             document.getElementById('app-content').innerHTML = `
                 <div class="bg-white bg-opacity-95 p-8 rounded-3xl shadow-2xl w-full max-w-lg border-t-8 border-blue-600"> 
-                    <h1 class="text-3xl font-extrabold text-gray-800 mb-2">Agendar Visita</h1>
-                    <p class="text-gray-600 mb-8">Escolha um horário para apresentação do álbum de formatura.</p>
+                    <h1 class="text-3xl font-extrabold text-gray-800 mb-2 text-center">Agendar Visita</h1>
+                    <p class="text-gray-600 mb-8 text-center">Escolha um horário (disponíveis de hora em hora).</p>
                     <form id="agendamento-form" class="space-y-5">
-                        <input type="text" name="nome_formando" required placeholder="Nome Completo">
-                        <textarea name="endereco" required placeholder="Endereço para a Visita" rows="2"></textarea>
-                        <input type="tel" name="telefone" placeholder="WhatsApp (Opcional)">
-                        <select name="data_hora" required>
-                            <option value="" disabled selected>-- Selecione o Horário --</option>
-                            ${options |
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Nome do Formando</label>
+                            <input type="text" name="nome_formando" required placeholder="Digite o nome completo">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Endereço para a Visita</label>
+                            <textarea name="endereco" required placeholder="Rua, número e bairro" rows="2"></textarea>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase ml-1">WhatsApp para Contato</label>
+                            <input type="tel" name="telefone" placeholder="(00) 00000-0000">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Data e Hora</label>
+                            <select name="data_hora" required>
+                                <option value="" disabled selected>-- Selecione o Horário --</option>
+                                ${options |
 
 | '<option disabled>Nenhum horário disponível</option>'}
-                        </select>
-                        <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition shadow-lg">Confirmar Agendamento</button>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition shadow-lg active:scale-95">
+                            Confirmar Agendamento
+                        </button>
                     </form>
                 </div>`;
             document.getElementById('agendamento-form').addEventListener('submit', salvarAgendamento);
@@ -227,17 +241,17 @@
             const rowHtml = agendamentos.filter(a => a.data_hora >= new Date()).map(a => `
                 <tr class="border-b hover:bg-gray-50 text-xs sm:text-sm">
                     <td class="p-3 font-medium">${formatDateTime(a.data_hora)}</td>
-                    <td class="p-3 font-bold">${a.nome_formando}</td>
-                    <td class="p-3">${a.endereco}</td>
-                    <td class="p-3 text-center"><button onclick="excluirAgendamento('${a.id}')" class="text-red-600 font-bold">EXCLUIR</button></td>
+                    <td class="p-3 font-bold text-blue-800">${a.nome_formando}</td>
+                    <td class="p-3 text-gray-600">${a.endereco}</td>
+                    <td class="p-3 text-center"><button onclick="excluirAgendamento('${a.id}')" class="text-red-600 font-bold hover:underline">EXCLUIR</button></td>
                 </tr>`).join('');
 
             document.getElementById('app-content').innerHTML = `
                 <div class="bg-white bg-opacity-95 p-6 rounded-3xl shadow-2xl w-full overflow-x-auto">
-                    <h1 class="text-2xl font-bold mb-4 text-blue-800">Relatório de Visitas</h1>
+                    <h1 class="text-2xl font-bold mb-4 text-blue-900 border-b pb-2">Relatório de Visitas</h1>
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-blue-50 text-[10px] uppercase text-blue-900">
-                            <tr><th class="p-3">Data/Hora</th><th class="p-3">Formando</th><th class="p-3">Endereço</th><th class="p-3">Ação</th></tr>
+                        <thead class="bg-blue-50 text-[10px] uppercase text-blue-800">
+                            <tr><th class="p-3 text-center">Data/Hora</th><th class="p-3">Formando</th><th class="p-3">Endereço</th><th class="p-3">Ação</th></tr>
                         </thead>
                         <tbody>${rowHtml |
 
@@ -245,15 +259,16 @@
                     </table>
                     <button onclick="navigate('index')" class="mt-6 text-blue-600 font-bold flex items-center gap-2">← Voltar</button>
                 </div>`;
+            window.excluirAgendamento = excluirAgendamento;
         }
 
         function renderSucesso() {
             document.getElementById('app-content').innerHTML = `
                 <div class="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-sm border-t-8 border-green-500">
-                    <div class="text-5xl mb-4">✅</div>
-                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Sucesso!</h2>
-                    <p class="text-gray-600 mb-8">Seu horário foi reservado. Em breve entraremos em contato.</p>
-                    <button onclick="navigate('index')" class="bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold">Voltar</button>
+                    <div class="text-6xl mb-4">✅</div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Agendado!</h2>
+                    <p class="text-gray-600 mb-8">Seu horário foi bloqueado. Entraremos em contato em breve.</p>
+                    <button onclick="navigate('index')" class="bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-blue-700 transition">Início</button>
                 </div>`;
         }
 
