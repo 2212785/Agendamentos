@@ -252,20 +252,52 @@
 
         // CORREÇÃO CRÍTICA DO BOTÃO GERAR PLANILHA
         window.abrirDashboardExcel = () => {
-            const excelModal = document.getElementById('excel-modal');
-            const previewArea = document.getElementById('excel-preview-content');
-            if (!excelModal || !previewArea) return;
+    const excelModal = document.getElementById('excel-modal');
+    const previewArea = document.getElementById('excel-preview-content');
+    if (!excelModal || !previewArea) return;
 
-            excelModal.style.display = 'block';
-            let headHtml = '<table class="w-full text-left text-sm" id="tabela-export-real"><thead class="bg-blue-600 text-white font-black uppercase text-[10px]"><tr><th class="p-3">DATA</th><th class="p-3">CLIENTE</th><th class="p-3">ENDEREÇO</th><th class="p-3">STATUS</th><th class="p-3 text-right">VALOR</th><th class="p-3 text-right">COMISSÃO</th></tr></thead><tbody class="divide-y divide-gray-100">';
-            let bodyHtml = '';
-            
-            dadosCompletos.forEach(item => {
-                bodyHtml += `<tr><td class="p-3 text-xs">${item.data}</td><td class="p-3 font-bold uppercase text-xs">${item.nome_formando}</td><td class="p-3 text-xs text-slate-500">${item.endereco || '-'}</td><td class="p-3 text-xs">${item.resultado.toUpperCase()}</td><td class="p-3 text-right text-xs font-bold text-blue-600">${formatBRL(item.valor)}</td><td class="p-3 text-right font-black text-emerald-600 text-xs">${formatBRL(item.comissao_fix_v3)}</td></tr>`;
-            });
+    if (!dadosCompletos || dadosCompletos.length === 0) {
+        alert("Nenhum dado carregado ainda.");
+        return;
+    }
 
-            previewArea.innerHTML = headHtml + bodyHtml + '</tbody></table>';
-        };
+    excelModal.style.display = 'block';
+
+    let headHtml = `
+        <table class="w-full text-left text-sm" id="tabela-export-real">
+            <thead class="bg-blue-600 text-white font-black uppercase text-[10px]">
+                <tr>
+                    <th class="p-3">DATA</th>
+                    <th class="p-3">CLIENTE</th>
+                    <th class="p-3">ENDEREÇO</th>
+                    <th class="p-3">STATUS</th>
+                    <th class="p-3 text-right">VALOR</th>
+                    <th class="p-3 text-right">COMISSÃO</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+    `;
+
+    let bodyHtml = '';
+
+    dadosCompletos.forEach(item => {
+        const status = (item.resultado || "Pendente").toUpperCase();
+
+        bodyHtml += `
+            <tr>
+                <td class="p-3 text-xs">${item.data || "-"}</td>
+                <td class="p-3 font-bold uppercase text-xs">${item.nome_formando || "-"}</td>
+                <td class="p-3 text-xs text-slate-500">${item.endereco || "-"}</td>
+                <td class="p-3 text-xs">${status}</td>
+                <td class="p-3 text-right text-xs font-bold text-blue-600">${formatBRL(item.valor || 0)}</td>
+                <td class="p-3 text-right font-black text-emerald-600 text-xs">${formatBRL(item.comissao_fix_v3 || 0)}</td>
+            </tr>
+        `;
+    });
+
+    previewArea.innerHTML = headHtml + bodyHtml + '</tbody></table>';
+};
+
 
         window.copiarTabelaExcel = async () => {
             const el = document.getElementById('tabela-export-real');
@@ -316,3 +348,4 @@
     </script>
 </body>
 </html>
+
