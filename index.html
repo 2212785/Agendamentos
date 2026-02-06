@@ -3,25 +3,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gestão de Vendas e Agendamentos</title>
+    <title>Gestão de Vendas e Comissões</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-image: url('https://images.unsplash.com/photo-1523050853063-9158946122a2?q=80&w=2070&auto=format&fit=crop'); 
-            background-size: cover; 
-            background-position: center; 
-            background-attachment: fixed;
-        }
-        #success-modal, #admin-modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-        }
+        body { font-family: 'Inter', sans-serif; background-image: url('https://images.unsplash.com/photo-1523050853063-9158946122a2?q=80&w=2070&auto=format&fit=crop'); background-size: cover; background-position: center; background-attachment: fixed; }
+        #success-modal, #admin-modal { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 9999; align-items: center; justify-content: center; }
         .day-btn.active { background-color: #2563eb; color: white; border-color: #1e40af; }
     </style>
 </head>
@@ -31,8 +17,7 @@
         <div class="bg-white p-8 rounded-3xl shadow-2xl text-center max-w-sm mx-4 border-t-8 border-green-500">
             <div class="text-green-500 text-6xl mb-4">✅</div>
             <h2 class="text-2xl font-extrabold text-gray-800 mb-2">Sucesso!</h2>
-            <p class="text-gray-600 font-medium text-lg">Agendamento realizado com sucesso!</p>
-            <p class="text-gray-400 text-xs mt-6 italic">Esta mensagem fechará em 10 segundos...</p>
+            <p class="text-gray-600 font-medium text-lg">Agendamento realizado!</p>
         </div>
     </div>
 
@@ -41,43 +26,49 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 border-b pb-2 gap-2">
                 <h2 class="text-xl font-bold text-gray-800">Painel Administrativo</h2>
                 <div class="flex flex-wrap gap-2">
-                    <button onclick="lancarAvulso()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition uppercase">Lançamento Avulso</button>
-                    <button onclick="copiarRelatorio()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition uppercase">Relatório WhatsApp</button>
-                    <button onclick="fecharAdmin()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg font-bold text-xs uppercase">Fechar</button>
+                    <button onclick="lancarAvulso()" class="bg-blue-600 text-white px-3 py-2 rounded-lg font-bold text-xs uppercase">Lançamento Avulso</button>
+                    <button onclick="copiarRelatorio()" class="bg-green-600 text-white px-3 py-2 rounded-lg font-bold text-xs uppercase">Relatório WhatsApp</button>
+                    <button onclick="fecharAdmin()" class="bg-gray-200 px-3 py-2 rounded-lg font-bold text-xs uppercase">Fechar</button>
                 </div>
             </div>
             
             <div id="resumo-financeiro" class="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-6"></div>
-            <div id="admin-content" class="text-sm overflow-x-auto border rounded-xl bg-gray-50"></div>
+
+            <h3 class="font-bold text-gray-700 mb-2 uppercase text-sm">Lista de Atendimentos</h3>
+            <div id="admin-content" class="text-sm overflow-x-auto border rounded-xl bg-gray-50 mb-6"></div>
+
+            <h3 class="font-bold text-gray-700 mb-2 uppercase text-sm">Tabela de Comissionamento</h3>
+            <div id="comissao-content" class="text-sm overflow-x-auto border rounded-xl bg-blue-50 p-4"></div>
+            
+            <div id="fechamento-final" class="mt-4 p-4 rounded-xl border-2"></div>
         </div>
     </div>
 
     <header class="bg-blue-600 text-white shadow-lg">
         <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="text-xl font-bold">Portal do Formando</div>
-            <button onclick="acessoAdmin()" class="text-xs bg-blue-700 hover:bg-blue-800 px-3 py-1 rounded-lg transition font-bold uppercase">Acesso ADM</button>
+            <button onclick="acessoAdmin()" class="text-xs bg-blue-700 px-3 py-1 rounded-lg font-bold uppercase">Acesso ADM</button>
         </nav>
     </header>
 
     <main class="container mx-auto p-4 flex-grow flex items-center justify-center">
-        <div class="bg-white p-6 md:p-10 rounded-2xl shadow-2xl border-t-8 border-blue-600 w-full max-w-md">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center">Reserve seu Horário</h2>
+        <div class="bg-white p-6 rounded-2xl shadow-2xl border-t-8 border-blue-600 w-full max-w-md">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Agende sua Visita</h2>
             <form id="form-agendamento" class="space-y-4">
-                <div class="grid grid-cols-3 gap-2 mb-4" id="day-selector">
-                    <button type="button" data-date="2026-02-04" class="day-btn border-2 border-blue-100 p-2 rounded-xl text-xs font-bold">04/02<br>Qua</button>
-                    <button type="button" data-date="2026-02-05" class="day-btn border-2 border-blue-100 p-2 rounded-xl text-xs font-bold">05/02<br>Qui</button>
-                    <button type="button" data-date="2026-02-06" class="day-btn border-2 border-blue-100 p-2 rounded-xl text-xs font-bold">06/02<br>Sex</button>
-                    <button type="button" data-date="2026-02-07" class="day-btn border-2 border-blue-100 p-2 rounded-xl text-xs font-bold">07/02<br>Sáb</button>
-                    <button type="button" data-date="2026-02-08" class="day-btn border-2 border-blue-100 p-2 rounded-xl text-xs font-bold">08/02<br>Dom</button>
+                <div class="grid grid-cols-3 gap-2" id="day-selector">
+                    <button type="button" data-date="2026-02-04" class="day-btn border-2 p-2 rounded-xl text-xs font-bold">04/02<br>Qua</button>
+                    <button type="button" data-date="2026-02-05" class="day-btn border-2 p-2 rounded-xl text-xs font-bold">05/02<br>Qui</button>
+                    <button type="button" data-date="2026-02-06" class="day-btn border-2 p-2 rounded-xl text-xs font-bold">06/02<br>Sex</button>
+                    <button type="button" data-date="2026-02-07" class="day-btn border-2 p-2 rounded-xl text-xs font-bold">07/02<br>Sáb</button>
+                    <button type="button" data-date="2026-02-08" class="day-btn border-2 p-2 rounded-xl text-xs font-bold">08/02<br>Dom</button>
                 </div>
                 <input type="hidden" id="data-selecionada" required>
-
-                <div><label class="block text-sm font-semibold text-gray-700 mb-1">Nome Completo</label><input type="text" id="nome" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></div>
-                <div><label class="block text-sm font-semibold text-gray-700 mb-1">WhatsApp</label><input type="tel" id="telefone" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></div>
-                <div><label class="block text-sm font-semibold text-gray-700 mb-1">Cidade</label><input type="text" id="cidade" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></div>
-                <div><label class="block text-sm font-semibold text-gray-700 mb-1">Horário Disponível</label><select id="horario" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-white"><option value="">Selecione o dia acima</option></select></div>
-                <div><label class="block text-sm font-semibold text-gray-700 mb-1">Endereço de Visita</label><textarea id="endereco" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" rows="2"></textarea></div>
-                <button type="submit" class="w-full bg-blue-600 text-white font-extrabold py-4 rounded-xl hover:bg-blue-700 transition uppercase shadow-lg active:scale-95">Confirmar Agendamento</button>
+                <input type="text" id="nome" required placeholder="Nome Completo" class="w-full p-3 border rounded-xl">
+                <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full p-3 border rounded-xl">
+                <input type="text" id="cidade" required placeholder="Cidade" class="w-full p-3 border rounded-xl">
+                <select id="horario" required class="w-full p-3 border rounded-xl bg-white"><option value="">Escolha o dia</option></select>
+                <textarea id="endereco" required placeholder="Endereço Completo" class="w-full p-3 border rounded-xl" rows="2"></textarea>
+                <button type="submit" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg uppercase">Confirmar</button>
             </form>
         </div>
     </main>
@@ -101,6 +92,7 @@
         const COLLECTION_PATH = 'agendamentos';
         const AVULSO_PATH = 'avulsos';
 
+        // Interface do usuário
         const dayButtons = document.querySelectorAll('.day-btn');
         const hiddenDataInput = document.getElementById('data-selecionada');
         const selectHorario = document.getElementById('horario');
@@ -112,159 +104,180 @@
                 btn.classList.add('active');
                 const dataVal = btn.getAttribute('data-date');
                 hiddenDataInput.value = dataVal;
-                selectHorario.innerHTML = '<option value="">Consultando...</option>';
+                selectHorario.innerHTML = '<option value="">...</option>';
                 const dataObj = new Date(dataVal + 'T00:00:00');
-                const diaSemana = dataObj.getDay(); 
-                let inicioHora = 9, fimHora = (diaSemana === 0 || diaSemana === 6) ? 15 : 20;
+                let inicio = 9, fim = (dataObj.getDay() === 0 || dataObj.getDay() === 6) ? 15 : 20;
                 let ocupados = [];
-                try { const snapshot = await get(ref(db, `${COLLECTION_PATH}/${dataVal}`)); if (snapshot.exists()) ocupados = Object.keys(snapshot.val()); } catch (e) {}
-                selectHorario.innerHTML = '<option value="">Escolha um horário</option>';
-                const agora = new Date(), limiteCarencia = new Date(agora.getTime() + (6 * 60 * 60 * 1000));
-                let cursor = new Date(`${dataVal}T${inicioHora.toString().padStart(2, '0')}:00:00`);
-                let limiteFinal = new Date(`${dataVal}T${fimHora.toString().padStart(2, '0')}:00:00`);
-                while (cursor <= limiteFinal) {
-                    const horaF = cursor.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                    if (!ocupados.includes(horaF.replace(':','-')) && cursor > limiteCarencia) {
-                        const opt = document.createElement('option');
-                        opt.value = horaF; opt.textContent = horaF; selectHorario.appendChild(opt);
+                try { const snap = await get(ref(db, `${COLLECTION_PATH}/${dataVal}`)); if (snap.exists()) ocupados = Object.keys(snap.val()); } catch(e){}
+                
+                selectHorario.innerHTML = '<option value="">Horário</option>';
+                let cursor = new Date(`${dataVal}T09:00:00`);
+                let final = new Date(`${dataVal}T${fim}:00:00`);
+                while(cursor <= final){
+                    let hF = cursor.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+                    if(!ocupados.includes(hF.replace(':','-'))) {
+                        let opt = document.createElement('option'); opt.value = hF; opt.textContent = hF; selectHorario.appendChild(opt);
                     }
-                    cursor.setMinutes(cursor.getMinutes() + 30);
+                    cursor.setMinutes(cursor.getMinutes()+30);
                 }
             });
         });
 
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const data = hiddenDataInput.value, horario = selectHorario.value;
-            try {
-                const path = `${COLLECTION_PATH}/${data}/${horario.replace(':', '-')}`;
-                await set(ref(db, path), {
-                    data, horario, nome_formando: document.getElementById('nome').value,
-                    telefone: document.getElementById('telefone').value, endereco: document.getElementById('endereco').value,
-                    cidade: document.getElementById('cidade').value,
-                    resultado: "", pagamento: "", valor: 0, entrada: 0, forma_entrada: ""
-                });
-                document.getElementById('success-modal').style.display = 'flex';
-                e.target.reset();
-                setTimeout(() => document.getElementById('success-modal').style.display = 'none', 10000);
-            } catch (err) { alert("Erro ao salvar."); }
+            const data = hiddenDataInput.value, hor = selectHorario.value;
+            await set(ref(db, `${COLLECTION_PATH}/${data}/${hor.replace(':','-')}`), {
+                data, horario: hor, nome_formando: document.getElementById('nome').value,
+                telefone: document.getElementById('telefone').value, endereco: document.getElementById('endereco').value,
+                cidade: document.getElementById('cidade').value, resultado: "", comissao: 0
+            });
+            document.getElementById('success-modal').style.display='flex';
+            setTimeout(()=>location.reload(), 3000);
         });
 
-        window.acessoAdmin = async () => { if (prompt("Senha ADM:") === "2025") carregarRelatorio(); };
+        window.acessoAdmin = () => { if(prompt("Senha:")==="2025") carregarRelatorio(); };
 
         let resumoAtual = {};
-        let ultimaCidade = "";
+        let cidadeRel = "";
 
         async function carregarRelatorio() {
             modalAdmin.style.display = 'flex';
-            document.getElementById('admin-content').innerHTML = "<p class='p-4'>Carregando...</p>";
-            const [snapAgendados, snapAvulsos] = await Promise.all([get(ref(db, COLLECTION_PATH)), get(ref(db, AVULSO_PATH))]);
-            const agendados = snapAgendados.val() || {}, avulsos = snapAvulsos.val() || {};
-            let t = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, totalVendas: 0, vale: 0 };
+            const [sAg, sAv] = await Promise.all([get(ref(db, COLLECTION_PATH)), get(ref(db, AVULSO_PATH))]);
+            const ag = sAg.val() || {}, av = sAv.val() || {};
+            let t = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, totalVendas: 0, vale: 0, totalComissao: 0 };
             const lista = [];
-            for(let d in agendados) for(let h in agendados[d]) lista.push({...agendados[d][h], id: h, tipo: 'agenda'});
-            for(let id in avulsos) lista.push({...avulsos[id], id: id, tipo: 'avulso'});
-            lista.sort((a,b) => new Date(a.data) - new Date(b.data));
-
-            let html = '<table class="w-full border-collapse text-[11px] md:text-xs text-left"><thead><tr class="bg-gray-200 text-gray-700 uppercase"><th class="p-3 border">Data</th><th class="p-3 border">Formando / Cidade</th><th class="p-3 border">Endereço</th><th class="p-3 border">Status/Valor</th><th class="p-3 border text-center">Ações</th></tr></thead><tbody class="bg-white">';
+            for(let d in ag) for(let h in ag[d]) lista.push({...ag[d][h], id:h, tipo:'agenda'});
+            for(let id in av) lista.push({...av[id], id:id, tipo:'avulso'});
+            
+            let htmlTable = '<table class="w-full text-left"><thead><tr class="bg-gray-200"> <th class="p-2 border">Data</th><th class="p-2 border">Cliente</th><th class="p-2 border">Endereço</th><th class="p-2 border">Status</th><th class="p-2 border">Ações</th></tr></thead><tbody>';
+            let htmlComissao = '<table class="w-full text-left bg-white"><thead><tr class="bg-blue-600 text-white"><th class="p-2">Cliente</th><th class="p-2">Forma Pgto</th><th class="p-2">Valor</th><th class="p-2">Comissão</th></tr></thead><tbody>';
 
             lista.forEach(item => {
-                const val = parseFloat(item.valor || 0), ent = parseFloat(item.entrada || 0);
-                if(item.cidade) ultimaCidade = item.cidade;
+                const vTotal = parseFloat(item.valor || 0), vEnt = parseFloat(item.entrada || 0);
+                let comissaoVenda = 0;
+
                 if (item.resultado === "Venda") {
-                    t.vendidos++; t.totalVendas += val;
-                    if (item.pagamento === "Dinheiro") { t.dinheiro += val; t.vale += val; }
-                    else if (item.pagamento === "Pix") { t.pix += val; t.vale += val; }
-                    else if (item.pagamento === "Cartão Débito") t.debito += val;
-                    else if (item.pagamento === "Cartão Crédito") t.credito += val;
-                    else if (item.pagamento === "Boleto") t.boleto += val;
-                    if (ent > 0) {
-                        if (item.forma_entrada === "Dinheiro") { t.dinheiro += ent; t.vale += ent; }
-                        else if (item.forma_entrada === "Pix") { t.pix += ent; t.vale += ent; }
+                    t.vendidos++; t.totalVendas += vTotal;
+                    if(item.cidade) cidadeRel = item.cidade;
+
+                    // Cálculo de Comissões e Vales
+                    if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(item.pagamento)) {
+                        comissaoVenda = vTotal * 0.12;
+                        if(item.pagamento === "Dinheiro") { t.dinheiro += vTotal; t.vale += vTotal; }
+                        if(item.pagamento === "Pix") { t.pix += vTotal; t.vale += vTotal; }
+                        if(item.pagamento === "Cartão Débito") t.debito += vTotal;
+                        if(item.pagamento === "Cartão Crédito") t.credito += vTotal;
+                    } else if (item.pagamento === "Boleto") {
+                        t.boleto += (vTotal - vEnt);
+                        const restrito = item.restricao === "Sim";
+                        const percBoleto = restrito ? 0.05 : 0.08;
+                        
+                        // Comissão da Entrada (sempre 12% se for dinheiro/pix)
+                        const comEntrada = vEnt * 0.12;
+                        const comResto = (vTotal - vEnt) * percBoleto;
+                        comissaoVenda = comEntrada + comResto;
+
+                        if(item.forma_entrada === "Dinheiro") { t.dinheiro += vEnt; t.vale += vEnt; }
+                        if(item.forma_entrada === "Pix") { t.pix += vEnt; t.vale += vEnt; }
                     }
+                    t.totalComissao += comissaoVenda;
+
+                    htmlComissao += `<tr class="border-b">
+                        <td class="p-2">${item.nome_formando}</td>
+                        <td class="p-2 text-[10px]">${item.pagamento}${item.restricao ? ' (Restr: '+item.restricao+')' : ''}</td>
+                        <td class="p-2 font-bold">R$ ${vTotal.toFixed(2)}</td>
+                        <td class="p-2 text-green-700 font-bold">R$ ${comissaoVenda.toFixed(2)}</td>
+                    </tr>`;
                 } else if (item.resultado === "NQ") t.nq++;
 
-                html += `<tr class="hover:bg-gray-50 border-b">
-                    <td class="p-3 border font-bold">${item.data.split('-').reverse().join('/')}<br>${item.horario || 'Avulso'}</td>
-                    <td class="p-3 border uppercase font-semibold">${item.nome_formando}<br><span class="text-blue-600 text-[9px] font-bold">${item.cidade || ''}</span></td>
-                    <td class="p-3 border text-gray-600">${item.endereco || 'Venda Direta'}</td>
-                    <td class="p-3 border text-center font-bold">
-                        <span class="${item.resultado === 'Venda' ? 'text-green-600' : 'text-red-500'}">${item.resultado || 'Pendente'}</span><br>
-                        ${val > 0 ? 'R$ ' + val.toFixed(2) : ''}
-                    </td>
-                    <td class="p-3 border text-center space-y-1">
-                        ${item.tipo === 'agenda' ? `<button onclick="registrarResultadoVenda('${item.data}', '${item.id}')" class="bg-green-600 text-white px-2 py-1 rounded text-[10px] w-full uppercase font-bold">Resultado</button>` : ''}
-                        <button onclick="excluirRegistro('${item.tipo}', '${item.data}', '${item.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-[10px] w-full uppercase font-bold">Excluir</button>
+                htmlTable += `<tr class="border-b">
+                    <td class="p-2 border font-bold text-[10px]">${item.data.split('-').reverse().join('/')}<br>${item.horario}</td>
+                    <td class="p-2 border uppercase">${item.nome_formando}<br><span class="text-blue-600 text-[9px] font-bold">${item.cidade || ''}</span></td>
+                    <td class="p-2 border text-gray-500 text-[10px]">${item.endereco || 'Avulso'}</td>
+                    <td class="p-2 border text-center font-bold text-[10px]">${item.resultado || 'Pendente'}<br>R$ ${vTotal.toFixed(2)}</td>
+                    <td class="p-2 border text-center space-y-1">
+                        ${item.tipo==='agenda'?`<button onclick="registrarVenda('${item.data}','${item.id}')" class="bg-green-600 text-white p-1 rounded text-[9px] w-full font-bold uppercase">Resultado</button>`:''}
+                        <button onclick="excluirRegistro('${item.tipo}','${item.data}','${item.id}')" class="bg-red-500 text-white p-1 rounded text-[9px] w-full font-bold uppercase">Excluir</button>
                     </td>
                 </tr>`;
             });
 
             resumoAtual = t;
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="bg-white p-2 border rounded shadow-sm text-center"><p class="text-[8px] font-bold uppercase">Vend/NQ</p><p class="text-sm font-black">${t.vendidos}/${t.nq}</p></div>
-                <div class="bg-white p-2 border rounded shadow-sm text-center text-green-600"><p class="text-[8px] font-bold uppercase">Din/Pix</p><p class="text-[10px] font-bold">R$${t.dinheiro.toFixed(0)}/R$${t.pix.toFixed(0)}</p></div>
-                <div class="bg-white p-2 border rounded shadow-sm text-center text-blue-600"><p class="text-[8px] font-bold uppercase">Cartão D/C</p><p class="text-[10px] font-bold">R$${t.debito.toFixed(0)}/R$${t.credito.toFixed(0)}</p></div>
-                <div class="bg-white p-2 border rounded shadow-sm text-center text-orange-600"><p class="text-[8px] font-bold uppercase">Boleto</p><p class="text-[10px] font-bold">R$${t.boleto.toFixed(0)}</p></div>
-                <div class="bg-blue-600 p-2 rounded shadow text-center text-white"><p class="text-[8px] font-bold uppercase">Total Vendas</p><p class="text-[10px] font-black">R$${t.totalVendas.toFixed(2)}</p></div>
-                <div class="bg-yellow-400 p-2 rounded shadow text-center text-gray-900"><p class="text-[8px] font-bold uppercase">Vale</p><p class="text-[10px] font-black">R$${t.vale.toFixed(2)}</p></div>
+                <div class="bg-white p-2 border rounded text-center"><p class="text-[8px] font-bold">VEND/NQ</p><p class="text-sm font-black">${t.vendidos}/${t.nq}</p></div>
+                <div class="bg-white p-2 border rounded text-center text-green-600"><p class="text-[8px] font-bold">DINH/PIX</p><p class="text-[10px] font-bold">R$${t.dinheiro+t.pix}</p></div>
+                <div class="bg-white p-2 border rounded text-center text-blue-600"><p class="text-[8px] font-bold">CARTÕES</p><p class="text-[10px] font-bold">D$${t.debito}/C$${t.credito}</p></div>
+                <div class="bg-white p-2 border rounded text-center text-orange-600"><p class="text-[8px] font-bold">BOLETO</p><p class="text-[10px] font-bold">R$${t.boleto}</p></div>
+                <div class="bg-blue-600 p-2 rounded text-center text-white"><p class="text-[8px] font-bold">TOTAL VENDAS</p><p class="text-[10px] font-black">R$${t.totalVendas.toFixed(2)}</p></div>
+                <div class="bg-yellow-400 p-2 rounded text-center text-gray-900"><p class="text-[8px] font-bold">VALE</p><p class="text-[10px] font-black">R$${t.vale.toFixed(2)}</p></div>
             `;
-            document.getElementById('admin-content').innerHTML = html + '</tbody></table>';
+            document.getElementById('admin-content').innerHTML = htmlTable + '</tbody></table>';
+            document.getElementById('comissao-content').innerHTML = htmlComissao + '</tbody></table>';
+            
+            const saldoFinal = t.totalComissao - t.vale;
+            const statusFechamento = saldoFinal >= 0 ? 
+                `<p class="text-lg font-black text-green-700 uppercase italic">Total a Receber: R$ ${saldoFinal.toFixed(2)}</p>` : 
+                `<p class="text-lg font-black text-red-600 uppercase italic">Devolver à Empresa: R$ ${Math.abs(saldoFinal).toFixed(2)}</p>`;
+
+            document.getElementById('fechamento-final').className = `mt-4 p-4 rounded-xl border-2 ${saldoFinal >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`;
+            document.getElementById('fechamento-final').innerHTML = `
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 uppercase">Total de Comissões Geradas: R$ ${t.totalComissao.toFixed(2)}</p>
+                        <p class="text-xs font-bold text-gray-500 uppercase">Total de Vales (Dinheiro/Pix): R$ ${t.vale.toFixed(2)}</p>
+                    </div>
+                    <div class="text-right">${statusFechamento}</div>
+                </div>
+            `;
         }
 
         window.lancarAvulso = async () => {
-            const nome = prompt("Nome do Cliente?"); if (!nome) return;
-            const cidade = prompt("Cidade?");
-            const res = prompt("1-VENDA | 2-NQ");
-            let d = { nome_formando: nome, cidade: cidade, data: new Date().toISOString().split('T')[0], horario: "Avulso", resultado: "", pagamento: "", valor: 0, entrada: 0, forma_entrada: "" };
-            if (res === "1") {
-                const pag = prompt("1-Dinheiro | 2-Pix | 3-Débito | 4-Crédito | 5-Boleto");
-                const f = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito", "4": "Cartão Crédito", "5": "Boleto" };
-                if (f[pag]) {
-                    d.resultado = "Venda"; d.pagamento = f[pag]; d.valor = parseFloat(prompt("Valor TOTAL?") || 0);
-                    if (f[pag] === "Boleto" && prompt("1-Com Entrada | 2-Sem") === "1") {
-                        d.entrada = parseFloat(prompt("Valor Entrada?") || 0);
-                        d.forma_entrada = prompt("1-Din | 2-Pix") === "1" ? "Dinheiro" : "Pix";
+            const nome = prompt("Nome?"); if(!nome) return;
+            const cid = prompt("Cidade?");
+            const res = prompt("1-Venda | 2-NQ");
+            let d = { nome_formando:nome, cidade:cid, data:new Date().toISOString().split('T')[0], horario:"Avulso", resultado:"", pagamento:"", valor:0, entrada:0, forma_entrada:"", restricao:"" };
+            if(res==="1") {
+                const fP = prompt("1-Din | 2-Pix | 3-Déb | 4-Créd | 5-Bol");
+                const formas = {"1":"Dinheiro","2":"Pix","3":"Cartão Débito","4":"Cartão Crédito","5":"Boleto"};
+                if(formas[fP]) {
+                    d.resultado="Venda"; d.pagamento=formas[fP]; d.valor=parseFloat(prompt("Total?")||0);
+                    if(fP==="5") {
+                        d.restricao = prompt("Restrição SPC/Serasa? 1-Sim | 2-Não")==="1"?"Sim":"Não";
+                        if(prompt("Entrada? 1-Sim | 2-Não")==="1") { d.entrada=parseFloat(prompt("Valor?")||0); d.forma_entrada=prompt("1-Din | 2-Pix")==="1"?"Dinheiro":"Pix"; }
                     }
                 }
-            } else { d.resultado = "NQ"; }
+            } else d.resultado="NQ";
             await push(ref(db, AVULSO_PATH), d); carregarRelatorio();
+        };
+
+        window.registrarVenda = async (data, id) => {
+            const res = prompt("1-VENDA | 2-NQ");
+            if(res==="1") {
+                const fP = prompt("1-Din | 2-Pix | 3-Déb | 4-Créd | 5-Bol");
+                const formas = {"1":"Dinheiro","2":"Pix","3":"Cartão Débito","4":"Cartão Crédito","5":"Boleto"};
+                if(formas[fP]) {
+                    const total = prompt("Total?");
+                    let rest = "", vE = 0, fE = "";
+                    if(fP==="5") {
+                        rest = prompt("Com Restrição? 1-Sim | 2-Não")==="1"?"Sim":"Não";
+                        if(prompt("Entrada? 1-Sim | 2-Não")==="1") { vE=prompt("Valor?"); fE=prompt("1-Din | 2-Pix")==="1"?"Dinheiro":"Pix"; }
+                    }
+                    await update(ref(db, `${COLLECTION_PATH}/${data}/${id}`), { resultado:"Venda", pagamento:formas[fP], valor:parseFloat(total), entrada:parseFloat(vE), forma_entrada:fE, restricao:rest });
+                    carregarRelatorio();
+                }
+            } else await update(ref(db, `${COLLECTION_PATH}/${data}/${id}`), { resultado:"NQ" }); carregarRelatorio();
         };
 
         window.copiarRelatorio = () => {
             const t = resumoAtual;
-            const cidadeInf = prompt("Nome da cidade para o relatório:", ultimaCidade);
-            const msg = `**${cidadeInf}**\nVendidos = ${String(t.vendidos).padStart(2, '0')}\nNQ = ${String(t.nq).padStart(2, '0')}\nDinheiro = R$ ${t.dinheiro.toFixed(2)}\nPix = R$ ${t.pix.toFixed(2)}\nCartão Débito = R$ ${t.debito.toFixed(2)}\nBoleto = R$ ${t.boleto.toFixed(2)}\nCartão Crédito = R$ ${t.credito.toFixed(2)}\nTotal de vendas = R$ ${t.totalVendas.toFixed(2)}\nVale = R$ ${t.vale.toFixed(2)}`;
+            const cid = prompt("Cidade:", ultimaCidade);
+            const msg = `**${cid}**\nVendidos = ${String(t.vendidos).padStart(2,'0')}\nNQ = ${String(t.nq).padStart(2,'0')}\nDinheiro = R$ ${t.dinheiro.toFixed(2)}\nPix = R$ ${t.pix.toFixed(2)}\nCartão Débito = R$ ${t.debito.toFixed(2)}\nBoleto = R$ ${t.boleto.toFixed(2)}\nCartão Crédito = R$ ${t.credito.toFixed(2)}\nTotal de vendas = R$ ${t.totalVendas.toFixed(2)}\nVale = R$ ${t.vale.toFixed(2)}`;
             const el = document.createElement('textarea'); el.value = msg; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-            alert("Relatório de " + cidadeInf + " copiado!");
+            alert("Copiado!");
         };
 
-        window.registrarResultadoVenda = async (data, horaId) => {
-            const res = prompt("1-VENDA | 2-NQ");
-            if (res === "1") {
-                const pag = prompt("1-Dinheiro | 2-Pix | 3-Débito | 4-Crédito | 5-Boleto");
-                const f = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito", "4": "Cartão Crédito", "5": "Boleto" };
-                if (f[pag]) {
-                    const total = prompt("Valor TOTAL?");
-                    let vE = 0, fE = "";
-                    if (f[pag] === "Boleto") {
-                        if (prompt("1-Com Entrada | 2-Sem") === "1") {
-                            vE = prompt("Valor Entrada?"); fE = prompt("1-Din | 2-Pix") === "1" ? "Dinheiro" : "Pix";
-                        }
-                    }
-                    await update(ref(db, `${COLLECTION_PATH}/${data}/${horaId}`), { 
-                        resultado: "Venda", pagamento: f[pag], valor: parseFloat(total || 0), entrada: parseFloat(vE || 0), forma_entrada: fE
-                    });
-                    carregarRelatorio();
-                }
-            } else if (res === "2") { await update(ref(db, `${COLLECTION_PATH}/${data}/${horaId}`), { resultado: "NQ", pagamento: "", valor: 0, entrada: 0 }); carregarRelatorio(); }
-        };
-
-        window.excluirRegistro = async (tipo, data, id) => {
-            if (confirm("Excluir?")) { const path = tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`; await remove(ref(db, path)); carregarRelatorio(); }
-        };
-
+        window.excluirRegistro = async (tipo, data, id) => { if(confirm("Excluir?")) { const path = tipo==='agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`; await remove(ref(db, path)); carregarRelatorio(); } };
         window.fecharAdmin = () => modalAdmin.style.display = 'none';
     </script>
 </body>
 </html>
-    
