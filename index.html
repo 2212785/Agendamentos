@@ -17,7 +17,8 @@
         <div class="bg-white p-8 rounded-3xl shadow-2xl text-center max-w-sm mx-4 border-t-8 border-green-500">
             <div class="text-green-500 text-6xl mb-4">✅</div>
             <h2 class="text-2xl font-extrabold text-gray-800 mb-2">Sucesso!</h2>
-            <p class="text-gray-600 font-medium text-lg">Operação realizada!</p>
+            <p class="text-gray-600 font-medium text-lg">Agendamento realizado!</p>
+            <p class="text-blue-600 text-sm mt-4 font-bold italic">Enviando confirmação via WhatsApp...</p>
         </div>
     </div>
 
@@ -33,13 +34,10 @@
             </div>
             
             <div id="resumo-financeiro" class="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-6"></div>
-
             <h3 class="font-bold text-gray-700 mb-2 uppercase text-xs">Controle de Atendimentos</h3>
             <div id="admin-content" class="text-sm overflow-x-auto border rounded-xl bg-gray-50 mb-6 shadow-inner"></div>
-
             <h3 class="font-bold text-gray-700 mb-2 uppercase text-xs">Tabela de Comissionamento</h3>
             <div id="comissao-content" class="text-sm overflow-x-auto border rounded-xl bg-blue-50 p-4 shadow-inner"></div>
-            
             <div id="fechamento-final" class="mt-4 p-4 rounded-xl border-2 shadow-lg"></div>
         </div>
     </div>
@@ -63,12 +61,12 @@
                     <button type="button" data-date="2026-02-08" class="day-btn border-2 p-2 rounded-xl text-xs font-bold transition">08/02<br>Dom</button>
                 </div>
                 <input type="hidden" id="data-selecionada" required>
-                <input type="text" id="nome" required placeholder="Nome Completo" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
-                <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
-                <input type="text" id="cidade" required placeholder="Cidade" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
-                <select id="horario" required class="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none"><option value="">Escolha o dia acima</option></select>
-                <textarea id="endereco" required placeholder="Endereço de Visita" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" rows="2"></textarea>
-                <button type="submit" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg uppercase transition active:scale-95">Confirmar Agendamento</button>
+                <input type="text" id="nome" required placeholder="Nome Completo" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="tel" id="telefone" required placeholder="Seu WhatsApp" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="cidade" required placeholder="Cidade" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                <select id="horario" required class="w-full p-3 border rounded-xl bg-white outline-none focus:ring-2 focus:ring-blue-500"><option value="">Escolha o dia acima</option></select>
+                <textarea id="endereco" required placeholder="Endereço Completo" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500" rows="2"></textarea>
+                <button type="submit" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg uppercase transition active:scale-95">Finalizar Agendamento</button>
             </form>
         </div>
     </main>
@@ -91,6 +89,9 @@
         const db = getDatabase(app);
         const COLLECTION_PATH = 'agendamentos';
         const AVULSO_PATH = 'avulsos';
+
+        // --- INSIRA SEU WHATSAPP AQUI (Somente números com DDD) ---
+        const MEU_WHATSAPP = "5516993291674"; 
 
         const dayButtons = document.querySelectorAll('.day-btn');
         const hiddenDataInput = document.getElementById('data-selecionada');
@@ -122,19 +123,29 @@
 
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const data = hiddenDataInput.value, hor = selectHorario.value;
-            await set(ref(db, `${COLLECTION_PATH}/${data}/${hor.replace(':','-')}`), {
-                data, horario: hor, nome_formando: document.getElementById('nome').value,
-                telefone: document.getElementById('telefone').value, endereco: document.getElementById('endereco').value,
-                cidade: document.getElementById('cidade').value, resultado: ""
-            });
-            document.getElementById('success-modal').style.display='flex';
-            setTimeout(()=>location.reload(), 2000);
+            const data = hiddenDataInput.value, hor = selectHorario.value, nome = document.getElementById('nome').value, cid = document.getElementById('cidade').value, end = document.getElementById('endereco').value;
+            
+            try {
+                await set(ref(db, `${COLLECTION_PATH}/${data}/${hor.replace(':','-')}`), {
+                    data, horario: hor, nome_formando: nome, telefone: document.getElementById('telefone').value, endereco: end, cidade: cid, resultado: ""
+                });
+                
+                document.getElementById('success-modal').style.display='flex';
+
+                // Disparo de notificação via WhatsApp
+                const msgZap = window.encodeURIComponent(`Olá! Gostaria de confirmar meu agendamento:\n\n*Nome:* ${nome}\n*Data:* ${data.split('-').reverse().join('/')}\n*Horário:* ${hor}\n*Cidade:* ${cid}\n*Endereço:* ${end}`);
+                setTimeout(() => {
+                    window.open(`https://wa.me/${MEU_WHATSAPP}?text=${msgZap}`, '_blank');
+                    location.reload();
+                }, 2500);
+
+            } catch (err) { alert("Erro ao salvar."); }
         });
 
         window.acessoAdmin = () => { if(prompt("Senha:")==="2025") carregarRelatorio(); };
 
         let resumoAtual = {};
+        let ultimaCidade = "";
 
         async function carregarRelatorio() {
             modalAdmin.style.display = 'flex';
@@ -142,7 +153,6 @@
             const ag = sAg.val() || {}, av = sAv.val() || {};
             let t = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, totalVendas: 0, vale: 0, totalComissao: 0 };
             const lista = [];
-
             for(let d in ag) for(let h in ag[d]) lista.push({...ag[d][h], id:h, tipo:'agenda'});
             for(let id in av) lista.push({...av[id], id:id, tipo:'avulso'});
             lista.sort((a,b) => new Date(a.data) - new Date(b.data));
@@ -153,6 +163,7 @@
             lista.forEach(item => {
                 const vTotal = parseFloat(item.valor || 0), vEnt = parseFloat(item.entrada || 0);
                 let comVenda = 0;
+                if(item.cidade) ultimaCidade = item.cidade;
 
                 if (item.resultado === "Venda") {
                     t.vendidos++; t.totalVendas += vTotal;
@@ -187,12 +198,12 @@
 
             resumoAtual = t;
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="bg-white p-2 border rounded shadow-sm text-center"><p class="text-[8px] font-bold text-gray-400">VEND/NQ</p><p class="text-sm font-black">${t.vendidos}/${t.nq}</p></div>
-                <div class="bg-white p-2 border rounded shadow-sm text-center text-green-600"><p class="text-[8px] font-bold">CASH (D/P)</p><p class="text-[10px] font-bold">R$${(t.dinheiro+t.pix).toFixed(2)}</p></div>
-                <div class="bg-white p-2 border rounded shadow-sm text-center text-blue-600"><p class="text-[8px] font-bold">CARTÕES</p><p class="text-[10px] font-bold">R$${(t.debito+t.credito).toFixed(2)}</p></div>
-                <div class="bg-white p-2 border rounded shadow-sm text-center text-orange-600"><p class="text-[8px] font-bold">BOLETOS</p><p class="text-[10px] font-bold">R$${t.boleto.toFixed(2)}</p></div>
-                <div class="bg-blue-600 p-2 rounded shadow text-center text-white"><p class="text-[8px] font-bold">VENDAS</p><p class="text-[10px] font-black">R$${t.totalVendas.toFixed(2)}</p></div>
-                <div class="bg-yellow-400 p-2 rounded shadow text-center text-gray-900"><p class="text-[8px] font-bold">VALE</p><p class="text-[10px] font-black">R$${t.vale.toFixed(2)}</p></div>
+                <div class="bg-white p-2 border rounded shadow-sm text-center"><p class="text-[8px] font-bold text-gray-400 uppercase">Vend/NQ</p><p class="text-sm font-black">${t.vendidos}/${t.nq}</p></div>
+                <div class="bg-white p-2 border rounded shadow-sm text-center text-green-600"><p class="text-[8px] font-bold uppercase">Cash (D/P)</p><p class="text-[10px] font-bold">R$${(t.dinheiro+t.pix).toFixed(0)}</p></div>
+                <div class="bg-white p-2 border rounded shadow-sm text-center text-blue-600"><p class="text-[8px] font-bold uppercase">Cartão D/C</p><p class="text-[10px] font-bold">R$${(t.debito+t.credito).toFixed(0)}</p></div>
+                <div class="bg-white p-2 border rounded shadow-sm text-center text-orange-600"><p class="text-[8px] font-bold uppercase">Boleto</p><p class="text-[10px] font-bold">R$${t.boleto.toFixed(0)}</p></div>
+                <div class="bg-blue-600 p-2 rounded shadow text-center text-white"><p class="text-[8px] font-bold uppercase">Vendas</p><p class="text-[10px] font-black">R$${t.totalVendas.toFixed(2)}</p></div>
+                <div class="bg-yellow-400 p-2 rounded shadow text-center text-gray-900"><p class="text-[8px] font-bold uppercase">Vale</p><p class="text-[10px] font-black">R$${t.vale.toFixed(2)}</p></div>
             `;
             document.getElementById('admin-content').innerHTML = htmlTable + '</tbody></table>';
             document.getElementById('comissao-content').innerHTML = htmlComissao + '</tbody></table>';
@@ -231,8 +242,7 @@
 
         window.lancarAvulso = async () => {
             const nome = prompt("Nome do Cliente?"); if(!nome) return;
-            // REMOVIDO PROMPT DE CIDADE
-            const res = prompt("Lançar como: 1-Venda | 2-NQ");
+            const res = prompt("1-Venda | 2-NQ");
             let d = { nome_formando: nome, data: new Date().toISOString().split('T')[0], horario: "Avulso", resultado: res==="1"?"Venda":"NQ", pagamento:"", valor:0, entrada:0, forma_entrada:"", restricao:"" };
             if (res === "1") {
                 const fP = prompt("1-Din | 2-Pix | 3-Déb | 4-Créd | 5-Bol");
@@ -250,14 +260,14 @@
 
         window.copiarRelatorio = () => {
             const t = resumoAtual;
-            const cid = prompt("Nome da cidade para o relatório WhatsApp:");
+            const cid = prompt("Nome da cidade para o relatório WhatsApp:", ultimaCidade);
             if (!cid) return;
             const msg = `**${cid}**\nVendidos = ${String(t.vendidos).padStart(2,'0')}\nNQ = ${String(t.nq).padStart(2,'0')}\nDinheiro = R$ ${t.dinheiro.toFixed(2)}\nPix = R$ ${t.pix.toFixed(2)}\nCartão Débito = R$ ${t.debito.toFixed(2)}\nBoleto = R$ ${t.boleto.toFixed(2)}\nCartão Crédito = R$ ${t.credito.toFixed(2)}\nTotal de vendas = R$ ${t.totalVendas.toFixed(2)}\nVale = ${t.vale.toFixed(2).replace('.', ',')}`;
             const el = document.createElement('textarea'); el.value = msg; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
             alert("Relatório copiado!");
         };
 
-        window.excluirRegistro = async (tipo, data, id) => { if (confirm("Excluir registro?")) { await remove(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}`:`${AVULSO_PATH}/${id}`))); carregarRelatorio(); } };
+        window.excluirRegistro = async (tipo, data, id) => { if (confirm("Excluir?")) { await remove(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}`:`${AVULSO_PATH}/${id}`))); carregarRelatorio(); } };
         window.fecharAdmin = () => modalAdmin.style.display = 'none';
     </script>
 </body>
