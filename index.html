@@ -43,7 +43,7 @@
                 <button onclick="fecharAdmin()" class="bg-gray-200 hover:bg-gray-300 px-4 py-1 rounded-lg font-bold">Fechar</button>
             </div>
             
-            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 bg-blue-50 p-4 rounded-xl border border-blue-100">
+            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6 bg-blue-50 p-4 rounded-xl border border-blue-100">
                 </div>
 
             <div id="admin-content" class="text-sm overflow-x-auto">
@@ -126,7 +126,6 @@
         const modalSucesso = document.getElementById('success-modal');
         const modalAdmin = document.getElementById('admin-modal');
 
-        // Geração de Horários com 30min e carência de 6h
         dayButtons.forEach(btn => {
             btn.addEventListener('click', async () => {
                 dayButtons.forEach(b => b.classList.remove('active'));
@@ -137,7 +136,6 @@
                 selectHorario.innerHTML = '<option value="">Consultando...</option>';
                 const dataObj = new Date(dataVal + 'T00:00:00');
                 const diaSemana = dataObj.getDay(); 
-                
                 let inicioHora = 9;
                 let fimHora = (diaSemana === 0 || diaSemana === 6) ? 15 : 20;
 
@@ -157,11 +155,9 @@
                 while (cursor <= horarioFinal) {
                     const horaFormatada = cursor.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                     const chaveFirebase = horaFormatada.replace(':', '-');
-
                     if (!ocupados.includes(chaveFirebase) && cursor > limiteCarencia) {
                         const opt = document.createElement('option');
-                        opt.value = horaFormatada; 
-                        opt.textContent = horaFormatada;
+                        opt.value = horaFormatada; opt.textContent = horaFormatada;
                         selectHorario.appendChild(opt);
                     }
                     cursor.setMinutes(cursor.getMinutes() + 30);
@@ -169,13 +165,11 @@
             });
         });
 
-        // Gravação do Agendamento
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
             const data = hiddenDataInput.value;
             const horario = selectHorario.value;
             if(!data) { alert("Escolha o dia primeiro."); return; }
-
             try {
                 const path = `${COLLECTION_PATH}/${data}/${horario.replace(':', '-')}`;
                 await set(ref(db, path), {
@@ -183,11 +177,7 @@
                     nome_formando: document.getElementById('nome').value,
                     telefone: document.getElementById('telefone').value,
                     endereco: document.getElementById('endereco').value,
-                    resultado: "",
-                    pagamento: "",
-                    valor: 0,
-                    entrada: 0,
-                    forma_entrada: ""
+                    resultado: "", pagamento: "", valor: 0, entrada: 0, forma_entrada: ""
                 });
                 modalSucesso.style.display = 'flex';
                 e.target.reset();
@@ -196,7 +186,6 @@
             } catch (err) { alert("Erro ao salvar."); }
         });
 
-        // ADM
         window.acessoAdmin = async () => {
             const senha = prompt("Senha ADM:");
             if (senha === "2025") carregarRelatorio();
@@ -209,10 +198,11 @@
             const snapshot = await get(ref(db, COLLECTION_PATH));
             const data = snapshot.val() || {};
             
-            let totais = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0 };
+            // Variáveis do Dashboard
+            let totais = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, vale: 0 };
+            
             const lista = [];
             for(let d in data) for(let h in data[d]) lista.push({...data[d][h], id: h});
-            
             lista.sort((a,b) => new Date(a.data+'T'+a.horario.replace('-',':')) - new Date(b.data+'T'+b.horario.replace('-',':')));
 
             let html = '<table class="w-full border-collapse border mt-4 text-xs"><thead><tr class="bg-gray-100"><th class="border p-2 text-left">Data/Hora</th><th class="border p-2 text-left">Formando</th><th class="border p-2 text-left">Endereço</th><th class="border p-2">Resultado/Valor</th><th class="border p-2">Ações</th></tr></thead><tbody>';
@@ -223,17 +213,17 @@
 
                 if (item.resultado === "Venda") {
                     totais.vendidos++;
-                    // Soma o valor total de acordo com a forma de pagamento principal
-                    if (item.pagamento === "Dinheiro") totais.dinheiro += valorNumerico;
-                    if (item.pagamento === "Pix") totais.pix += valorNumerico;
+                    // Pagamento Principal
+                    if (item.pagamento === "Dinheiro") { totais.dinheiro += valorNumerico; totais.vale += valorNumerico; }
+                    if (item.pagamento === "Pix") { totais.pix += valorNumerico; totais.vale += valorNumerico; }
                     if (item.pagamento === "Cartão Débito") totais.debito += valorNumerico;
                     if (item.pagamento === "Cartão Crédito") totais.credito += valorNumerico;
                     if (item.pagamento === "Boleto") totais.boleto += valorNumerico;
 
-                    // Se teve entrada em outra forma, somamos ela separadamente
-                    if (entradaNumerica > 0 && item.forma_entrada) {
-                        if (item.forma_entrada === "Dinheiro") totais.dinheiro += entradaNumerica;
-                        if (item.forma_entrada === "Pix") totais.pix += entradaNumerica;
+                    // Entrada (Boleto)
+                    if (entradaNumerica > 0) {
+                        if (item.forma_entrada === "Dinheiro") { totais.dinheiro += entradaNumerica; totais.vale += entradaNumerica; }
+                        if (item.forma_entrada === "Pix") { totais.pix += entradaNumerica; totais.vale += entradaNumerica; }
                     }
                 } else if (item.resultado === "NQ") {
                     totais.nq++;
@@ -242,7 +232,7 @@
                 const displayResultado = item.resultado ? 
                     `<div class="font-bold text-blue-700">${item.resultado} ${item.pagamento ? '- ' + item.pagamento : ''}</div>
                      <div class="text-green-600 font-bold">R$ ${valorNumerico.toFixed(2)}</div>
-                     ${entradaNumerica > 0 ? `<div class="text-[9px] text-gray-500">Entrada: R$ ${entradaNumerica.toFixed(2)} (${item.forma_entrada})</div>` : ''}` 
+                     ${entradaNumerica > 0 ? `<div class="text-[9px] text-gray-500 font-bold italic">Entrada: R$ ${entradaNumerica.toFixed(2)} (${item.forma_entrada})</div>` : ''}` 
                     : "Pendente";
 
                 html += `<tr>
@@ -257,12 +247,13 @@
                 </tr>`;
             });
 
-            // Atualiza Resumo
+            // Atualiza Dashboard com o campo VALE
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="p-2 border-r border-blue-100"><p class="text-[10px] uppercase text-gray-500 font-bold">Vendidos / NQ</p><p class="text-lg font-black text-blue-800">${totais.vendidos} / ${totais.nq}</p></div>
-                <div class="p-2 border-r border-blue-100"><p class="text-[10px] uppercase text-gray-500 font-bold">Dinheiro / Pix</p><p class="text-sm font-bold text-green-700">R$ ${totais.dinheiro.toFixed(2)} / R$ ${totais.pix.toFixed(2)}</p></div>
-                <div class="p-2 border-r border-blue-100"><p class="text-[10px] uppercase text-gray-500 font-bold">Cartões (D/C)</p><p class="text-sm font-bold text-blue-700">R$ ${totais.debito.toFixed(2)} / R$ ${totais.credito.toFixed(2)}</p></div>
-                <div class="p-2"><p class="text-[10px] uppercase text-gray-500 font-bold">Boleto</p><p class="text-sm font-bold text-orange-700">R$ ${totais.boleto.toFixed(2)}</p></div>
+                <div class="p-2 border-r border-blue-100 bg-white rounded-l-xl"><p class="text-[9px] uppercase text-gray-500 font-bold">Vendidos / NQ</p><p class="text-lg font-black text-blue-800">${totais.vendidos} / ${totais.nq}</p></div>
+                <div class="p-2 border-r border-blue-100 bg-white"><p class="text-[9px] uppercase text-gray-500 font-bold">Dinh / Pix</p><p class="text-xs font-bold text-green-700">R$ ${totais.dinheiro.toFixed(2)} / R$ ${totais.pix.toFixed(2)}</p></div>
+                <div class="p-2 border-r border-blue-100 bg-white"><p class="text-[9px] uppercase text-gray-500 font-bold">Cartões (D/C)</p><p class="text-xs font-bold text-blue-700">R$ ${totais.debito.toFixed(2)} / R$ ${totais.credito.toFixed(2)}</p></div>
+                <div class="p-2 border-r border-blue-100 bg-white"><p class="text-[9px] uppercase text-gray-500 font-bold">Boleto</p><p class="text-xs font-bold text-orange-700">R$ ${totais.boleto.toFixed(2)}</p></div>
+                <div class="p-2 bg-yellow-400 rounded-r-xl shadow-inner"><p class="text-[10px] uppercase text-gray-900 font-black">VALE (CASH)</p><p class="text-base font-black text-gray-900 italic">R$ ${totais.vale.toFixed(2)}</p></div>
             `;
 
             document.getElementById('admin-content').innerHTML = lista.length ? html + '</tbody></table>' : "Nenhum agendamento encontrado.";
@@ -289,8 +280,7 @@
                     }
 
                     await update(ref(db, `${COLLECTION_PATH}/${data}/${horaId}`), { 
-                        resultado: "Venda", 
-                        pagamento: formas[pag],
+                        resultado: "Venda", pagamento: formas[pag],
                         valor: parseFloat(valorTotal || 0),
                         entrada: parseFloat(valorEntrada || 0),
                         forma_entrada: formaEntrada
