@@ -36,7 +36,7 @@
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
                 <div>
                     <h1 class="text-3xl font-extrabold tracking-tight text-white italic">MASTER <span class="text-blue-500">DASHBOARD</span></h1>
-                    <p class="text-slate-400 text-sm font-medium">Gestão Financeira & Comissões</p>
+                    <p class="text-slate-400 text-sm font-medium text-uppercase">CONTROLE DE COMISSÕES SEPARADO POR MODALIDADE</p>
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <button onclick="lancarAvulso()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase shadow transition">Lançamento Direto</button>
@@ -46,19 +46,19 @@
                 </div>
             </div>
 
-            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8"></div>
+            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8"></div>
 
             <div class="grid lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold text-white flex items-center gap-2"><span class="w-2 h-6 bg-blue-500 rounded-full"></span> ATENDIMENTOS</h3>
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2 tracking-widest"><span class="w-2 h-6 bg-blue-500 rounded-full"></span> ATENDIMENTOS</h3>
                         <input type="text" id="busca-admin" onkeyup="filtrarLista()" placeholder="Buscar cliente..." class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 w-64 text-white">
                     </div>
                     <div id="admin-content" class="glass rounded-3xl overflow-hidden shadow-2xl border-white/5"></div>
                 </div>
 
                 <div class="space-y-6">
-                    <h3 class="text-lg font-bold text-white flex items-center gap-2"><span class="w-2 h-6 bg-emerald-500 rounded-full"></span> EXTRATO DIÁRIO</h3>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2 tracking-widest"><span class="w-2 h-6 bg-emerald-500 rounded-full"></span> EXTRATO</h3>
                     <div id="comissao-content" class="glass rounded-3xl p-5 overflow-hidden shadow-2xl border-white/5"></div>
                     <div id="fechamento-final"></div>
                 </div>
@@ -70,7 +70,7 @@
         <div class="container mx-auto flex justify-between items-center">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-800 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg">P</div>
-                <span class="text-2xl font-black tracking-tighter text-white uppercase italic">Portal <span class="text-blue-500 font-light lowercase not-italic text-lg">do formando</span></span>
+                <span class="text-2xl font-black tracking-tighter text-white uppercase italic">Portal <span class="text-blue-500 font-light lowercase not-italic text-lg text-white">do formando</span></span>
             </div>
             <button onclick="acessoAdmin()" class="glass px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition border-white/20">Login ADM</button>
         </div>
@@ -131,10 +131,8 @@
         const selectHorario = document.getElementById('horario');
         const modalAdmin = document.getElementById('admin-modal');
 
-        // Formatação BRL Expert
         const formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
-        // Agendamento Público
         document.querySelectorAll('.day-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
@@ -165,7 +163,7 @@
                 data: d, horario: h, nome_formando: n, telefone: document.getElementById('telefone').value, endereco: e_v, cidade: c, resultado: "Pendente"
             });
             document.getElementById('success-modal').style.display='flex';
-            setTimeout(() => { window.open(`https://wa.me/${MEU_WHATSAPP}?text=${window.encodeURIComponent('Solicitação de Agendamento:\n\n*Nome:* '+n+'\n*Data:* '+d.split('-').reverse().join('/')+'\n*Horário:* '+h+'\n*Cidade:* '+c)}`); location.reload(); }, 2000);
+            setTimeout(() => { window.open(`https://wa.me/${MEU_WHATSAPP}?text=${window.encodeURIComponent('*Solicitação de Agendamento*\n\n*Nome:* '+n+'\n*Data:* '+d.split('-').reverse().join('/')+'\n*Horário:* '+h+'\n*Cidade:* '+c)}`); location.reload(); }, 2000);
         });
 
         window.acessoAdmin = () => { if(prompt("Expert Key:")==="2025") carregarRelatorio(); };
@@ -187,8 +185,8 @@
             let t = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, totalVendas: 0, vale: 0, totalComissao: 0 };
             lista.sort((a,b) => new Date(a.data) - new Date(b.data));
             
-            let htmlTable = '<table class="w-full text-left text-xs"><thead class="bg-slate-700/50 text-slate-300 font-bold"><tr class="border-b border-slate-700"><th class="p-4">DATA</th><th class="p-4">CLIENTE</th><th class="p-4">ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">AÇÕES</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
-            let htmlComissao = '<table class="w-full text-[10px] text-left"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase tracking-tighter"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Total</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
+            let htmlTable = '<table class="w-full text-left text-xs"><thead class="bg-slate-700/50 text-slate-300 font-bold"><tr class="border-b border-slate-700"><th class="p-4">DATA</th><th class="p-4">CLIENTE</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
+            let htmlComissao = '<table class="w-full text-[10px] text-left"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Total</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
 
             lista.forEach(item => {
                 const vT = parseFloat(item.valor || 0), vE = parseFloat(item.entrada || 0);
@@ -210,16 +208,15 @@
                         if(item.forma_entrada === "Pix") { t.pix += vE; t.vale += vE; }
                     }
                     t.totalComissao += com;
-                    htmlComissao += `<tr><td class="py-3 uppercase font-bold text-slate-200 truncate max-w-[100px]">${item.nome_formando}</td><td class="py-3 text-right font-medium">${formatBRL(vT)}</td><td class="py-3 text-right text-emerald-400 font-black italic">${formatBRL(com)}</td></tr>`;
+                    htmlComissao += `<tr><td class="py-3 uppercase font-bold text-slate-200">${item.nome_formando}</td><td class="py-3 text-right font-medium">${formatBRL(vT)}</td><td class="py-3 text-right text-emerald-400 font-black italic">${formatBRL(com)}</td></tr>`;
                 } else if (item.resultado === "NQ") t.nq++;
 
-                const colors = { 'Venda': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', 'NQ': 'bg-rose-500/10 text-rose-500 border-rose-500/20', 'Não Atendeu': 'bg-amber-500/10 text-amber-500 border-amber-500/20', 'Reagendar': 'bg-blue-500/10 text-blue-500 border-blue-500/20', 'Pendente': 'bg-slate-500/10 text-slate-400 border-slate-500/20' };
+                const statusStyle = { 'Venda': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', 'NQ': 'bg-rose-500/10 text-rose-500 border-rose-500/20', 'Não Atendeu': 'bg-amber-500/10 text-amber-500 border-amber-500/20', 'Reagendar': 'bg-blue-500/10 text-blue-500 border-blue-500/20', 'Pendente': 'bg-slate-500/10 text-slate-400 border-slate-500/20' };
 
                 htmlTable += `<tr class="hover:bg-slate-800/40 transition">
                     <td class="p-4 font-bold text-slate-300 text-[10px] uppercase">${item.data.split('-').reverse().join('/')}<br><span class="font-light text-slate-500 tracking-widest">${item.horario}</span></td>
                     <td class="p-4 uppercase font-black text-slate-100">${item.nome_formando}<br><span class="text-blue-500 font-bold lowercase text-[9px]">${item.cidade || ''}</span></td>
-                    <td class="p-4 text-slate-400 text-[10px] max-w-[120px] truncate">${item.endereco || 'Manual'}</td>
-                    <td class="p-4 text-center"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${colors[item.resultado] || colors['Pendente']}">${item.resultado || 'Pendente'}</span></td>
+                    <td class="p-4 text-center"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${statusStyle[item.resultado] || statusStyle['Pendente']}">${item.resultado || 'Pendente'}</span><br><span class="text-[9px] text-slate-500">${item.pagamento || ''}</span></td>
                     <td class="p-4 text-center space-y-1">
                         <button onclick="registrarResultado('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1 rounded-lg text-[8px] w-full font-black uppercase transition border border-blue-400/30">Gerenciar</button>
                     </td>
@@ -228,12 +225,13 @@
 
             resumoAtual = t;
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="glass p-4 rounded-2xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Efetividade</p><p class="text-xl font-black">${t.vendidos} / ${lista.length}</p></div>
-                <div class="glass p-4 rounded-2xl text-center border-t-2 border-emerald-500 shadow-xl text-emerald-400"><p class="text-[9px] font-bold uppercase tracking-widest">Din/Pix</p><p class="text-sm font-black">${formatBRL(t.dinheiro+t.pix)}</p></div>
-                <div class="glass p-4 rounded-2xl text-center border-t-2 border-indigo-500 shadow-xl text-indigo-300"><p class="text-[9px] font-bold uppercase tracking-widest">Cartões</p><p class="text-sm font-black">${formatBRL(t.debito+t.credito)}</p></div>
-                <div class="glass p-4 rounded-2xl text-center border-t-2 border-orange-500 shadow-xl text-orange-400"><p class="text-[9px] font-bold uppercase tracking-widest">Boletos</p><p class="text-sm font-black">${formatBRL(t.boleto)}</p></div>
-                <div class="bg-blue-600 p-4 rounded-2xl text-center shadow-2xl"><p class="text-[9px] font-bold text-blue-100 uppercase tracking-widest">Total Vendas</p><p class="text-lg font-black">${formatBRL(t.totalVendas)}</p></div>
-                <div class="bg-amber-500 p-4 rounded-2xl text-center shadow-2xl text-amber-950"><p class="text-[9px] font-bold uppercase tracking-widest">Vales</p><p class="text-lg font-black">${formatBRL(t.vale)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Efetividade</p><p class="text-lg font-black">${t.vendidos}/${lista.length}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-emerald-500 shadow-xl text-emerald-400"><p class="text-[8px] font-bold uppercase tracking-widest">CASH (D+P)</p><p class="text-[11px] font-black">${formatBRL(t.dinheiro+t.pix)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-400 shadow-xl text-blue-300"><p class="text-[8px] font-bold uppercase tracking-widest">DÉBITO</p><p class="text-[11px] font-black">${formatBRL(t.debito)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-indigo-400 shadow-xl text-indigo-300"><p class="text-[8px] font-bold uppercase tracking-widest">CRÉDITO</p><p class="text-[11px] font-black">${formatBRL(t.credito)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-orange-500 shadow-xl text-orange-400"><p class="text-[8px] font-bold uppercase tracking-widest">BOLETO</p><p class="text-[11px] font-black">${formatBRL(t.boleto)}</p></div>
+                <div class="bg-blue-600 p-3 rounded-2xl text-center shadow-2xl"><p class="text-[8px] font-bold text-blue-100 uppercase tracking-widest text-white">VENDAS</p><p class="text-[11px] font-black text-white">${formatBRL(t.totalVendas)}</p></div>
+                <div class="bg-amber-500 p-3 rounded-2xl text-center shadow-2xl text-amber-950"><p class="text-[8px] font-bold uppercase tracking-widest">VALES</p><p class="text-[11px] font-black">${formatBRL(t.vale)}</p></div>
             `;
             document.getElementById('admin-content').innerHTML = htmlTable + '</tbody></table>';
             document.getElementById('comissao-content').innerHTML = htmlComissao + '</tbody></table>';
@@ -243,11 +241,11 @@
             document.getElementById('fechamento-final').innerHTML = `
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                     <div class="text-center md:text-left">
-                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-[.25em]">Comissões: ${formatBRL(t.totalComissao)}</p>
-                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-[.25em]">Vales Totais: ${formatBRL(t.vale)}</p>
+                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Comissões Acumuladas: ${formatBRL(t.totalComissao)}</p>
+                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Adiantamentos (Vales): ${formatBRL(t.vale)}</p>
                     </div>
-                    <div class="px-8 py-4 bg-black/50 rounded-3xl border border-white/10 shadow-2xl">
-                        ${saldo >= 0 ? `<p class="text-[10px] text-emerald-400 font-black tracking-widest uppercase mb-1">A Receber</p><p class="text-4xl font-black text-emerald-500 tracking-tighter italic">${formatBRL(saldo)}</p>` : `<p class="text-[10px] text-rose-400 font-black tracking-widest uppercase mb-1">Devolver</p><p class="text-4xl font-black text-rose-500 tracking-tighter italic">${formatBRL(Math.abs(saldo))}</p>`}
+                    <div class="px-8 py-3 bg-black/50 rounded-2xl border border-white/10">
+                        ${saldo >= 0 ? `<p class="text-[9px] text-emerald-400 font-black tracking-widest uppercase mb-1">A Receber</p><p class="text-3xl font-black text-emerald-500 tracking-tighter italic">${formatBRL(saldo)}</p>` : `<p class="text-[9px] text-rose-400 font-black tracking-widest uppercase mb-1">Devolver</p><p class="text-3xl font-black text-rose-500 tracking-tighter italic">${formatBRL(Math.abs(saldo))}</p>`}
                     </div>
                 </div>
             `;
@@ -268,40 +266,40 @@
         };
 
         window.registrarResultado = async (tipo, data, id) => {
-            const r = prompt("RESULTADO: 1-Venda | 2-NQ | 3-Não Atendeu | 4-Reagendar");
+            const r = prompt("STATUS:\n1-VENDA | 2-NQ\n3-NÃO ATENDEU | 4-REAGENDAR");
             if(!{"1":1,"2":1,"3":1,"4":1}[r]) return;
             if (r === "1") {
-                const fP = prompt("PGTO: 1-Din | 2-Pix | 3-Déb | 4-Créd | 5-Bol");
+                const fP = prompt("FORMA PGTO:\n1-Dinheiro | 2-Pix\n3-Cartão Débito\n4-Cartão Crédito\n5-Boleto");
                 const fM = {"1":"Dinheiro","2":"Pix","3":"Cartão Débito","4":"Cartão Crédito","5":"Boleto"};
                 if (fM[fP]) {
                     const vT = parseFloat(prompt("VALOR TOTAL?") || 0);
                     let rest = "", vE = 0, fE = "";
                     if (fP === "5") {
-                        rest = prompt("SPC? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
-                        if (prompt("ENTRADA? 1-Sim | 2-Não") === "1") { vE = parseFloat(prompt("VALOR ENTRADA?") || 0); fE = prompt("FORMA: 1-Din | 2-Pix") === "1" ? "Dinheiro" : "Pix"; }
+                        rest = prompt("TEM RESTRIÇÃO? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
+                        if (prompt("VALOR ENTRADA? 1-Sim | 2-Não") === "1") { vE = parseFloat(prompt("VALOR?") || 0); fE = prompt("FORMA: 1-Din | 2-Pix") === "1" ? "Dinheiro" : "Pix"; }
                     }
                     await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { resultado: "Venda", pagamento: fM[fP], valor: vT, entrada: vE, forma_entrada: fE, restricao: rest });
                 }
-            } else await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], valor:0, pagamento: "" });
+            } else await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], valor:0 });
             carregarRelatorio();
         };
 
         window.lancarAvulso = async () => {
-            const n = prompt("Nome do Cliente:"); if(!n) return;
+            const n = prompt("Nome Completo:"); if(!n) return;
             await push(ref(db, AVULSO_PATH), { nome_formando: n, data: new Date().toISOString().split('T')[0], horario: "Avulso", resultado: "Pendente" });
             carregarRelatorio();
         };
 
         window.copiarRelatorio = () => {
-            const c = prompt("Nome da Cidade:"); if(!c) return;
+            const c = prompt("Cidade:"); if(!c) return;
             const t = resumoAtual;
             const msg = `**${c}**\nVendidos = ${String(t.vendidos).padStart(2,'0')}\nNQ = ${String(t.nq).padStart(2,'0')}\nDinheiro = ${formatBRL(t.dinheiro)}\nPix = ${formatBRL(t.pix)}\nCartão Débito = ${formatBRL(t.debito)}\nBoleto = ${formatBRL(t.boleto)}\nCartão Crédito = ${formatBRL(t.credito)}\nTotal de vendas = ${formatBRL(t.totalVendas)}\nVale = ${t.vale.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
             const el = document.createElement('textarea'); el.value = msg; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-            alert("Copiado com sucesso!");
+            alert("Copiado!");
         };
 
         window.fecharAdmin = () => modalAdmin.style.display = 'none';
-        window.excluirRegistro = async (tipo, data, id) => { if (confirm("EXCLUIR?")) { await remove(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}`:`${AVULSO_PATH}/${id}`))); carregarRelatorio(); } };
+        window.excluirRegistro = async (tipo, data, id) => { if (confirm("Deseja EXCLUIR?")) { await remove(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}`:`${AVULSO_PATH}/${id}`))); carregarRelatorio(); } };
     </script>
 </body>
 </html>
