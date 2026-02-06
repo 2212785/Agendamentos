@@ -74,6 +74,7 @@
 
                 <div><label class="block text-sm font-semibold text-gray-700 mb-1">Nome Completo</label><input type="text" id="nome" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></div>
                 <div><label class="block text-sm font-semibold text-gray-700 mb-1">WhatsApp</label><input type="tel" id="telefone" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></div>
+                <div><label class="block text-sm font-semibold text-gray-700 mb-1">Cidade</label><input type="text" id="cidade" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></div>
                 <div><label class="block text-sm font-semibold text-gray-700 mb-1">Horário Disponível</label><select id="horario" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-white"><option value="">Selecione o dia acima</option></select></div>
                 <div><label class="block text-sm font-semibold text-gray-700 mb-1">Endereço de Visita</label><textarea id="endereco" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" rows="2"></textarea></div>
                 <button type="submit" class="w-full bg-blue-600 text-white font-extrabold py-4 rounded-xl hover:bg-blue-700 transition uppercase shadow-lg active:scale-95">Confirmar Agendamento</button>
@@ -100,7 +101,6 @@
         const COLLECTION_PATH = 'agendamentos';
         const AVULSO_PATH = 'avulsos';
 
-        // Lógica de horários e botões permanece igual
         const dayButtons = document.querySelectorAll('.day-btn');
         const hiddenDataInput = document.getElementById('data-selecionada');
         const selectHorario = document.getElementById('horario');
@@ -118,12 +118,10 @@
                 let inicioHora = 9, fimHora = (diaSemana === 0 || diaSemana === 6) ? 15 : 20;
                 let ocupados = [];
                 try { const snapshot = await get(ref(db, `${COLLECTION_PATH}/${dataVal}`)); if (snapshot.exists()) ocupados = Object.keys(snapshot.val()); } catch (e) {}
-
                 selectHorario.innerHTML = '<option value="">Escolha um horário</option>';
                 const agora = new Date(), limiteCarencia = new Date(agora.getTime() + (6 * 60 * 60 * 1000));
                 let cursor = new Date(`${dataVal}T${inicioHora.toString().padStart(2, '0')}:00:00`);
                 let limiteFinal = new Date(`${dataVal}T${fimHora.toString().padStart(2, '0')}:00:00`);
-
                 while (cursor <= limiteFinal) {
                     const horaF = cursor.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                     if (!ocupados.includes(horaF.replace(':','-')) && cursor > limiteCarencia) {
@@ -143,6 +141,7 @@
                 await set(ref(db, path), {
                     data, horario, nome_formando: document.getElementById('nome').value,
                     telefone: document.getElementById('telefone').value, endereco: document.getElementById('endereco').value,
+                    cidade: document.getElementById('cidade').value,
                     resultado: "", pagamento: "", valor: 0, entrada: 0, forma_entrada: ""
                 });
                 document.getElementById('success-modal').style.display = 'flex';
@@ -154,31 +153,24 @@
         window.acessoAdmin = async () => { if (prompt("Senha ADM:") === "2025") carregarRelatorio(); };
 
         let resumoAtual = {};
+        let ultimaCidade = "";
 
         async function carregarRelatorio() {
             modalAdmin.style.display = 'flex';
             document.getElementById('admin-content').innerHTML = "<p class='p-4'>Carregando...</p>";
-            
-            const snapAgendados = await get(ref(db, COLLECTION_PATH));
-            const snapAvulsos = await get(ref(db, AVULSO_PATH));
-            
-            const agendados = snapAgendados.val() || {};
-            const avulsos = snapAvulsos.val() || {};
-            
+            const [snapAgendados, snapAvulsos] = await Promise.all([get(ref(db, COLLECTION_PATH)), get(ref(db, AVULSO_PATH))]);
+            const agendados = snapAgendados.val() || {}, avulsos = snapAvulsos.val() || {};
             let t = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, totalVendas: 0, vale: 0 };
             const lista = [];
-
-            // Processa Agendados
             for(let d in agendados) for(let h in agendados[d]) lista.push({...agendados[d][h], id: h, tipo: 'agenda'});
-            // Processa Avulsos
             for(let id in avulsos) lista.push({...avulsos[id], id: id, tipo: 'avulso'});
-
             lista.sort((a,b) => new Date(a.data) - new Date(b.data));
 
-            let html = '<table class="w-full border-collapse text-[11px] md:text-xs text-left"><thead><tr class="bg-gray-200 text-gray-700 uppercase"><th class="p-3 border">Data</th><th class="p-3 border">Formando</th><th class="p-3 border">Endereço/Origem</th><th class="p-3 border">Status/Valor</th><th class="p-3 border text-center">Ações</th></tr></thead><tbody class="bg-white">';
+            let html = '<table class="w-full border-collapse text-[11px] md:text-xs text-left"><thead><tr class="bg-gray-200 text-gray-700 uppercase"><th class="p-3 border">Data</th><th class="p-3 border">Formando / Cidade</th><th class="p-3 border">Endereço</th><th class="p-3 border">Status/Valor</th><th class="p-3 border text-center">Ações</th></tr></thead><tbody class="bg-white">';
 
             lista.forEach(item => {
                 const val = parseFloat(item.valor || 0), ent = parseFloat(item.entrada || 0);
+                if(item.cidade) ultimaCidade = item.cidade;
                 if (item.resultado === "Venda") {
                     t.vendidos++; t.totalVendas += val;
                     if (item.pagamento === "Dinheiro") { t.dinheiro += val; t.vale += val; }
@@ -194,8 +186,8 @@
 
                 html += `<tr class="hover:bg-gray-50 border-b">
                     <td class="p-3 border font-bold">${item.data.split('-').reverse().join('/')}<br>${item.horario || 'Avulso'}</td>
-                    <td class="p-3 border uppercase font-semibold">${item.nome_formando}</td>
-                    <td class="p-3 border text-blue-800">${item.endereco || '<span class="text-gray-400 italic">Venda Direta</span>'}</td>
+                    <td class="p-3 border uppercase font-semibold">${item.nome_formando}<br><span class="text-blue-600 text-[9px] font-bold">${item.cidade || ''}</span></td>
+                    <td class="p-3 border text-gray-600">${item.endereco || 'Venda Direta'}</td>
                     <td class="p-3 border text-center font-bold">
                         <span class="${item.resultado === 'Venda' ? 'text-green-600' : 'text-red-500'}">${item.resultado || 'Pendente'}</span><br>
                         ${val > 0 ? 'R$ ' + val.toFixed(2) : ''}
@@ -209,8 +201,8 @@
 
             resumoAtual = t;
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="bg-white p-2 border rounded shadow-sm text-center"><p class="text-[8px] font-bold uppercase">Vendidos/NQ</p><p class="text-sm font-black">${t.vendidos}/${t.nq}</p></div>
-                <div class="bg-white p-2 border rounded shadow-sm text-center text-green-600"><p class="text-[8px] font-bold uppercase">Dinheiro/Pix</p><p class="text-[10px] font-bold">R$${t.dinheiro.toFixed(0)}/R$${t.pix.toFixed(0)}</p></div>
+                <div class="bg-white p-2 border rounded shadow-sm text-center"><p class="text-[8px] font-bold uppercase">Vend/NQ</p><p class="text-sm font-black">${t.vendidos}/${t.nq}</p></div>
+                <div class="bg-white p-2 border rounded shadow-sm text-center text-green-600"><p class="text-[8px] font-bold uppercase">Din/Pix</p><p class="text-[10px] font-bold">R$${t.dinheiro.toFixed(0)}/R$${t.pix.toFixed(0)}</p></div>
                 <div class="bg-white p-2 border rounded shadow-sm text-center text-blue-600"><p class="text-[8px] font-bold uppercase">Cartão D/C</p><p class="text-[10px] font-bold">R$${t.debito.toFixed(0)}/R$${t.credito.toFixed(0)}</p></div>
                 <div class="bg-white p-2 border rounded shadow-sm text-center text-orange-600"><p class="text-[8px] font-bold uppercase">Boleto</p><p class="text-[10px] font-bold">R$${t.boleto.toFixed(0)}</p></div>
                 <div class="bg-blue-600 p-2 rounded shadow text-center text-white"><p class="text-[8px] font-bold uppercase">Total Vendas</p><p class="text-[10px] font-black">R$${t.totalVendas.toFixed(2)}</p></div>
@@ -220,44 +212,47 @@
         }
 
         window.lancarAvulso = async () => {
-            const nome = prompt("Nome do Cliente?");
-            if (!nome) return;
+            const nome = prompt("Nome do Cliente?"); if (!nome) return;
+            const cidade = prompt("Cidade?");
             const res = prompt("1-VENDA | 2-NQ");
-            let dados = { nome_formando: nome, data: new Date().toISOString().split('T')[0], horario: "Avulso", resultado: "", pagamento: "", valor: 0, entrada: 0, forma_entrada: "" };
-            
+            let d = { nome_formando: nome, cidade: cidade, data: new Date().toISOString().split('T')[0], horario: "Avulso", resultado: "", pagamento: "", valor: 0, entrada: 0, forma_entrada: "" };
             if (res === "1") {
                 const pag = prompt("1-Dinheiro | 2-Pix | 3-Débito | 4-Crédito | 5-Boleto");
-                const formas = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito", "4": "Cartão Crédito", "5": "Boleto" };
-                if (formas[pag]) {
-                    dados.resultado = "Venda"; dados.pagamento = formas[pag];
-                    dados.valor = parseFloat(prompt("Valor TOTAL?") || 0);
-                    if (formas[pag] === "Boleto" && prompt("1-Com Entrada | 2-Sem") === "1") {
-                        dados.entrada = parseFloat(prompt("Valor Entrada?") || 0);
-                        dados.forma_entrada = prompt("1-Dinh | 2-Pix") === "1" ? "Dinheiro" : "Pix";
+                const f = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito", "4": "Cartão Crédito", "5": "Boleto" };
+                if (f[pag]) {
+                    d.resultado = "Venda"; d.pagamento = f[pag]; d.valor = parseFloat(prompt("Valor TOTAL?") || 0);
+                    if (f[pag] === "Boleto" && prompt("1-Com Entrada | 2-Sem") === "1") {
+                        d.entrada = parseFloat(prompt("Valor Entrada?") || 0);
+                        d.forma_entrada = prompt("1-Din | 2-Pix") === "1" ? "Dinheiro" : "Pix";
                     }
                 }
-            } else { dados.resultado = "NQ"; }
-            
-            await push(ref(db, AVULSO_PATH), dados);
-            carregarRelatorio();
+            } else { d.resultado = "NQ"; }
+            await push(ref(db, AVULSO_PATH), d); carregarRelatorio();
         };
 
         window.copiarRelatorio = () => {
             const t = resumoAtual;
-            const msg = `Vendidos = ${String(t.vendidos).padStart(2, '0')}\nNQ = ${String(t.nq).padStart(2, '0')}\nDinheiro = R$ ${t.dinheiro.toFixed(2)}\nPix = R$ ${t.pix.toFixed(2)}\nCartão Débito = R$ ${t.debito.toFixed(2)}\nBoleto = R$ ${t.boleto.toFixed(2)}\nCartão Crédito = R$ ${t.credito.toFixed(2)}\nTotal de vendas = R$ ${t.totalVendas.toFixed(2)}\nVale = R$ ${t.vale.toFixed(2)}`;
+            const cidadeInf = prompt("Nome da cidade para o relatório:", ultimaCidade);
+            const msg = `**${cidadeInf}**\nVendidos = ${String(t.vendidos).padStart(2, '0')}\nNQ = ${String(t.nq).padStart(2, '0')}\nDinheiro = R$ ${t.dinheiro.toFixed(2)}\nPix = R$ ${t.pix.toFixed(2)}\nCartão Débito = R$ ${t.debito.toFixed(2)}\nBoleto = R$ ${t.boleto.toFixed(2)}\nCartão Crédito = R$ ${t.credito.toFixed(2)}\nTotal de vendas = R$ ${t.totalVendas.toFixed(2)}\nVale = R$ ${t.vale.toFixed(2)}`;
             const el = document.createElement('textarea'); el.value = msg; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-            alert("Copiado!");
+            alert("Relatório de " + cidadeInf + " copiado!");
         };
 
         window.registrarResultadoVenda = async (data, horaId) => {
             const res = prompt("1-VENDA | 2-NQ");
             if (res === "1") {
                 const pag = prompt("1-Dinheiro | 2-Pix | 3-Débito | 4-Crédito | 5-Boleto");
-                const formas = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito", "4": "Cartão Crédito", "5": "Boleto" };
-                if (formas[pag]) {
-                    const total = prompt("Valor TOTAL?"), ent = (formas[pag] === "Boleto" && prompt("1-Com Entrada | 2-Sem") === "1") ? {v: prompt("Valor Entrada?"), f: prompt("1-Dinh | 2-Pix") === "1" ? "Dinheiro" : "Pix"} : {v:0, f:""};
+                const f = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito", "4": "Cartão Crédito", "5": "Boleto" };
+                if (f[pag]) {
+                    const total = prompt("Valor TOTAL?");
+                    let vE = 0, fE = "";
+                    if (f[pag] === "Boleto") {
+                        if (prompt("1-Com Entrada | 2-Sem") === "1") {
+                            vE = prompt("Valor Entrada?"); fE = prompt("1-Din | 2-Pix") === "1" ? "Dinheiro" : "Pix";
+                        }
+                    }
                     await update(ref(db, `${COLLECTION_PATH}/${data}/${horaId}`), { 
-                        resultado: "Venda", pagamento: formas[pag], valor: parseFloat(total || 0), entrada: parseFloat(ent.v || 0), forma_entrada: ent.f
+                        resultado: "Venda", pagamento: f[pag], valor: parseFloat(total || 0), entrada: parseFloat(vE || 0), forma_entrada: fE
                     });
                     carregarRelatorio();
                 }
@@ -265,13 +260,11 @@
         };
 
         window.excluirRegistro = async (tipo, data, id) => {
-            if (confirm("Excluir?")) {
-                const path = tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`;
-                await remove(ref(db, path)); carregarRelatorio();
-            }
+            if (confirm("Excluir?")) { const path = tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`; await remove(ref(db, path)); carregarRelatorio(); }
         };
 
         window.fecharAdmin = () => modalAdmin.style.display = 'none';
     </script>
 </body>
 </html>
+    
