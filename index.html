@@ -19,48 +19,46 @@
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col text-white">
 
     <div id="excel-modal">
         <div class="max-w-5xl mx-auto bg-white text-slate-900 rounded-3xl p-8 shadow-2xl overflow-hidden">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-black uppercase text-blue-600 italic">📊 Relatório Elite</h2>
+                <h2 class="text-2xl font-black uppercase text-blue-600 italic">📊 Relatório Estratégico</h2>
                 <div class="flex gap-2">
                     <button onclick="copiarTabelaExcel()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase shadow hover:bg-emerald-700 transition">Copiar Dados</button>
                     <button onclick="document.getElementById('excel-modal').style.display='none'" class="bg-slate-200 text-slate-600 px-4 py-2 rounded-lg font-bold text-xs uppercase">Fechar</button>
                 </div>
             </div>
-            <div id="excel-preview-content" class="overflow-x-auto border rounded-xl"></div>
+            <div id="excel-preview-content" class="overflow-x-auto border rounded-xl bg-gray-50"></div>
         </div>
     </div>
 
     <div id="admin-modal">
-        <div class="max-w-7xl mx-auto text-white">
+        <div class="max-w-7xl mx-auto">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
                 <div>
                     <h1 class="text-3xl font-extrabold tracking-tight italic uppercase">Master <span class="text-blue-500 font-black">Dashboard</span></h1>
-                    <p class="text-slate-400 text-sm font-medium tracking-widest uppercase">CONTROLE DE VISITAS E COMISSÕES</p>
+                    <p class="text-slate-400 text-sm font-medium tracking-widest uppercase">Expert Management System</p>
                 </div>
                 <div class="flex flex-wrap gap-3">
-                    <button onclick="lancarAvulso()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase shadow transition">Lançamento Direto</button>
+                    <button onclick="lancarAvulso()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase shadow transition">Venda Direta</button>
                     <button onclick="abrirDashboardExcel()" class="bg-slate-700 hover:bg-slate-600 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase shadow transition">Gerar Planilha</button>
                     <button onclick="copiarRelatorio()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase shadow transition font-black">Relatório WhatsApp</button>
                     <button onclick="fecharAdmin()" class="bg-rose-600/20 text-rose-500 border border-rose-500/50 px-5 py-2.5 rounded-xl font-bold text-xs uppercase hover:bg-rose-600 hover:text-white transition">Sair</button>
                 </div>
             </div>
-
             <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8"></div>
-
             <div class="grid lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold text-white flex items-center gap-2 tracking-widest uppercase"><span class="w-2 h-6 bg-blue-500 rounded-full"></span> Roteiro de Atendimento</h3>
-                        <input type="text" id="busca-admin" onkeyup="filtrarLista()" placeholder="Filtrar cliente..." class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 w-64 text-white">
+                    <div class="flex justify-between items-center mb-4 text-white">
+                        <h3 class="text-lg font-bold flex items-center gap-2 uppercase"><span class="w-2 h-6 bg-blue-500 rounded-full"></span> Lista de Visitas</h3>
+                        <input type="text" id="busca-admin" onkeyup="filtrarLista()" placeholder="Buscar..." class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 w-64 text-white">
                     </div>
                     <div id="admin-content" class="glass rounded-3xl overflow-hidden border-white/5 shadow-2xl"></div>
                 </div>
                 <div class="space-y-6">
-                    <h3 class="text-lg font-bold text-white flex items-center gap-2 tracking-widest uppercase text-white"><span class="w-2 h-6 bg-emerald-500 rounded-full"></span> Extrato do Dia</h3>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2 tracking-widest uppercase"><span class="w-2 h-6 bg-emerald-500 rounded-full"></span> Financeiro</h3>
                     <div id="comissao-content" class="glass rounded-3xl p-5 border-white/5 shadow-inner"></div>
                     <div id="fechamento-final"></div>
                 </div>
@@ -68,22 +66,21 @@
         </div>
     </div>
 
-    <header class="p-6 text-white">
+    <header class="p-6">
         <div class="container mx-auto flex justify-between items-center">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-800 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg">P</div>
-                <span class="text-2xl font-black tracking-tighter uppercase italic">Portal <span class="text-blue-500 font-light lowercase not-italic text-lg">do formando</span></span>
+                <span class="text-2xl font-black tracking-tighter uppercase italic text-white">Portal <span class="text-blue-500 font-light lowercase not-italic text-lg">do formando</span></span>
             </div>
             <button onclick="acessoAdmin()" class="glass px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition border-white/20">Login ADM</button>
         </div>
     </header>
 
-    <main class="container mx-auto p-4 flex-grow flex items-center justify-center text-white">
-        <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl relative overflow-hidden text-center">
+    <main class="container mx-auto p-4 flex-grow flex items-center justify-center">
+        <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl relative overflow-hidden text-center text-white">
             <div class="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-blue-600 via-indigo-400 to-blue-600"></div>
-            <h2 class="text-3xl font-black mb-2 tracking-tight uppercase">Agendar Visita</h2>
-            <p class="text-slate-400 text-sm font-medium italic mb-10">Datas disponíveis até 09/02</p>
-            
+            <h2 class="text-3xl font-black mb-2 uppercase">Agendar Visita</h2>
+            <p class="text-slate-400 text-sm font-medium italic mb-10">Agendamentos até 09/02</p>
             <form id="form-agendamento" class="space-y-6 text-left">
                 <div class="grid grid-cols-2 gap-2" id="day-selector">
                     <button type="button" data-date="2026-02-06" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">06/02<br>Hoje</button>
@@ -96,12 +93,12 @@
                     <input type="text" id="nome" required placeholder="Nome do Formando" class="w-full bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl outline-none focus:border-blue-500 transition text-white">
                     <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl outline-none focus:border-blue-500 transition text-white">
                     <input type="text" id="cidade" required placeholder="Cidade" class="w-full bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl outline-none focus:border-blue-500 transition text-white">
-                    <select id="horario" required class="w-full bg-slate-800 border border-slate-700 p-4 rounded-2xl outline-none focus:border-blue-500 transition cursor-pointer text-white">
-                        <option value="">Aguardando seleção de data...</option>
+                    <select id="horario" required class="w-full bg-slate-800 border border-slate-700 p-4 rounded-2xl outline-none focus:border-blue-500 transition text-white">
+                        <option value="">Selecione a Data</option>
                     </select>
-                    <textarea id="endereco" required placeholder="Endereço de Visita Completo" class="w-full bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl outline-none focus:border-blue-500 transition text-white" rows="2"></textarea>
+                    <textarea id="endereco" required placeholder="Endereço Completo para Visita" class="w-full bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl outline-none focus:border-blue-500 transition text-white" rows="2"></textarea>
                 </div>
-                <button type="submit" class="btn-primary w-full text-white font-black py-5 rounded-2xl shadow-2xl uppercase tracking-widest active:scale-95 text-sm">Finalizar Agendamento</button>
+                <button type="submit" class="btn-primary w-full text-white font-black py-5 rounded-2xl shadow-2xl uppercase tracking-widest active:scale-95 text-sm">Agendar Visita</button>
             </form>
         </div>
     </main>
@@ -131,7 +128,6 @@
         const modalAdmin = document.getElementById('admin-modal');
         const formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 
-        // Agendamento
         document.querySelectorAll('.day-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
@@ -155,14 +151,14 @@
 
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const d = hiddenDataInput.value, h = selectHorario.value, n = document.getElementById('nome').value, c = document.getElementById('cidade').value, endVal = document.getElementById('endereco').value;
-            await set(ref(db, `${COLLECTION_PATH}/${d}/${h.replace(':','-')}`), { data:d, horario:h, nome_formando:n, telefone: document.getElementById('telefone').value, endereco:endVal, cidade:c, resultado:"Pendente" });
-            const msgBody = `*NOVA VISITA AGENDADA*\n\n*Nome:* ${n}\n*Data:* ${d.split('-').reverse().join('/')}\n*Horário:* ${h}\n*Cidade:* ${c}\n*Endereço:* ${endVal}`;
-            window.open(`https://wa.me/${MEU_WHATSAPP}?text=${window.encodeURIComponent(msgBody)}`);
+            const d = hiddenDataInput.value, h = selectHorario.value, n = document.getElementById('nome').value, c = document.getElementById('cidade').value, ev = document.getElementById('endereco').value;
+            await set(ref(db, `${COLLECTION_PATH}/${d}/${h.replace(':','-')}`), { data:d, horario:h, nome_formando:n, telefone: document.getElementById('telefone').value, endereco:ev, cidade:c, resultado:"Pendente" });
+            const msg = `*NOVA VISITA AGENDADA*\n\n*Nome:* ${n}\n*Data:* ${d.split('-').reverse().join('/')}\n*Horário:* ${h}\n*Cidade:* ${c}\n*Endereço:* ${ev}`;
+            window.open(`https://wa.me/${MEU_WHATSAPP}?text=${window.encodeURIComponent(msg)}`);
             location.reload();
         });
 
-        window.acessoAdmin = () => { if(prompt("Expert Key:")==="2025") carregarRelatorio(); };
+        window.acessoAdmin = () => { if(prompt("Key:")==="2025") carregarRelatorio(); };
 
         let dadosCompletos = [];
         let resumoAtual = {};
@@ -181,16 +177,16 @@
             let t = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, totalVendas: 0, vale: 0, totalComissao: 0 };
             lista.sort((a,b) => new Date(a.data) - new Date(b.data));
             
-            let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 font-bold uppercase border-b border-slate-700"><tr><th class="p-4 text-white">DATA</th><th class="p-4 text-white">CLIENTE / ENDEREÇO</th><th class="p-4 text-center text-white">STATUS</th><th class="p-4 text-center text-white">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
+            let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4 text-white">DATA</th><th class="p-4 text-white">CLIENTE / ENDEREÇO</th><th class="p-4 text-center text-white text-white">STATUS</th><th class="p-4 text-center text-white text-white">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
             let htmlComissao = '<table class="w-full text-[10px] text-left text-white"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase tracking-tighter"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
 
             lista.forEach(item => {
                 const vT = parseFloat(item.valor || 0), vE = parseFloat(item.entrada || 0);
-                let comLocal = 0;
+                let com = 0;
                 if (item.resultado === "Venda") {
                     t.vendidos++; t.totalVendas += vT;
                     if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(item.pagamento)) {
-                        comLocal = vT * 0.12;
+                        com = vT * 0.12;
                         if(item.pagamento === "Dinheiro") { t.dinheiro += vT; t.vale += vT; }
                         if(item.pagamento === "Pix") { t.pix += vT; t.vale += vT; }
                         if(item.pagamento === "Cartão Débito") t.debito += vT;
@@ -198,26 +194,25 @@
                     } else if (item.pagamento === "Boleto") {
                         t.boleto += (vT - vE);
                         let p = item.restricao === "Sim" ? 0.05 : 0.08;
-                        comLocal = (vE * 0.12) + ((vT - vE) * p);
+                        com = (vE * 0.12) + ((vT - vE) * p);
                         if(item.forma_entrada === "Dinheiro") { t.dinheiro += vE; t.vale += vE; }
                         if(item.forma_entrada === "Pix") { t.pix += vE; t.vale += vE; }
                     }
-                    item.comissao_final = comLocal;
-                    t.totalComissao += comLocal;
-                    htmlComissao += `<tr><td class="py-3 uppercase font-bold text-slate-200 truncate max-w-[100px]">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black italic">${formatBRL(comLocal)}</td></tr>`;
+                    item.comissao_fixada_total = com;
+                    t.totalComissao += com;
+                    htmlComissao += `<tr><td class="py-3 uppercase font-bold text-slate-200 truncate max-w-[100px]">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black italic">${formatBRL(com)}</td></tr>`;
                 } else if (item.resultado === "NQ") t.nq++;
 
                 const colors = { 'Venda': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', 'NQ': 'bg-rose-500/10 text-rose-500 border-rose-500/20', 'Não Atendeu': 'bg-amber-500/10 text-amber-500 border-amber-500/20', 'Reagendar': 'bg-blue-500/10 text-blue-500 border-blue-500/20', 'Pendente': 'bg-slate-500/10 text-slate-400 border-slate-500/20' };
 
-                // AJUSTE DE FONTE DO ENDEREÇO (Igual ao Nome)
                 htmlTable += `<tr class="hover:bg-slate-800/40 transition">
                     <td class="p-4 font-bold text-slate-300 uppercase">${item.data.split('-').reverse().join('/')}<br><span class="font-light text-slate-500 text-[10px]">${item.horario}</span></td>
                     <td class="p-4 uppercase font-black text-slate-100">
                         ${item.nome_formando}<br>
-                        <span class="text-blue-400 font-black lowercase text-[11px] tracking-tighter block mt-1 leading-tight">${item.endereco || 'Ajuste Manual'}</span>
+                        <span class="text-blue-400 font-black lowercase text-[11px] block mt-1">${item.endereco || 'Ajuste Manual'}</span>
                         <span class="text-slate-500 font-medium text-[9px] uppercase">${item.cidade || ''}</span>
                     </td>
-                    <td class="p-4 text-center text-white"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${colors[item.resultado] || colors['Pendente']}">${item.resultado || 'Pendente'}</span></td>
+                    <td class="p-4 text-center"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${colors[item.resultado] || colors['Pendente']}">${item.resultado || 'Pendente'}</span></td>
                     <td class="p-4 text-center">
                         <button onclick="gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-[9px] w-full font-black uppercase transition border border-blue-400/30">Gerenciar</button>
                     </td>
@@ -226,13 +221,13 @@
 
             resumoAtual = t;
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest text-white text-white">Efetividade</p><p class="text-lg font-black text-white text-white">${t.vendidos}/${lista.length}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-emerald-500 shadow-xl text-emerald-400 text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">CASH (D+P)</p><p class="text-[10px] font-black text-white text-white">${formatBRL(t.dinheiro+t.pix)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-400 shadow-xl text-blue-300 text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">DÉBITO</p><p class="text-[10px] font-black text-white text-white">${formatBRL(t.debito)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-indigo-400 shadow-xl text-indigo-300 text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">CRÉDITO</p><p class="text-[10px] font-black text-white text-white">${formatBRL(t.credito)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-orange-500 shadow-xl text-orange-400 text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">BOLETO</p><p class="text-[10px] font-black text-white text-white">${formatBRL(t.boleto)}</p></div>
-                <div class="bg-blue-600 p-3 rounded-2xl text-center shadow-2xl text-white"><p class="text-[8px] font-bold text-blue-100 uppercase tracking-widest text-white">VENDAS</p><p class="text-[11px] font-black text-white text-white">${formatBRL(t.totalVendas)}</p></div>
-                <div class="bg-amber-500 p-3 rounded-2xl text-center shadow-2xl text-amber-950 text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">VALES</p><p class="text-[11px] font-black text-white text-white">${formatBRL(t.vale)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest text-white">Efetividade</p><p class="text-lg font-black text-white">${t.vendidos}/${lista.length}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-emerald-500 shadow-xl text-emerald-400 text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">CASH (D+P)</p><p class="text-[10px] font-black text-white">${formatBRL(t.dinheiro+t.pix)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-400 shadow-xl text-blue-300 text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">DÉBITO</p><p class="text-[10px] font-black text-white">${formatBRL(t.debito)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-indigo-400 shadow-xl text-indigo-300 text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">CRÉDITO</p><p class="text-[10px] font-black text-white">${formatBRL(t.credito)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-orange-500 shadow-xl text-orange-400 text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">BOLETO</p><p class="text-[10px] font-black text-white">${formatBRL(t.boleto)}</p></div>
+                <div class="bg-blue-600 p-3 rounded-2xl text-center shadow-2xl text-white"><p class="text-[8px] font-bold text-blue-100 uppercase tracking-widest">VENDAS</p><p class="text-[11px] font-black">${formatBRL(t.totalVendas)}</p></div>
+                <div class="bg-amber-500 p-3 rounded-2xl text-center shadow-2xl text-amber-950 text-white"><p class="text-[8px] font-bold uppercase tracking-widest">VALES</p><p class="text-[11px] font-black text-white">${formatBRL(t.vale)}</p></div>
             `;
             document.getElementById('admin-content').innerHTML = htmlTable + '</tbody></table>';
             document.getElementById('comissao-content').innerHTML = htmlComissao + '</tbody></table>';
@@ -240,57 +235,54 @@
             const saldo = t.totalComissao - t.vale;
             document.getElementById('fechamento-final').innerHTML = `
                 <div class="mt-4 p-6 rounded-[2rem] border-2 shadow-2xl text-right ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}">
-                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest text-white">Total Comissão: ${formatBRL(t.totalComissao)}</p>
-                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4 text-white text-white">Adiantamento: ${formatBRL(t.vale)}</p>
-                    ${saldo >= 0 ? `<p class="text-[10px] text-emerald-400 font-black tracking-widest uppercase mb-1">Saldo Líquido</p><p class="text-4xl font-black text-emerald-500 italic text-white">${formatBRL(saldo)}</p>` : `<p class="text-[10px] text-rose-400 font-black tracking-widest uppercase mb-1">A Devolver</p><p class="text-4xl font-black text-rose-500 italic text-white">${formatBRL(Math.abs(saldo))}</p>`}
+                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Saldo Comissões: ${formatBRL(t.totalComissao)}</p>
+                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4">Total Adiantado: ${formatBRL(t.vale)}</p>
+                    ${saldo >= 0 ? `<p class="text-[10px] text-emerald-400 font-black uppercase mb-1 text-white">A Receber</p><p class="text-4xl font-black text-emerald-500 italic text-white">${formatBRL(saldo)}</p>` : `<p class="text-[10px] text-rose-400 font-black uppercase mb-1 text-white">Devolver</p><p class="text-4xl font-black text-rose-500 italic text-white">${formatBRL(Math.abs(saldo))}</p>`}
                 </div>
             `;
         }
 
         window.abrirDashboardExcel = () => {
-            const modal = document.getElementById('excel-modal');
-            const preview = document.getElementById('excel-preview-content');
-            modal.style.display = 'block';
+            document.getElementById('excel-modal').style.display = 'block';
             let html = `<table class="w-full text-left text-sm" id="tabela-export-real">
-                <thead class="bg-blue-600 text-white font-black uppercase text-[10px] text-white"><tr><th class="p-3 text-white">DATA</th><th class="p-3 text-white">CLIENTE</th><th class="p-3 text-white">ENDEREÇO</th><th class="p-3 text-white">STATUS</th><th class="p-3 text-right text-white">TOTAL</th><th class="p-3 text-right text-white">COMISSÃO</th></tr></thead><tbody>`;
+                <thead class="bg-blue-600 text-white font-black uppercase text-[10px]"><tr><th class="p-3">DATA</th><th class="p-3">CLIENTE</th><th class="p-3">ENDEREÇO</th><th class="p-3">STATUS</th><th class="p-3 text-right">COMISSÃO</th></tr></thead><tbody class="divide-y divide-gray-100">`;
             dadosCompletos.forEach(i => {
-                html += `<tr class="border-b"><td class="p-3">${i.data}</td><td class="p-3 font-bold uppercase">${i.nome_formando}</td><td class="p-3">${i.endereco||'Manual'}</td><td>${i.resultado.toUpperCase()}</td><td class="p-3 text-right">${formatBRL(i.valor)}</td><td class="p-3 text-right font-black text-emerald-600">${formatBRL(i.comissao_final)}</td></tr>`;
+                html += `<tr><td class="p-3 text-xs">${i.data}</td><td class="p-3 font-bold uppercase text-xs">${i.nome_formando}</td><td class="p-3 text-xs">${i.endereco||'-'}</td><td class="p-3 text-xs">${i.resultado.toUpperCase()}</td><td class="p-3 text-right font-black text-emerald-600 text-xs">${formatBRL(i.comissao_fixada_total)}</td></tr>`;
             });
             html += `</tbody></table>`;
-            preview.innerHTML = html;
+            document.getElementById('excel-preview-content').innerHTML = html;
         };
 
         window.copiarTabelaExcel = async () => {
             const el = document.getElementById('tabela-export-real');
-            try { await navigator.clipboard.writeText(el.innerText); alert("COPIADO!"); } catch (err) { alert("Erro ao copiar."); }
+            try { await navigator.clipboard.writeText(el.innerText); alert("DADOS COPIADOS!\nAgora basta colar no seu Excel."); } catch (err) { alert("Erro ao copiar."); }
         };
 
         window.copiarRelatorio = async () => {
-            const c = prompt("Cidade p/ Relatório:"); if(!c) return;
+            const c = prompt("Cidade:"); if(!c) return;
             const t = resumoAtual;
-            const msg = `**${c}**\nVendidos = ${String(t.vendidos).padStart(2,'0')}\nNQ = ${String(t.nq).padStart(2,'0')}\nDinheiro = ${formatBRL(t.dinheiro)}\nPix = ${formatBRL(t.pix)}\nCartão Débito = ${formatBRL(t.debito)}\nBoleto = ${formatBRL(t.boleto)}\nCartão Crédito = ${formatBRL(t.credito)}\nTotal de vendas = ${formatBRL(t.totalVendas)}\nVale = ${formatBRL(t.vale)}`;
-            try { await navigator.clipboard.writeText(msg); alert("RELATÓRIO COPIADO!"); } catch (err) { alert("Erro ao copiar."); }
+            const msg = `**${c}**\nVendidos = ${t.vendidos}\nDinheiro = ${formatBRL(t.dinheiro)}\nPix = ${formatBRL(t.pix)}\nDébito = ${formatBRL(t.debito)}\nCrédito = ${formatBRL(t.credito)}\nBoleto = ${formatBRL(t.boleto)}\nTotal = ${formatBRL(t.totalVendas)}\nVale = ${formatBRL(t.vale)}`;
+            try { await navigator.clipboard.writeText(msg); alert("RELATÓRIO COPIADO!"); } catch (err) { alert("Erro."); }
         };
 
         window.gerenciarItem = async (tipo, data, id) => {
-            const acao = prompt("1-ALTERAR STATUS | 2-APAGAR REGISTRO");
-            if(acao === "2") { if(confirm("EXCLUIR?")) { await remove(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}`:`${AVULSO_PATH}/${id}`))); carregarRelatorio(); }
+            const acao = prompt("1-RESULTADO | 2-EXCLUIR");
+            if(acao === "2") { if(confirm("APAGAR?")) { await remove(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}`:`${AVULSO_PATH}/${id}`))); carregarRelatorio(); }
             } else if(acao === "1") {
                 const r = prompt("STATUS: 1-Venda | 2-NQ | 3-Não Atendeu | 4-Reagendar");
-                if(!{"1":1,"2":1,"3":1,"4":1}[r]) return;
                 if (r === "1") {
                     const fP = prompt("PGTO: 1-Din | 2-Pix | 3-Déb | 4-Créd | 5-Bol");
                     const fM = {"1":"Dinheiro","2":"Pix","3":"Cartão Débito","4":"Cartão Crédito","5":"Boleto"};
                     if (fM[fP]) {
-                        const vT = parseFloat(prompt("TOTAL?") || 0);
+                        const vT = parseFloat(prompt("VALOR TOTAL?") || 0);
                         let rest = "", vE = 0, fE = "";
                         if (fP === "5") {
-                            rest = (prompt("SPC? 1-Sim | 2-Não") === "1" ? "Sim" : "Não");
-                            if (prompt("ENTRADA? 1-Sim | 2-Não") === "1") { vE = parseFloat(prompt("VALOR?") || 0); fE = (prompt("1-Din | 2-Pix") === "1" ? "Dinheiro" : "Pix"); }
+                            rest = prompt("SPC? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
+                            if (prompt("ENTRADA? 1-Sim | 2-Não") === "1") { vE = parseFloat(prompt("QUAL O VALOR?") || 0); fE = prompt("1-Din | 2-Pix") === "1" ? "Dinheiro" : "Pix"; }
                         }
                         await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { resultado: "Venda", pagamento: fM[fP], valor: vT, entrada: vE, forma_entrada: fE, restricao: rest });
                     }
-                } else await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], valor:0, pagamento: "" });
+                } else if ({"2":1,"3":1,"4":1}[r]) await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], valor:0 });
                 carregarRelatorio();
             }
         };
