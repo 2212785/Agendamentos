@@ -12,7 +12,7 @@
         .btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); transition: all 0.3s ease; }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4); }
 
-        /* CORREÇÃO CRÍTICA: z-index separado */
+        /* MANTIDO: z-index separado para correção do botão planilha */
         #admin-modal { 
             display: none; 
             position: fixed; 
@@ -170,11 +170,21 @@
                     if (snap.exists()) ocupados = Object.keys(snap.val()); 
                 } catch(e){}
 
+                // LÓGICA DA TRAVA DE 6 HORAS
+                const agora = new Date();
+                const hojeStr = agora.toISOString().split('T')[0];
+                const limiteMinimo = new Date(agora.getTime() + (6 * 60 * 60 * 1000)); // Agora + 6h
+
                 selectHorario.innerHTML = '<option value="">Horários Livres</option>';
                 let cursor = new Date(`${dVal}T09:00:00`), final = new Date(`${dVal}T20:00:00`);
+                
                 while(cursor <= final){
                     let hF = cursor.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-                    if(!ocupados.includes(hF.replace(':','-'))) {
+                    
+                    // Validação: Não ocupado E (Se for hoje, tem que ser > 6h no futuro)
+                    const isFuturoSuficiente = (dVal !== hojeStr) || (cursor > limiteMinimo);
+
+                    if(!ocupados.includes(hF.replace(':','-')) && isFuturoSuficiente) {
                         let opt = document.createElement('option'); 
                         opt.value = hF; 
                         opt.textContent = hF; 
@@ -215,7 +225,7 @@
             let t = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, totalVendas: 0, vale: 0, totalComissao: 0 };
             lista.sort((a,b) => new Date(a.data) - new Date(b.data));
             
-            let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 font-bold uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4 text-white">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center text-white">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
+            let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 font-bold uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center text-white">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
             let htmlComissao = '<table class="w-full text-[10px] text-left text-white"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase tracking-tighter"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
 
             lista.forEach(item => {
@@ -332,7 +342,6 @@
             `;
         }
 
-        // CORREÇÃO DO BOTÃO GERAR PLANILHA
         window.abrirDashboardExcel = () => {
             const excelModal = document.getElementById('excel-modal');
             const previewArea = document.getElementById('excel-preview-content');
@@ -343,7 +352,6 @@
                 return;
             }
 
-            // display FLEX para centralizar corretamente
             excelModal.style.display = 'flex';
             excelModal.style.alignItems = 'center';
             excelModal.style.justifyContent = 'center';
@@ -367,11 +375,7 @@
 
             dadosCompletos.forEach(item => {
                 const status = (item.resultado || "Pendente").toUpperCase();
-
-                const dataFormatada = item.data 
-                    ? item.data.split('-').reverse().join('/')
-                    : "-";
-
+                const dataFormatada = item.data ? item.data.split('-').reverse().join('/') : "-";
                 bodyHtml += `
                     <tr>
                         <td class="p-3 text-xs">${dataFormatada}</td>
@@ -389,32 +393,22 @@
 
         window.copiarTabelaExcel = async () => {
             const el = document.getElementById('tabela-export-real');
-            if (!el) {
-                alert("Tabela não encontrada.");
-                return;
-            }
-
+            if (!el) return;
             try { 
                 await navigator.clipboard.writeText(el.innerText); 
                 alert("TABELA COPIADA!\nAgora cole no Excel."); 
-            } catch (e) { 
-                alert("Erro ao copiar."); 
-            }
+            } catch (e) { alert("Erro ao copiar."); }
         };
 
         window.copiarRelatorio = async () => {
             const c = prompt("Cidade:"); 
             if(!c) return;
-
             const t = resumoAtual;
             const msg = `**${c}**\nVendidos = ${t.vendidos}\nCASH = ${formatBRL(t.dinheiro+t.pix)}\nDébito = ${formatBRL(t.debito)}\nCrédito = ${formatBRL(t.credito)}\nBoleto = ${formatBRL(t.boleto)}\nTotal = ${formatBRL(t.totalVendas)}\nVale = ${formatBRL(t.vale)}`;
-
             try { 
                 await navigator.clipboard.writeText(msg); 
                 alert("COPIADO!"); 
-            } catch (e) { 
-                alert("Erro."); 
-            }
+            } catch (e) { alert("Erro."); }
         };
 
         window.gerenciarItem = async (tipo, data, id) => {
@@ -441,19 +435,13 @@
                             }
                         }
                         await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { 
-                            resultado: "Venda", 
-                            pagamento: fM[fP], 
-                            valor: vT, 
-                            entrada: vE, 
-                            forma_entrada: fE, 
-                            restricao: rest 
+                            resultado: "Venda", pagamento: fM[fP], valor: vT, entrada: vE, forma_entrada: fE, restricao: rest 
                         });
                     }
                 } 
                 else if ({"2":1,"3":1,"4":1}[r]) {
                     await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { 
-                        resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], 
-                        valor:0 
+                        resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], valor:0 
                     });
                 }
                 carregarRelatorio();
@@ -471,14 +459,9 @@
         window.lancarAvulso = async () => {
             const n = prompt("Nome Cliente:"); 
             if(!n) return;
-
             await push(ref(db, AVULSO_PATH), { 
-                nome_formando: n, 
-                data: new Date().toISOString().split('T')[0], 
-                horario: "Avulso", 
-                resultado: "Pendente" 
+                nome_formando: n, data: new Date().toISOString().split('T')[0], horario: "Avulso", resultado: "Pendente" 
             });
-
             carregarRelatorio();
         };
 
@@ -486,6 +469,7 @@
     </script>
 </body>
 </html>
+
 
 
 
