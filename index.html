@@ -133,7 +133,10 @@
                 selectHorario.innerHTML = '<option value="">Consultando...</option>';
                 const dataObj = new Date(dataVal + 'T00:00:00');
                 const diaSemana = dataObj.getDay(); 
-                let inicio = 9, fim = (diaSemana === 0 || diaSemana === 6) ? 15 : 20;
+                
+                // Mantendo os horários iniciais e finais conforme solicitado
+                let inicioHora = 9;
+                let fimHora = (diaSemana === 0 || diaSemana === 6) ? 15 : 20;
 
                 let ocupados = [];
                 try {
@@ -142,14 +145,33 @@
                 } catch (e) { console.error(e); }
 
                 selectHorario.innerHTML = '<option value="">Escolha um horário</option>';
-                for (let h = inicio; h <= fim; h++) {
-                    const hora = `${h.toString().padStart(2, '0')}:00`;
-                    const chaveFirebase = hora.replace(':','-');
-                    if (!ocupados.includes(chaveFirebase)) {
+
+                // Lógica de Carência de 6 horas
+                const agora = new Date();
+                const limiteCarencia = new Date(agora.getTime() + (6 * 60 * 60 * 1000));
+
+                // Loop alterado para 30 em 30 minutos
+                let cursor = new Date(`${dataVal}T${inicioHora.toString().padStart(2, '0')}:00:00`);
+                let horarioFinal = new Date(`${dataVal}T${fimHora.toString().padStart(2, '0')}:00:00`);
+
+                while (cursor <= horarioFinal) {
+                    const horaFormatada = cursor.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    const chaveFirebase = horaFormatada.replace(':', '-');
+
+                    // Só exibe se NÃO estiver ocupado E se for após 6 horas do momento atual
+                    if (!ocupados.includes(chaveFirebase) && cursor > limiteCarencia) {
                         const opt = document.createElement('option');
-                        opt.value = hora; opt.textContent = hora;
+                        opt.value = horaFormatada; 
+                        opt.textContent = horaFormatada;
                         selectHorario.appendChild(opt);
                     }
+                    
+                    // Incremento de 30 minutos
+                    cursor.setMinutes(cursor.getMinutes() + 30);
+                }
+
+                if (selectHorario.options.length <= 1) {
+                    selectHorario.innerHTML = '<option value="">Sem horários para hoje</option>';
                 }
             });
         });
@@ -160,6 +182,7 @@
             const data = hiddenDataInput.value;
             const horario = selectHorario.value;
             if(!data) { alert("Escolha o dia primeiro."); return; }
+            if(!horario) { alert("Escolha um horário disponível."); return; }
 
             try {
                 const path = `${COLLECTION_PATH}/${data}/${horario.replace(':', '-')}`;
@@ -193,7 +216,7 @@
             
             const lista = [];
             for(let d in data) for(let h in data[d]) lista.push({...data[d][h], id: h});
-            lista.sort((a,b) => new Date(a.data+'T'+a.horario) - new Date(b.data+'T'+b.horario));
+            lista.sort((a,b) => new Date(a.data+'T'+a.horario.replace('-',':')) - new Date(b.data+'T'+b.horario.replace('-',':')));
 
             lista.forEach(item => {
                 html += `<tr>
