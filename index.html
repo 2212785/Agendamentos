@@ -11,7 +11,28 @@
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); transition: all 0.3s ease; }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4); }
-        #admin-modal, #excel-modal { display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); z-index: 9999; padding: 20px; overflow-y: auto; }
+
+        /* CORREÇÃO CRÍTICA: z-index separado */
+        #admin-modal { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(2, 6, 23, 0.98); 
+            z-index: 9999; 
+            padding: 20px; 
+            overflow-y: auto; 
+        }
+
+        #excel-modal { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(2, 6, 23, 0.98); 
+            z-index: 10001; 
+            padding: 20px; 
+            overflow-y: auto; 
+        }
+
         .day-btn { transition: all 0.2s; border-color: rgba(255,255,255,0.1); color: #94a3b8; background: rgba(255,255,255,0.03); }
         .day-btn.active { background: #3b82f6; color: white; border-color: #60a5fa; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
         ::-webkit-scrollbar { width: 8px; }
@@ -144,13 +165,20 @@
                 hiddenDataInput.value = dVal;
                 selectHorario.innerHTML = '<option>Consultando...</option>';
                 let ocupados = [];
-                try { const snap = await get(ref(db, `${COLLECTION_PATH}/${dVal}`)); if (snap.exists()) ocupados = Object.keys(snap.val()); } catch(e){}
+                try { 
+                    const snap = await get(ref(db, `${COLLECTION_PATH}/${dVal}`)); 
+                    if (snap.exists()) ocupados = Object.keys(snap.val()); 
+                } catch(e){}
+
                 selectHorario.innerHTML = '<option value="">Horários Livres</option>';
                 let cursor = new Date(`${dVal}T09:00:00`), final = new Date(`${dVal}T20:00:00`);
                 while(cursor <= final){
                     let hF = cursor.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
                     if(!ocupados.includes(hF.replace(':','-'))) {
-                        let opt = document.createElement('option'); opt.value = hF; opt.textContent = hF; selectHorario.appendChild(opt);
+                        let opt = document.createElement('option'); 
+                        opt.value = hF; 
+                        opt.textContent = hF; 
+                        selectHorario.appendChild(opt);
                     }
                     cursor.setMinutes(cursor.getMinutes()+30);
                 }
@@ -166,7 +194,9 @@
             location.reload();
         });
 
-        window.acessoAdmin = () => { if(prompt("Expert Key:")==="2025") carregarRelatorio(); };
+        window.acessoAdmin = () => { 
+            if(prompt("Expert Key:")==="2025") carregarRelatorio(); 
+        };
 
         let dadosCompletos = [];
         let resumoAtual = {};
@@ -191,8 +221,11 @@
             lista.forEach(item => {
                 const vT = parseFloat(item.valor || 0), vE = parseFloat(item.entrada || 0);
                 let com = 0;
+
                 if (item.resultado === "Venda") {
-                    t.vendidos++; t.totalVendas += vT;
+                    t.vendidos++; 
+                    t.totalVendas += vT;
+
                     if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(item.pagamento)) {
                         com = vT * 0.12;
                         if(item.pagamento === "Dinheiro") { t.dinheiro += vT; t.vale += vT; }
@@ -206,21 +239,43 @@
                         if(item.forma_entrada === "Dinheiro") { t.dinheiro += vE; t.vale += vE; }
                         if(item.forma_entrada === "Pix") { t.pix += vE; t.vale += vE; }
                     }
+
                     item.comissao_fix_v3 = com; 
                     t.totalComissao += com;
-                    htmlComissao += `<tr><td class="py-3 uppercase font-bold text-slate-200 truncate max-w-[100px]">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black italic">${formatBRL(com)}</td></tr>`;
-                } else if (item.resultado === "NQ") t.nq++;
 
-                const statusStyle = { 'Venda': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', 'NQ': 'bg-rose-500/10 text-rose-500 border-rose-500/20', 'Não Atendeu': 'bg-amber-500/10 text-amber-500 border-amber-500/20', 'Reagendar': 'bg-blue-500/10 text-blue-500 border-blue-500/20', 'Pendente': 'bg-slate-500/10 text-slate-400 border-slate-500/20' };
+                    htmlComissao += `<tr>
+                        <td class="py-3 uppercase font-bold text-slate-200 truncate max-w-[100px]">${item.nome_formando}</td>
+                        <td class="py-3 text-right text-emerald-400 font-black italic">${formatBRL(com)}</td>
+                    </tr>`;
+                } 
+                else if (item.resultado === "NQ") {
+                    t.nq++;
+                }
+
+                const statusStyle = { 
+                    'Venda': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', 
+                    'NQ': 'bg-rose-500/10 text-rose-500 border-rose-500/20', 
+                    'Não Atendeu': 'bg-amber-500/10 text-amber-500 border-amber-500/20', 
+                    'Reagendar': 'bg-blue-500/10 text-blue-500 border-blue-500/20', 
+                    'Pendente': 'bg-slate-500/10 text-slate-400 border-slate-500/20' 
+                };
 
                 htmlTable += `<tr class="hover:bg-slate-800/40 transition">
-                    <td class="p-4 font-bold text-slate-300 uppercase">${item.data.split('-').reverse().join('/')}<br><span class="font-light text-slate-500 text-[10px]">${item.horario}</span></td>
+                    <td class="p-4 font-bold text-slate-300 uppercase">
+                        ${(item.data || "").split('-').reverse().join('/')}
+                        <br>
+                        <span class="font-light text-slate-500 text-[10px]">${item.horario || ""}</span>
+                    </td>
                     <td class="p-4 uppercase font-black text-slate-100">
-                        ${item.nome_formando}<br>
+                        ${item.nome_formando || "-"}<br>
                         <span class="text-blue-400 font-black lowercase text-[11px] block mt-1 leading-tight">${item.endereco || 'Ajuste Manual'}</span>
                         <span class="text-slate-500 font-medium text-[9px] uppercase">${item.cidade || ''}</span>
                     </td>
-                    <td class="p-4 text-center text-white"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${statusStyle[item.resultado] || statusStyle['Pendente']}">${item.resultado || 'Pendente'}</span></td>
+                    <td class="p-4 text-center text-white">
+                        <span class="px-2 py-1 rounded-lg text-[9px] font-black border ${statusStyle[item.resultado] || statusStyle['Pendente']}">
+                            ${item.resultado || 'Pendente'}
+                        </span>
+                    </td>
                     <td class="p-4 text-center">
                         <button onclick="gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-[9px] w-full font-black uppercase transition border border-blue-400/30">Gerenciar</button>
                     </td>
@@ -228,93 +283,149 @@
             });
 
             resumoAtual = t;
+
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest text-white">Efetividade</p><p class="text-lg font-black text-white">${t.vendidos}/${lista.length}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-emerald-500 shadow-xl text-emerald-400 text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">CASH (D+P)</p><p class="text-[10px] font-black text-white">${formatBRL(t.dinheiro+t.pix)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-400 shadow-xl text-blue-300 text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">DÉBITO</p><p class="text-[10px] font-black text-white">${formatBRL(t.debito)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-indigo-400 shadow-xl text-indigo-300 text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">CRÉDITO</p><p class="text-[10px] font-black text-white">${formatBRL(t.credito)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-orange-500 shadow-xl text-orange-400 text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">BOLETO</p><p class="text-[10px] font-black text-white">${formatBRL(t.boleto)}</p></div>
-                <div class="bg-blue-600 p-3 rounded-2xl text-center shadow-2xl text-white"><p class="text-[8px] font-bold text-blue-100 uppercase tracking-widest">VENDAS</p><p class="text-[11px] font-black">${formatBRL(t.totalVendas)}</p></div>
-                <div class="bg-amber-500 p-3 rounded-2xl text-center shadow-2xl text-amber-950 text-white"><p class="text-[8px] font-bold uppercase tracking-widest">VALES</p><p class="text-[11px] font-black text-white">${formatBRL(t.vale)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-500 shadow-xl">
+                    <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest text-white">Efetividade</p>
+                    <p class="text-lg font-black text-white">${t.vendidos}/${lista.length}</p>
+                </div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-emerald-500 shadow-xl text-emerald-400 text-white">
+                    <p class="text-[8px] font-bold uppercase tracking-widest text-white">CASH (D+P)</p>
+                    <p class="text-[10px] font-black text-white">${formatBRL(t.dinheiro+t.pix)}</p>
+                </div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-400 shadow-xl text-blue-300 text-white">
+                    <p class="text-[8px] font-bold uppercase tracking-widest text-white">DÉBITO</p>
+                    <p class="text-[10px] font-black text-white">${formatBRL(t.debito)}</p>
+                </div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-indigo-400 shadow-xl text-indigo-300 text-white">
+                    <p class="text-[8px] font-bold uppercase tracking-widest text-white">CRÉDITO</p>
+                    <p class="text-[10px] font-black text-white">${formatBRL(t.credito)}</p>
+                </div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-orange-500 shadow-xl text-orange-400 text-white">
+                    <p class="text-[8px] font-bold uppercase tracking-widest text-white">BOLETO</p>
+                    <p class="text-[10px] font-black text-white">${formatBRL(t.boleto)}</p>
+                </div>
+                <div class="bg-blue-600 p-3 rounded-2xl text-center shadow-2xl text-white">
+                    <p class="text-[8px] font-bold text-blue-100 uppercase tracking-widest">VENDAS</p>
+                    <p class="text-[11px] font-black">${formatBRL(t.totalVendas)}</p>
+                </div>
+                <div class="bg-amber-500 p-3 rounded-2xl text-center shadow-2xl text-amber-950 text-white">
+                    <p class="text-[8px] font-bold uppercase tracking-widest">VALES</p>
+                    <p class="text-[11px] font-black text-white">${formatBRL(t.vale)}</p>
+                </div>
             `;
+
             document.getElementById('admin-content').innerHTML = htmlTable + '</tbody></table>';
             document.getElementById('comissao-content').innerHTML = htmlComissao + '</tbody></table>';
             
             const saldo = t.totalComissao - t.vale;
+
             document.getElementById('fechamento-final').innerHTML = `
                 <div class="mt-4 p-6 rounded-[2rem] border-2 shadow-2xl text-right ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}">
                     <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest text-white">Saldo Comissões: ${formatBRL(t.totalComissao)}</p>
                     <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4 text-white">Total Vale: ${formatBRL(t.vale)}</p>
-                    ${saldo >= 0 ? `<p class="text-[10px] text-emerald-400 font-black uppercase mb-1">A Receber</p><p class="text-4xl font-black text-emerald-500 italic">${formatBRL(saldo)}</p>` : `<p class="text-[10px] text-rose-400 font-black uppercase mb-1">Devolver</p><p class="text-4xl font-black text-rose-500 italic">${formatBRL(Math.abs(saldo))}</p>`}
+                    ${saldo >= 0 
+                        ? `<p class="text-[10px] text-emerald-400 font-black uppercase mb-1">A Receber</p><p class="text-4xl font-black text-emerald-500 italic">${formatBRL(saldo)}</p>` 
+                        : `<p class="text-[10px] text-rose-400 font-black uppercase mb-1">Devolver</p><p class="text-4xl font-black text-rose-500 italic">${formatBRL(Math.abs(saldo))}</p>`
+                    }
                 </div>
             `;
         }
 
-        // CORREÇÃO CRÍTICA DO BOTÃO GERAR PLANILHA
+        // CORREÇÃO DO BOTÃO GERAR PLANILHA
         window.abrirDashboardExcel = () => {
-    const excelModal = document.getElementById('excel-modal');
-    const previewArea = document.getElementById('excel-preview-content');
-    if (!excelModal || !previewArea) return;
+            const excelModal = document.getElementById('excel-modal');
+            const previewArea = document.getElementById('excel-preview-content');
+            if (!excelModal || !previewArea) return;
 
-    if (!dadosCompletos || dadosCompletos.length === 0) {
-        alert("Nenhum dado carregado ainda.");
-        return;
-    }
+            if (!dadosCompletos || dadosCompletos.length === 0) {
+                alert("Nenhum dado carregado ainda.");
+                return;
+            }
 
-    excelModal.style.display = 'block';
+            // display FLEX para centralizar corretamente
+            excelModal.style.display = 'flex';
+            excelModal.style.alignItems = 'center';
+            excelModal.style.justifyContent = 'center';
 
-    let headHtml = `
-        <table class="w-full text-left text-sm" id="tabela-export-real">
-            <thead class="bg-blue-600 text-white font-black uppercase text-[10px]">
-                <tr>
-                    <th class="p-3">DATA</th>
-                    <th class="p-3">CLIENTE</th>
-                    <th class="p-3">ENDEREÇO</th>
-                    <th class="p-3">STATUS</th>
-                    <th class="p-3 text-right">VALOR</th>
-                    <th class="p-3 text-right">COMISSÃO</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-    `;
+            let headHtml = `
+                <table class="w-full text-left text-sm" id="tabela-export-real">
+                    <thead class="bg-blue-600 text-white font-black uppercase text-[10px]">
+                        <tr>
+                            <th class="p-3">DATA</th>
+                            <th class="p-3">CLIENTE</th>
+                            <th class="p-3">ENDEREÇO</th>
+                            <th class="p-3">STATUS</th>
+                            <th class="p-3 text-right">VALOR</th>
+                            <th class="p-3 text-right">COMISSÃO</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+            `;
 
-    let bodyHtml = '';
+            let bodyHtml = '';
 
-    dadosCompletos.forEach(item => {
-        const status = (item.resultado || "Pendente").toUpperCase();
+            dadosCompletos.forEach(item => {
+                const status = (item.resultado || "Pendente").toUpperCase();
 
-        bodyHtml += `
-            <tr>
-                <td class="p-3 text-xs">${item.data || "-"}</td>
-                <td class="p-3 font-bold uppercase text-xs">${item.nome_formando || "-"}</td>
-                <td class="p-3 text-xs text-slate-500">${item.endereco || "-"}</td>
-                <td class="p-3 text-xs">${status}</td>
-                <td class="p-3 text-right text-xs font-bold text-blue-600">${formatBRL(item.valor || 0)}</td>
-                <td class="p-3 text-right font-black text-emerald-600 text-xs">${formatBRL(item.comissao_fix_v3 || 0)}</td>
-            </tr>
-        `;
-    });
+                const dataFormatada = item.data 
+                    ? item.data.split('-').reverse().join('/')
+                    : "-";
 
-    previewArea.innerHTML = headHtml + bodyHtml + '</tbody></table>';
-};
+                bodyHtml += `
+                    <tr>
+                        <td class="p-3 text-xs">${dataFormatada}</td>
+                        <td class="p-3 font-bold uppercase text-xs">${item.nome_formando || "-"}</td>
+                        <td class="p-3 text-xs text-slate-500">${item.endereco || "-"}</td>
+                        <td class="p-3 text-xs">${status}</td>
+                        <td class="p-3 text-right text-xs font-bold text-blue-600">${formatBRL(item.valor || 0)}</td>
+                        <td class="p-3 text-right font-black text-emerald-600 text-xs">${formatBRL(item.comissao_fix_v3 || 0)}</td>
+                    </tr>
+                `;
+            });
 
+            previewArea.innerHTML = headHtml + bodyHtml + '</tbody></table>';
+        };
 
         window.copiarTabelaExcel = async () => {
             const el = document.getElementById('tabela-export-real');
-            try { await navigator.clipboard.writeText(el.innerText); alert("TABELA COPIADA!\nAgora cole no Excel."); } catch (e) { alert("Erro ao copiar."); }
+            if (!el) {
+                alert("Tabela não encontrada.");
+                return;
+            }
+
+            try { 
+                await navigator.clipboard.writeText(el.innerText); 
+                alert("TABELA COPIADA!\nAgora cole no Excel."); 
+            } catch (e) { 
+                alert("Erro ao copiar."); 
+            }
         };
 
         window.copiarRelatorio = async () => {
-            const c = prompt("Cidade:"); if(!c) return;
+            const c = prompt("Cidade:"); 
+            if(!c) return;
+
             const t = resumoAtual;
             const msg = `**${c}**\nVendidos = ${t.vendidos}\nCASH = ${formatBRL(t.dinheiro+t.pix)}\nDébito = ${formatBRL(t.debito)}\nCrédito = ${formatBRL(t.credito)}\nBoleto = ${formatBRL(t.boleto)}\nTotal = ${formatBRL(t.totalVendas)}\nVale = ${formatBRL(t.vale)}`;
-            try { await navigator.clipboard.writeText(msg); alert("COPIADO!"); } catch (e) { alert("Erro."); }
+
+            try { 
+                await navigator.clipboard.writeText(msg); 
+                alert("COPIADO!"); 
+            } catch (e) { 
+                alert("Erro."); 
+            }
         };
 
         window.gerenciarItem = async (tipo, data, id) => {
             const acao = prompt("1-RESULTADO | 2-EXCLUIR");
-            if(acao === "2") { if(confirm("APAGAR?")) { await remove(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}`:`${AVULSO_PATH}/${id}`))); carregarRelatorio(); }
-            } else if(acao === "1") {
+            if(acao === "2") { 
+                if(confirm("APAGAR?")) { 
+                    await remove(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}`:`${AVULSO_PATH}/${id}`))); 
+                    carregarRelatorio(); 
+                }
+            } 
+            else if(acao === "1") {
                 const r = prompt("STATUS: 1-Venda | 2-NQ | 3-Não Atendeu | 4-Reagendar");
                 if (r === "1") {
                     const fP = prompt("PGTO: 1-Din | 2-Pix | 3-Déb | 4-Créd | 5-Bol");
@@ -324,23 +435,50 @@
                         let rest = "", vE = 0, fE = "";
                         if (fP === "5") {
                             rest = prompt("SPC? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
-                            if (prompt("ENTRADA? 1-Sim | 2-Não") === "1") { vE = parseFloat(prompt("VALOR?") || 0); fE = prompt("FORMA: 1-Din | 2-Pix") === "1" ? "Dinheiro" : "Pix"; }
+                            if (prompt("ENTRADA? 1-Sim | 2-Não") === "1") { 
+                                vE = parseFloat(prompt("VALOR?") || 0); 
+                                fE = prompt("FORMA: 1-Din | 2-Pix") === "1" ? "Dinheiro" : "Pix"; 
+                            }
                         }
-                        await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { resultado: "Venda", pagamento: fM[fP], valor: vT, entrada: vE, forma_entrada: fE, restricao: rest });
+                        await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { 
+                            resultado: "Venda", 
+                            pagamento: fM[fP], 
+                            valor: vT, 
+                            entrada: vE, 
+                            forma_entrada: fE, 
+                            restricao: rest 
+                        });
                     }
-                } else if ({"2":1,"3":1,"4":1}[r]) await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], valor:0 });
+                } 
+                else if ({"2":1,"3":1,"4":1}[r]) {
+                    await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { 
+                        resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], 
+                        valor:0 
+                    });
+                }
                 carregarRelatorio();
             }
         };
 
         window.filtrarLista = () => {
             const t = document.getElementById('busca-admin').value.toLowerCase();
-            renderizarLista(dadosCompletos.filter(i => i.nome_formando.toLowerCase().includes(t) || (i.cidade && i.cidade.toLowerCase().includes(t))));
+            renderizarLista(dadosCompletos.filter(i => 
+                (i.nome_formando && i.nome_formando.toLowerCase().includes(t)) || 
+                (i.cidade && i.cidade.toLowerCase().includes(t))
+            ));
         };
 
         window.lancarAvulso = async () => {
-            const n = prompt("Nome Cliente:"); if(!n) return;
-            await push(ref(db, AVULSO_PATH), { nome_formando: n, data: new Date().toISOString().split('T')[0], horario: "Avulso", resultado: "Pendente" });
+            const n = prompt("Nome Cliente:"); 
+            if(!n) return;
+
+            await push(ref(db, AVULSO_PATH), { 
+                nome_formando: n, 
+                data: new Date().toISOString().split('T')[0], 
+                horario: "Avulso", 
+                resultado: "Pendente" 
+            });
+
             carregarRelatorio();
         };
 
@@ -348,4 +486,6 @@
     </script>
 </body>
 </html>
+
+
 
