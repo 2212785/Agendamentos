@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Agendamento de Visita - Formaturas</title>
+    <title>Agendamento e Gestão de Vendas - Formaturas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { 
@@ -37,11 +37,15 @@
     </div>
 
     <div id="admin-modal">
-        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-6xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-6xl mx-4 max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4 border-b pb-2">
-                <h2 class="text-xl font-bold text-gray-800">Relatório de Agendamentos</h2>
+                <h2 class="text-xl font-bold text-gray-800">Painel Administrativo</h2>
                 <button onclick="fecharAdmin()" class="bg-gray-200 hover:bg-gray-300 px-4 py-1 rounded-lg font-bold">Fechar</button>
             </div>
+            
+            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 bg-blue-50 p-4 rounded-xl border border-blue-100">
+                </div>
+
             <div id="admin-content" class="text-sm overflow-x-auto">
                 </div>
         </div>
@@ -54,10 +58,10 @@
         </nav>
     </header>
 
-    <main id="app-content" class="container mx-auto p-4 md:p-8 flex-grow flex items-center justify-center">
+    <main class="container mx-auto p-4 md:p-8 flex-grow flex items-center justify-center">
         <div class="bg-white p-6 md:p-10 rounded-2xl shadow-2xl border-t-8 border-blue-600 w-full max-w-md">
             <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center">Reserve seu Horário</h2>
-            <p class="text-gray-500 mb-6 text-sm text-center font-medium italic">Disponível apenas de 04/02 a 08/02</p>
+            <p class="text-gray-500 mb-6 text-sm text-center font-medium italic">Selecione o dia e horário</p>
             
             <form id="form-agendamento" class="space-y-4">
                 <div class="grid grid-cols-3 gap-2 mb-4" id="day-selector">
@@ -70,12 +74,12 @@
                 <input type="hidden" id="data-selecionada" required>
 
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nome Completo do Formando</label>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nome Completo</label>
                     <input type="text" id="nome" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nome completo">
                 </div>
 
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Telefone / WhatsApp</label>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">WhatsApp</label>
                     <input type="tel" id="telefone" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="(00) 00000-0000">
                 </div>
 
@@ -122,6 +126,7 @@
         const modalSucesso = document.getElementById('success-modal');
         const modalAdmin = document.getElementById('admin-modal');
 
+        // Geração de Horários com 30min e carência de 6h
         dayButtons.forEach(btn => {
             btn.addEventListener('click', async () => {
                 dayButtons.forEach(b => b.classList.remove('active'));
@@ -164,6 +169,7 @@
             });
         });
 
+        // Gravação do Agendamento
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
             const data = hiddenDataInput.value;
@@ -178,7 +184,10 @@
                     telefone: document.getElementById('telefone').value,
                     endereco: document.getElementById('endereco').value,
                     resultado: "",
-                    pagamento: ""
+                    pagamento: "",
+                    valor: 0,
+                    entrada: 0,
+                    forma_entrada: ""
                 });
                 modalSucesso.style.display = 'flex';
                 e.target.reset();
@@ -187,6 +196,7 @@
             } catch (err) { alert("Erro ao salvar."); }
         });
 
+        // ADM
         window.acessoAdmin = async () => {
             const senha = prompt("Senha ADM:");
             if (senha === "2025") carregarRelatorio();
@@ -199,57 +209,108 @@
             const snapshot = await get(ref(db, COLLECTION_PATH));
             const data = snapshot.val() || {};
             
-            let html = '<table class="w-full border-collapse border mt-4 text-xs"><thead><tr class="bg-gray-100"><th class="border p-2">Data/Hora</th><th class="border p-2">Formando</th><th class="border p-2">Telefone</th><th class="border p-2">Endereço</th><th class="border p-2">Resultado</th><th class="border p-2">Ações</th></tr></thead><tbody>';
-            
+            let totais = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0 };
             const lista = [];
             for(let d in data) for(let h in data[d]) lista.push({...data[d][h], id: h});
+            
             lista.sort((a,b) => new Date(a.data+'T'+a.horario.replace('-',':')) - new Date(b.data+'T'+b.horario.replace('-',':')));
 
+            let html = '<table class="w-full border-collapse border mt-4 text-xs"><thead><tr class="bg-gray-100"><th class="border p-2 text-left">Data/Hora</th><th class="border p-2 text-left">Formando</th><th class="border p-2 text-left">Endereço</th><th class="border p-2">Resultado/Valor</th><th class="border p-2">Ações</th></tr></thead><tbody>';
+
             lista.forEach(item => {
-                const textoResultado = item.resultado === "Venda" ? `✅ Venda (${item.pagamento})` : (item.resultado === "NQ" ? "❌ NQ" : "Pendente");
-                
+                const valorNumerico = parseFloat(item.valor || 0);
+                const entradaNumerica = parseFloat(item.entrada || 0);
+
+                if (item.resultado === "Venda") {
+                    totais.vendidos++;
+                    // Soma o valor total de acordo com a forma de pagamento principal
+                    if (item.pagamento === "Dinheiro") totais.dinheiro += valorNumerico;
+                    if (item.pagamento === "Pix") totais.pix += valorNumerico;
+                    if (item.pagamento === "Cartão Débito") totais.debito += valorNumerico;
+                    if (item.pagamento === "Cartão Crédito") totais.credito += valorNumerico;
+                    if (item.pagamento === "Boleto") totais.boleto += valorNumerico;
+
+                    // Se teve entrada em outra forma, somamos ela separadamente
+                    if (entradaNumerica > 0 && item.forma_entrada) {
+                        if (item.forma_entrada === "Dinheiro") totais.dinheiro += entradaNumerica;
+                        if (item.forma_entrada === "Pix") totais.pix += entradaNumerica;
+                    }
+                } else if (item.resultado === "NQ") {
+                    totais.nq++;
+                }
+
+                const displayResultado = item.resultado ? 
+                    `<div class="font-bold text-blue-700">${item.resultado} ${item.pagamento ? '- ' + item.pagamento : ''}</div>
+                     <div class="text-green-600 font-bold">R$ ${valorNumerico.toFixed(2)}</div>
+                     ${entradaNumerica > 0 ? `<div class="text-[9px] text-gray-500">Entrada: R$ ${entradaNumerica.toFixed(2)} (${item.forma_entrada})</div>` : ''}` 
+                    : "Pendente";
+
                 html += `<tr>
-                    <td class="border p-2 font-bold">${item.data.split('-').reverse().join('/')} às ${item.horario}</td>
-                    <td class="border p-2 uppercase">${item.nome_formando}</td>
-                    <td class="border p-2">${item.telefone}</td>
-                    <td class="border p-2">${item.endereco}</td>
-                    <td class="border p-2 font-bold text-center text-blue-600">${textoResultado}</td>
+                    <td class="border p-2 font-bold">${item.data.split('-').reverse().join('/')}<br>${item.horario}</td>
+                    <td class="border p-2 uppercase">${item.nome_formando}<br><span class="text-gray-500 font-normal normal-case">${item.telefone}</span></td>
+                    <td class="border p-2 text-[10px]">${item.endereco}</td>
+                    <td class="border p-2 text-center">${displayResultado}</td>
                     <td class="border p-2 text-center space-y-1">
-                        <button onclick="registrarResultado('${item.data}', '${item.id}')" class="bg-green-600 text-white px-2 py-1 rounded text-[10px] font-bold block w-full">RESULTADO</button>
+                        <button onclick="registrarResultadoVenda('${item.data}', '${item.id}')" class="bg-green-600 text-white px-2 py-1 rounded text-[10px] font-bold block w-full">RESULTADO</button>
                         <button onclick="cancelarAgendamento('${item.data}', '${item.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-[10px] font-bold block w-full">EXCLUIR</button>
                     </td>
                 </tr>`;
             });
 
+            // Atualiza Resumo
+            document.getElementById('resumo-financeiro').innerHTML = `
+                <div class="p-2 border-r border-blue-100"><p class="text-[10px] uppercase text-gray-500 font-bold">Vendidos / NQ</p><p class="text-lg font-black text-blue-800">${totais.vendidos} / ${totais.nq}</p></div>
+                <div class="p-2 border-r border-blue-100"><p class="text-[10px] uppercase text-gray-500 font-bold">Dinheiro / Pix</p><p class="text-sm font-bold text-green-700">R$ ${totais.dinheiro.toFixed(2)} / R$ ${totais.pix.toFixed(2)}</p></div>
+                <div class="p-2 border-r border-blue-100"><p class="text-[10px] uppercase text-gray-500 font-bold">Cartões (D/C)</p><p class="text-sm font-bold text-blue-700">R$ ${totais.debito.toFixed(2)} / R$ ${totais.credito.toFixed(2)}</p></div>
+                <div class="p-2"><p class="text-[10px] uppercase text-gray-500 font-bold">Boleto</p><p class="text-sm font-bold text-orange-700">R$ ${totais.boleto.toFixed(2)}</p></div>
+            `;
+
             document.getElementById('admin-content').innerHTML = lista.length ? html + '</tbody></table>' : "Nenhum agendamento encontrado.";
         }
 
-        window.registrarResultado = async (data, horaId) => {
+        window.registrarResultadoVenda = async (data, horaId) => {
             const res = prompt("Digite: \n1 para VENDA \n2 para NQ");
             if (res === "1") {
-                const pag = prompt("Forma de Pagamento: \n1-Cartão\n2-Pix\n3-Dinheiro\n4-Boleto");
-                const formas = { "1": "Cartão", "2": "Pix", "3": "Dinheiro", "4": "Boleto" };
+                const pag = prompt("Forma de Pagamento Principal: \n1-Dinheiro\n2-Pix\n3-Cartão Débito\n4-Cartão Crédito\n5-Boleto");
+                const formas = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito", "4": "Cartão Crédito", "5": "Boleto" };
+                
                 if (formas[pag]) {
-                    await update(ref(db, `${COLLECTION_PATH}/${data}/${horaId}`), { resultado: "Venda", pagamento: formas[pag] });
+                    const valorTotal = prompt("Qual o valor TOTAL da venda?");
+                    let valorEntrada = 0;
+                    let formaEntrada = "";
+
+                    if (formas[pag] === "Boleto") {
+                        const ent = prompt("Boleto: \n1-Com Entrada \n2-Sem Entrada");
+                        if (ent === "1") {
+                            valorEntrada = prompt("Valor da Entrada?");
+                            const fEnt = prompt("Forma da Entrada: \n1-Dinheiro \n2-Pix");
+                            formaEntrada = fEnt === "1" ? "Dinheiro" : "Pix";
+                        }
+                    }
+
+                    await update(ref(db, `${COLLECTION_PATH}/${data}/${horaId}`), { 
+                        resultado: "Venda", 
+                        pagamento: formas[pag],
+                        valor: parseFloat(valorTotal || 0),
+                        entrada: parseFloat(valorEntrada || 0),
+                        forma_entrada: formaEntrada
+                    });
                     carregarRelatorio();
                 }
             } else if (res === "2") {
-                await update(ref(db, `${COLLECTION_PATH}/${data}/${horaId}`), { resultado: "NQ", pagamento: "" });
+                await update(ref(db, `${COLLECTION_PATH}/${data}/${horaId}`), { resultado: "NQ", pagamento: "", valor: 0, entrada: 0 });
                 carregarRelatorio();
             }
         };
 
         window.cancelarAgendamento = async (data, horaId) => {
-            if (confirm("Tem certeza que deseja cancelar e excluir este agendamento?")) {
-                try {
-                    await remove(ref(db, `${COLLECTION_PATH}/${data}/${horaId}`));
-                    carregarRelatorio();
-                } catch (e) { alert("Erro ao cancelar."); }
+            if (confirm("Tem certeza que deseja excluir?")) {
+                await remove(ref(db, `${COLLECTION_PATH}/${data}/${horaId}`));
+                carregarRelatorio();
             }
         };
 
         window.fecharAdmin = () => modalAdmin.style.display = 'none';
     </script>
 </body>
-</html>         
-              
+</html>
