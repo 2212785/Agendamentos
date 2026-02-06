@@ -41,16 +41,14 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 border-b pb-2 gap-2">
                 <h2 class="text-xl font-bold text-gray-800">Painel Administrativo</h2>
                 <div class="flex flex-wrap gap-2">
-                    <button onclick="copiarRelatorio()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition uppercase">Gerar Relatório WhatsApp</button>
+                    <button onclick="lancarAvulso()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition uppercase">Lançamento Avulso</button>
+                    <button onclick="copiarRelatorio()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition uppercase">Relatório WhatsApp</button>
                     <button onclick="fecharAdmin()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg font-bold text-xs uppercase">Fechar</button>
                 </div>
             </div>
             
-            <div id="resumo-financeiro" class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-6">
-                </div>
-
-            <div id="admin-content" class="text-sm overflow-x-auto border rounded-xl bg-gray-50">
-                </div>
+            <div id="resumo-financeiro" class="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-6"></div>
+            <div id="admin-content" class="text-sm overflow-x-auto border rounded-xl bg-gray-50"></div>
         </div>
     </div>
 
@@ -74,36 +72,18 @@
                 </div>
                 <input type="hidden" id="data-selecionada" required>
 
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nome Completo</label>
-                    <input type="text" id="nome" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nome do formando">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Telefone / WhatsApp</label>
-                    <input type="tel" id="telefone" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="(00) 00000-0000">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Horário Disponível</label>
-                    <select id="horario" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                        <option value="">Selecione o dia acima</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Endereço de Visita</label>
-                    <textarea id="endereco" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" rows="2" placeholder="Rua, número, bairro..."></textarea>
-                </div>
-
-                <button type="submit" class="w-full bg-blue-600 text-white font-extrabold py-4 rounded-xl hover:bg-blue-700 transition shadow-lg active:scale-95 uppercase">Confirmar Agendamento</button>
+                <div><label class="block text-sm font-semibold text-gray-700 mb-1">Nome Completo</label><input type="text" id="nome" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></div>
+                <div><label class="block text-sm font-semibold text-gray-700 mb-1">WhatsApp</label><input type="tel" id="telefone" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"></div>
+                <div><label class="block text-sm font-semibold text-gray-700 mb-1">Horário Disponível</label><select id="horario" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-white"><option value="">Selecione o dia acima</option></select></div>
+                <div><label class="block text-sm font-semibold text-gray-700 mb-1">Endereço de Visita</label><textarea id="endereco" required class="w-full p-3 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" rows="2"></textarea></div>
+                <button type="submit" class="w-full bg-blue-600 text-white font-extrabold py-4 rounded-xl hover:bg-blue-700 transition uppercase shadow-lg active:scale-95">Confirmar Agendamento</button>
             </form>
         </div>
     </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, get, set, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        import { getDatabase, ref, get, set, remove, update, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU", 
@@ -118,13 +98,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const COLLECTION_PATH = 'agendamentos';
+        const AVULSO_PATH = 'avulsos';
 
+        // Lógica de horários e botões permanece igual
         const dayButtons = document.querySelectorAll('.day-btn');
         const hiddenDataInput = document.getElementById('data-selecionada');
         const selectHorario = document.getElementById('horario');
         const modalAdmin = document.getElementById('admin-modal');
 
-        // GERAÇÃO DE HORÁRIOS (30 MIN + 6H CARÊNCIA)
         dayButtons.forEach(btn => {
             btn.addEventListener('click', async () => {
                 dayButtons.forEach(b => b.classList.remove('active'));
@@ -136,10 +117,7 @@
                 const diaSemana = dataObj.getDay(); 
                 let inicioHora = 9, fimHora = (diaSemana === 0 || diaSemana === 6) ? 15 : 20;
                 let ocupados = [];
-                try {
-                    const snapshot = await get(ref(db, `${COLLECTION_PATH}/${dataVal}`));
-                    if (snapshot.exists()) ocupados = Object.keys(snapshot.val());
-                } catch (e) {}
+                try { const snapshot = await get(ref(db, `${COLLECTION_PATH}/${dataVal}`)); if (snapshot.exists()) ocupados = Object.keys(snapshot.val()); } catch (e) {}
 
                 selectHorario.innerHTML = '<option value="">Escolha um horário</option>';
                 const agora = new Date(), limiteCarencia = new Date(agora.getTime() + (6 * 60 * 60 * 1000));
@@ -150,25 +128,21 @@
                     const horaF = cursor.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                     if (!ocupados.includes(horaF.replace(':','-')) && cursor > limiteCarencia) {
                         const opt = document.createElement('option');
-                        opt.value = horaF; opt.textContent = horaF;
-                        selectHorario.appendChild(opt);
+                        opt.value = horaF; opt.textContent = horaF; selectHorario.appendChild(opt);
                     }
                     cursor.setMinutes(cursor.getMinutes() + 30);
                 }
             });
         });
 
-        // SALVAR AGENDAMENTO
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
             const data = hiddenDataInput.value, horario = selectHorario.value;
             try {
                 const path = `${COLLECTION_PATH}/${data}/${horario.replace(':', '-')}`;
                 await set(ref(db, path), {
-                    data, horario, 
-                    nome_formando: document.getElementById('nome').value,
-                    telefone: document.getElementById('telefone').value,
-                    endereco: document.getElementById('endereco').value,
+                    data, horario, nome_formando: document.getElementById('nome').value,
+                    telefone: document.getElementById('telefone').value, endereco: document.getElementById('endereco').value,
                     resultado: "", pagamento: "", valor: 0, entrada: 0, forma_entrada: ""
                 });
                 document.getElementById('success-modal').style.display = 'flex';
@@ -177,38 +151,41 @@
             } catch (err) { alert("Erro ao salvar."); }
         });
 
-        window.acessoAdmin = async () => {
-            const senha = prompt("Senha ADM:");
-            if (senha === "2025") carregarRelatorio();
-        };
+        window.acessoAdmin = async () => { if (prompt("Senha ADM:") === "2025") carregarRelatorio(); };
 
         let resumoAtual = {};
 
         async function carregarRelatorio() {
             modalAdmin.style.display = 'flex';
-            document.getElementById('admin-content').innerHTML = "<p class='p-4'>Carregando dados...</p>";
-            const snapshot = await get(ref(db, COLLECTION_PATH));
-            const data = snapshot.val() || {};
+            document.getElementById('admin-content').innerHTML = "<p class='p-4'>Carregando...</p>";
+            
+            const snapAgendados = await get(ref(db, COLLECTION_PATH));
+            const snapAvulsos = await get(ref(db, AVULSO_PATH));
+            
+            const agendados = snapAgendados.val() || {};
+            const avulsos = snapAvulsos.val() || {};
             
             let t = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, totalVendas: 0, vale: 0 };
             const lista = [];
-            for(let d in data) for(let h in data[d]) lista.push({...data[d][h], id: h});
-            lista.sort((a,b) => new Date(a.data+'T'+a.horario.replace('-',':')) - new Date(b.data+'T'+b.horario.replace('-',':')));
 
-            let html = '<table class="w-full border-collapse text-[11px] md:text-xs text-left"><thead><tr class="bg-gray-200 text-gray-700 uppercase tracking-wider"><th class="p-3 border">Data/Hora</th><th class="p-3 border">Formando</th><th class="p-3 border">Endereço</th><th class="p-3 border">Status / Valor</th><th class="p-3 border text-center">Ações</th></tr></thead><tbody class="bg-white">';
+            // Processa Agendados
+            for(let d in agendados) for(let h in agendados[d]) lista.push({...agendados[d][h], id: h, tipo: 'agenda'});
+            // Processa Avulsos
+            for(let id in avulsos) lista.push({...avulsos[id], id: id, tipo: 'avulso'});
+
+            lista.sort((a,b) => new Date(a.data) - new Date(b.data));
+
+            let html = '<table class="w-full border-collapse text-[11px] md:text-xs text-left"><thead><tr class="bg-gray-200 text-gray-700 uppercase"><th class="p-3 border">Data</th><th class="p-3 border">Formando</th><th class="p-3 border">Endereço/Origem</th><th class="p-3 border">Status/Valor</th><th class="p-3 border text-center">Ações</th></tr></thead><tbody class="bg-white">';
 
             lista.forEach(item => {
                 const val = parseFloat(item.valor || 0), ent = parseFloat(item.entrada || 0);
                 if (item.resultado === "Venda") {
-                    t.vendidos++;
-                    t.totalVendas += val;
-                    // Soma principal
+                    t.vendidos++; t.totalVendas += val;
                     if (item.pagamento === "Dinheiro") { t.dinheiro += val; t.vale += val; }
                     else if (item.pagamento === "Pix") { t.pix += val; t.vale += val; }
                     else if (item.pagamento === "Cartão Débito") t.debito += val;
                     else if (item.pagamento === "Cartão Crédito") t.credito += val;
                     else if (item.pagamento === "Boleto") t.boleto += val;
-                    // Soma entrada
                     if (ent > 0) {
                         if (item.forma_entrada === "Dinheiro") { t.dinheiro += ent; t.vale += ent; }
                         else if (item.forma_entrada === "Pix") { t.pix += ent; t.vale += ent; }
@@ -216,67 +193,84 @@
                 } else if (item.resultado === "NQ") t.nq++;
 
                 html += `<tr class="hover:bg-gray-50 border-b">
-                    <td class="p-3 border font-bold">${item.data.split('-').reverse().join('/')}<br>${item.horario}</td>
-                    <td class="p-3 border uppercase font-semibold">${item.nome_formando}<br><span class="normal-case text-gray-500 font-normal">${item.telefone}</span></td>
-                    <td class="p-3 border text-blue-800 font-medium">${item.endereco}</td>
+                    <td class="p-3 border font-bold">${item.data.split('-').reverse().join('/')}<br>${item.horario || 'Avulso'}</td>
+                    <td class="p-3 border uppercase font-semibold">${item.nome_formando}</td>
+                    <td class="p-3 border text-blue-800">${item.endereco || '<span class="text-gray-400 italic">Venda Direta</span>'}</td>
                     <td class="p-3 border text-center font-bold">
                         <span class="${item.resultado === 'Venda' ? 'text-green-600' : 'text-red-500'}">${item.resultado || 'Pendente'}</span><br>
                         ${val > 0 ? 'R$ ' + val.toFixed(2) : ''}
                     </td>
                     <td class="p-3 border text-center space-y-1">
-                        <button onclick="registrarResultadoVenda('${item.data}', '${item.id}')" class="bg-green-600 text-white px-2 py-1 rounded text-[10px] font-bold w-full uppercase">Resultado</button>
-                        <button onclick="cancelarAgendamento('${item.data}', '${item.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-[10px] font-bold w-full uppercase">Excluir</button>
+                        ${item.tipo === 'agenda' ? `<button onclick="registrarResultadoVenda('${item.data}', '${item.id}')" class="bg-green-600 text-white px-2 py-1 rounded text-[10px] w-full uppercase font-bold">Resultado</button>` : ''}
+                        <button onclick="excluirRegistro('${item.tipo}', '${item.data}', '${item.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-[10px] w-full uppercase font-bold">Excluir</button>
                     </td>
                 </tr>`;
             });
 
             resumoAtual = t;
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="bg-white p-3 border rounded-xl shadow-sm text-center"><p class="text-[9px] font-bold text-gray-500 uppercase">Vendidos / NQ</p><p class="text-lg font-black text-gray-800">${t.vendidos} / ${t.nq}</p></div>
-                <div class="bg-white p-3 border rounded-xl shadow-sm text-center"><p class="text-[9px] font-bold text-gray-500 uppercase text-green-600">Dinheiro / Pix</p><p class="text-sm font-bold">R$ ${t.dinheiro.toFixed(0)} / R$ ${t.pix.toFixed(0)}</p></div>
-                <div class="bg-white p-3 border rounded-xl shadow-sm text-center"><p class="text-[9px] font-bold text-gray-500 uppercase text-blue-600">Cartão D/C</p><p class="text-sm font-bold">R$ ${t.debito.toFixed(0)} / R$ ${t.credito.toFixed(0)}</p></div>
-                <div class="bg-white p-3 border rounded-xl shadow-sm text-center"><p class="text-[9px] font-bold text-gray-500 uppercase text-orange-600">Boleto</p><p class="text-sm font-bold text-orange-700">R$ ${t.boleto.toFixed(2)}</p></div>
-                <div class="bg-blue-600 p-3 border border-blue-700 rounded-xl shadow-sm text-center text-white"><p class="text-[9px] font-bold uppercase">Total Vendas</p><p class="text-base font-black">R$ ${t.totalVendas.toFixed(2)}</p></div>
-                <div class="bg-yellow-400 p-3 border border-yellow-500 rounded-xl shadow-sm text-center text-gray-900"><p class="text-[9px] font-bold uppercase">Vale</p><p class="text-base font-black">R$ ${t.vale.toFixed(2)}</p></div>
+                <div class="bg-white p-2 border rounded shadow-sm text-center"><p class="text-[8px] font-bold uppercase">Vendidos/NQ</p><p class="text-sm font-black">${t.vendidos}/${t.nq}</p></div>
+                <div class="bg-white p-2 border rounded shadow-sm text-center text-green-600"><p class="text-[8px] font-bold uppercase">Dinheiro/Pix</p><p class="text-[10px] font-bold">R$${t.dinheiro.toFixed(0)}/R$${t.pix.toFixed(0)}</p></div>
+                <div class="bg-white p-2 border rounded shadow-sm text-center text-blue-600"><p class="text-[8px] font-bold uppercase">Cartão D/C</p><p class="text-[10px] font-bold">R$${t.debito.toFixed(0)}/R$${t.credito.toFixed(0)}</p></div>
+                <div class="bg-white p-2 border rounded shadow-sm text-center text-orange-600"><p class="text-[8px] font-bold uppercase">Boleto</p><p class="text-[10px] font-bold">R$${t.boleto.toFixed(0)}</p></div>
+                <div class="bg-blue-600 p-2 rounded shadow text-center text-white"><p class="text-[8px] font-bold uppercase">Total Vendas</p><p class="text-[10px] font-black">R$${t.totalVendas.toFixed(2)}</p></div>
+                <div class="bg-yellow-400 p-2 rounded shadow text-center text-gray-900"><p class="text-[8px] font-bold uppercase">Vale</p><p class="text-[10px] font-black">R$${t.vale.toFixed(2)}</p></div>
             `;
-            document.getElementById('admin-content').innerHTML = lista.length ? html + '</tbody></table>' : "<p class='p-6 text-center font-bold'>Nenhum agendamento encontrado.</p>";
+            document.getElementById('admin-content').innerHTML = html + '</tbody></table>';
         }
+
+        window.lancarAvulso = async () => {
+            const nome = prompt("Nome do Cliente?");
+            if (!nome) return;
+            const res = prompt("1-VENDA | 2-NQ");
+            let dados = { nome_formando: nome, data: new Date().toISOString().split('T')[0], horario: "Avulso", resultado: "", pagamento: "", valor: 0, entrada: 0, forma_entrada: "" };
+            
+            if (res === "1") {
+                const pag = prompt("1-Dinheiro | 2-Pix | 3-Débito | 4-Crédito | 5-Boleto");
+                const formas = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito", "4": "Cartão Crédito", "5": "Boleto" };
+                if (formas[pag]) {
+                    dados.resultado = "Venda"; dados.pagamento = formas[pag];
+                    dados.valor = parseFloat(prompt("Valor TOTAL?") || 0);
+                    if (formas[pag] === "Boleto" && prompt("1-Com Entrada | 2-Sem") === "1") {
+                        dados.entrada = parseFloat(prompt("Valor Entrada?") || 0);
+                        dados.forma_entrada = prompt("1-Dinh | 2-Pix") === "1" ? "Dinheiro" : "Pix";
+                    }
+                }
+            } else { dados.resultado = "NQ"; }
+            
+            await push(ref(db, AVULSO_PATH), dados);
+            carregarRelatorio();
+        };
 
         window.copiarRelatorio = () => {
             const t = resumoAtual;
             const msg = `Vendidos = ${String(t.vendidos).padStart(2, '0')}\nNQ = ${String(t.nq).padStart(2, '0')}\nDinheiro = R$ ${t.dinheiro.toFixed(2)}\nPix = R$ ${t.pix.toFixed(2)}\nCartão Débito = R$ ${t.debito.toFixed(2)}\nBoleto = R$ ${t.boleto.toFixed(2)}\nCartão Crédito = R$ ${t.credito.toFixed(2)}\nTotal de vendas = R$ ${t.totalVendas.toFixed(2)}\nVale = R$ ${t.vale.toFixed(2)}`;
-            const el = document.createElement('textarea');
-            el.value = msg; document.body.appendChild(el); el.select();
-            document.execCommand('copy'); document.body.removeChild(el);
-            alert("Relatório copiado para o WhatsApp!");
+            const el = document.createElement('textarea'); el.value = msg; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
+            alert("Copiado!");
         };
 
         window.registrarResultadoVenda = async (data, horaId) => {
-            const res = prompt("Digite: \n1 para VENDA \n2 para NQ");
+            const res = prompt("1-VENDA | 2-NQ");
             if (res === "1") {
-                const pag = prompt("Forma de Pagamento Principal: \n1-Dinheiro\n2-Pix\n3-Cartão Débito\n4-Cartão Crédito\n5-Boleto");
+                const pag = prompt("1-Dinheiro | 2-Pix | 3-Débito | 4-Crédito | 5-Boleto");
                 const formas = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito", "4": "Cartão Crédito", "5": "Boleto" };
                 if (formas[pag]) {
-                    const total = prompt("Qual o valor TOTAL da venda?");
-                    let vEntrada = 0, fEntrada = "";
-                    if (formas[pag] === "Boleto") {
-                        if (prompt("Boleto: \n1-Com Entrada \n2-Sem Entrada") === "1") {
-                            vEntrada = prompt("Valor da Entrada?");
-                            fEntrada = prompt("Forma da Entrada: \n1-Dinheiro \n2-Pix") === "1" ? "Dinheiro" : "Pix";
-                        }
-                    }
+                    const total = prompt("Valor TOTAL?"), ent = (formas[pag] === "Boleto" && prompt("1-Com Entrada | 2-Sem") === "1") ? {v: prompt("Valor Entrada?"), f: prompt("1-Dinh | 2-Pix") === "1" ? "Dinheiro" : "Pix"} : {v:0, f:""};
                     await update(ref(db, `${COLLECTION_PATH}/${data}/${horaId}`), { 
-                        resultado: "Venda", pagamento: formas[pag], valor: parseFloat(total || 0), entrada: parseFloat(vEntrada || 0), forma_entrada: fEntrada
+                        resultado: "Venda", pagamento: formas[pag], valor: parseFloat(total || 0), entrada: parseFloat(ent.v || 0), forma_entrada: ent.f
                     });
                     carregarRelatorio();
                 }
-            } else if (res === "2") {
-                await update(ref(db, `${COLLECTION_PATH}/${data}/${horaId}`), { resultado: "NQ", pagamento: "", valor: 0, entrada: 0 });
-                carregarRelatorio();
+            } else if (res === "2") { await update(ref(db, `${COLLECTION_PATH}/${data}/${horaId}`), { resultado: "NQ", pagamento: "", valor: 0, entrada: 0 }); carregarRelatorio(); }
+        };
+
+        window.excluirRegistro = async (tipo, data, id) => {
+            if (confirm("Excluir?")) {
+                const path = tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`;
+                await remove(ref(db, path)); carregarRelatorio();
             }
         };
 
-        window.cancelarAgendamento = async (data, horaId) => { if (confirm("Excluir registro?")) { await remove(ref(db, `${COLLECTION_PATH}/${data}/${horaId}`)); carregarRelatorio(); } };
         window.fecharAdmin = () => modalAdmin.style.display = 'none';
     </script>
 </body>
