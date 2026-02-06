@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gestão de Vendas e Comissões</title>
+    <title>Gestão Pro - Vendas e Comissões</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-image: url('https://images.unsplash.com/photo-1523050853063-9158946122a2?q=80&w=2070&auto=format&fit=crop'); background-size: cover; background-position: center; background-attachment: fixed; }
@@ -24,20 +24,28 @@
 
     <div id="admin-modal">
         <div class="bg-white p-4 md:p-6 rounded-2xl shadow-2xl w-full max-w-7xl mx-2 md:mx-4 max-h-[95vh] overflow-y-auto">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 border-b pb-2 gap-2">
-                <h2 class="text-xl font-bold text-gray-800">Painel Administrativo</h2>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 border-b pb-2 gap-4">
+                <h2 class="text-xl font-bold text-gray-800 uppercase tracking-tighter">Painel Administrativo</h2>
+                
+                <div class="flex-grow max-w-md">
+                    <input type="text" id="busca-admin" onkeyup="filtrarLista()" placeholder="🔍 Buscar por nome ou cidade..." class="w-full p-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400">
+                </div>
+
                 <div class="flex flex-wrap gap-2">
-                    <button onclick="lancarAvulso()" class="bg-blue-600 text-white px-3 py-2 rounded-lg font-bold text-xs uppercase shadow hover:bg-blue-700 transition">Lançamento Avulso</button>
-                    <button onclick="copiarRelatorio()" class="bg-green-600 text-white px-3 py-2 rounded-lg font-bold text-xs uppercase shadow hover:bg-green-700 transition">Relatório WhatsApp</button>
-                    <button onclick="fecharAdmin()" class="bg-gray-200 px-3 py-2 rounded-lg font-bold text-xs uppercase hover:bg-gray-300 transition">Fechar</button>
+                    <button onclick="lancarAvulso()" class="bg-blue-600 text-white px-3 py-2 rounded-lg font-bold text-[10px] uppercase shadow hover:bg-blue-700">Lançamento Avulso</button>
+                    <button onclick="exportarExcel()" class="bg-gray-700 text-white px-3 py-2 rounded-lg font-bold text-[10px] uppercase shadow hover:bg-black">Baixar Planilha</button>
+                    <button onclick="copiarRelatorio()" class="bg-green-600 text-white px-3 py-2 rounded-lg font-bold text-[10px] uppercase shadow hover:bg-green-700">Relatório WhatsApp</button>
+                    <button onclick="fecharAdmin()" class="bg-gray-200 px-3 py-2 rounded-lg font-bold text-[10px] uppercase hover:bg-gray-300">Fechar</button>
                 </div>
             </div>
             
             <div id="resumo-financeiro" class="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-6"></div>
-            <h3 class="font-bold text-gray-700 mb-2 uppercase text-xs">Controle de Atendimentos</h3>
+            
             <div id="admin-content" class="text-sm overflow-x-auto border rounded-xl bg-gray-50 mb-6 shadow-inner"></div>
-            <h3 class="font-bold text-gray-700 mb-2 uppercase text-xs">Tabela de Comissionamento</h3>
+
+            <h3 class="font-bold text-gray-700 mb-2 uppercase text-xs">Cálculo de Comissões</h3>
             <div id="comissao-content" class="text-sm overflow-x-auto border rounded-xl bg-blue-50 p-4 shadow-inner"></div>
+            
             <div id="fechamento-final" class="mt-4 p-4 rounded-xl border-2 shadow-lg"></div>
         </div>
     </div>
@@ -62,11 +70,11 @@
                 </div>
                 <input type="hidden" id="data-selecionada" required>
                 <input type="text" id="nome" required placeholder="Nome Completo" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="tel" id="telefone" required placeholder="Seu WhatsApp" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
                 <input type="text" id="cidade" required placeholder="Cidade" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
                 <select id="horario" required class="w-full p-3 border rounded-xl bg-white outline-none focus:ring-2 focus:ring-blue-500"><option value="">Escolha o dia acima</option></select>
-                <textarea id="endereco" required placeholder="Endereço Completo" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500" rows="2"></textarea>
-                <button type="submit" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg uppercase transition active:scale-95">Finalizar Agendamento</button>
+                <textarea id="endereco" required placeholder="Endereço de Visita" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500" rows="2"></textarea>
+                <button type="submit" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg uppercase transition active:scale-95">Confirmar Agendamento</button>
             </form>
         </div>
     </main>
@@ -89,22 +97,19 @@
         const db = getDatabase(app);
         const COLLECTION_PATH = 'agendamentos';
         const AVULSO_PATH = 'avulsos';
+        const MEU_WHATSAPP = "5516999999999"; 
 
-        // --- INSIRA SEU WHATSAPP AQUI (Somente números com DDD) ---
-        const MEU_WHATSAPP = "5516993291674"; 
-
-        const dayButtons = document.querySelectorAll('.day-btn');
         const hiddenDataInput = document.getElementById('data-selecionada');
         const selectHorario = document.getElementById('horario');
         const modalAdmin = document.getElementById('admin-modal');
 
-        dayButtons.forEach(btn => {
+        // Agendamento Público
+        document.querySelectorAll('.day-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
-                dayButtons.forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 const dataVal = btn.getAttribute('data-date');
                 hiddenDataInput.value = dataVal;
-                selectHorario.innerHTML = '<option value="">...</option>';
                 const dataObj = new Date(dataVal + 'T00:00:00');
                 let fim = (dataObj.getDay() === 0 || dataObj.getDay() === 6) ? 15 : 20;
                 let ocupados = [];
@@ -124,46 +129,38 @@
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
             const data = hiddenDataInput.value, hor = selectHorario.value, nome = document.getElementById('nome').value, cid = document.getElementById('cidade').value, end = document.getElementById('endereco').value;
-            
-            try {
-                await set(ref(db, `${COLLECTION_PATH}/${data}/${hor.replace(':','-')}`), {
-                    data, horario: hor, nome_formando: nome, telefone: document.getElementById('telefone').value, endereco: end, cidade: cid, resultado: ""
-                });
-                
-                document.getElementById('success-modal').style.display='flex';
-
-                // Disparo de notificação via WhatsApp
-                const msgZap = window.encodeURIComponent(`Olá! Gostaria de confirmar meu agendamento:\n\n*Nome:* ${nome}\n*Data:* ${data.split('-').reverse().join('/')}\n*Horário:* ${hor}\n*Cidade:* ${cid}\n*Endereço:* ${end}`);
-                setTimeout(() => {
-                    window.open(`https://wa.me/${MEU_WHATSAPP}?text=${msgZap}`, '_blank');
-                    location.reload();
-                }, 2500);
-
-            } catch (err) { alert("Erro ao salvar."); }
+            await set(ref(db, `${COLLECTION_PATH}/${data}/${hor.replace(':','-')}`), {
+                data, horario: hor, nome_formando: nome, telefone: document.getElementById('telefone').value, endereco: end, cidade: cid, resultado: ""
+            });
+            document.getElementById('success-modal').style.display='flex';
+            setTimeout(() => { window.open(`https://wa.me/${MEU_WHATSAPP}?text=${window.encodeURIComponent('Confirmação de Agendamento:\n\n*Nome:* '+nome+'\n*Data:* '+data.split('-').reverse().join('/')+'\n*Horário:* '+hor+'\n*Cidade:* '+cid)}`, '_blank'); location.reload(); }, 2500);
         });
 
         window.acessoAdmin = () => { if(prompt("Senha:")==="2025") carregarRelatorio(); };
 
+        let dadosCompletos = [];
         let resumoAtual = {};
-        let ultimaCidade = "";
 
         async function carregarRelatorio() {
             modalAdmin.style.display = 'flex';
             const [sAg, sAv] = await Promise.all([get(ref(db, COLLECTION_PATH)), get(ref(db, AVULSO_PATH))]);
             const ag = sAg.val() || {}, av = sAv.val() || {};
+            dadosCompletos = [];
+            for(let d in ag) for(let h in ag[d]) dadosCompletos.push({...ag[d][h], id:h, tipo:'agenda'});
+            for(let id in av) dadosCompletos.push({...av[id], id:id, tipo:'avulso'});
+            renderizarLista(dadosCompletos);
+        }
+
+        function renderizarLista(lista) {
             let t = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, totalVendas: 0, vale: 0, totalComissao: 0 };
-            const lista = [];
-            for(let d in ag) for(let h in ag[d]) lista.push({...ag[d][h], id:h, tipo:'agenda'});
-            for(let id in av) lista.push({...av[id], id:id, tipo:'avulso'});
             lista.sort((a,b) => new Date(a.data) - new Date(b.data));
             
-            let htmlTable = '<table class="w-full text-left"><thead><tr class="bg-gray-200"><th class="p-2 border">Data</th><th class="p-2 border">Cliente</th><th class="p-2 border">Endereço</th><th class="p-2 border text-center">Status/Valor</th><th class="p-2 border text-center">Ações</th></tr></thead><tbody>';
-            let htmlComissao = '<table class="w-full text-left bg-white"><thead><tr class="bg-blue-600 text-white"><th class="p-2">Cliente</th><th class="p-2">Pgto</th><th class="p-2">Total</th><th class="p-2">Comissão</th></tr></thead><tbody>';
+            let htmlTable = '<table class="w-full text-left" id="tabela-principal"><thead><tr class="bg-gray-200"> <th class="p-2 border">Data/Hora</th><th class="p-2 border">Cliente</th><th class="p-2 border">Endereço</th><th class="p-2 border text-center">Status</th><th class="p-2 border text-center">Ações</th></tr></thead><tbody>';
+            let htmlComissao = '<table class="w-full text-left bg-white"><thead><tr class="bg-blue-600 text-white"><th class="p-2">Cliente</th><th class="p-2">Pgto</th><th class="p-2 text-right">Total</th><th class="p-2 text-right">Comissão</th></tr></thead><tbody>';
 
             lista.forEach(item => {
                 const vTotal = parseFloat(item.valor || 0), vEnt = parseFloat(item.entrada || 0);
                 let comVenda = 0;
-                if(item.cidade) ultimaCidade = item.cidade;
 
                 if (item.resultado === "Venda") {
                     t.vendidos++; t.totalVendas += vTotal;
@@ -181,14 +178,16 @@
                         if(item.forma_entrada === "Pix") { t.pix += vEnt; t.vale += vEnt; }
                     }
                     t.totalComissao += comVenda;
-                    htmlComissao += `<tr class="border-b"><td class="p-2 font-semibold uppercase text-[10px]">${item.nome_formando}</td><td class="p-2 text-[10px]">${item.pagamento}</td><td class="p-2 font-bold text-[10px]">R$ ${vTotal.toFixed(2)}</td><td class="p-2 text-green-700 font-bold text-[10px]">R$ ${comVenda.toFixed(2)}</td></tr>`;
+                    htmlComissao += `<tr class="border-b"><td class="p-2 font-semibold uppercase text-[10px]">${item.nome_formando}</td><td class="p-2 text-[10px]">${item.pagamento}</td><td class="p-2 text-right font-bold">R$ ${vTotal.toFixed(2)}</td><td class="p-2 text-right text-green-700 font-bold">R$ ${comVenda.toFixed(2)}</td></tr>`;
                 } else if (item.resultado === "NQ") t.nq++;
 
-                htmlTable += `<tr class="border-b hover:bg-white">
+                const statusColor = item.resultado === 'Venda' ? 'text-green-600' : (item.resultado === 'Reagendar' ? 'text-blue-500' : (item.resultado === 'Não Atendeu' ? 'text-orange-500' : 'text-red-500'));
+
+                htmlTable += `<tr class="border-b hover:bg-white transition item-linha">
                     <td class="p-2 border font-bold text-[10px]">${item.data.split('-').reverse().join('/')}<br>${item.horario}</td>
-                    <td class="p-2 border uppercase font-bold text-gray-700 text-[10px]">${item.nome_formando}<br><span class="text-blue-600 font-normal">${item.cidade || ''}</span></td>
-                    <td class="p-2 border text-gray-500 text-[10px]">${item.endereco || 'Manual'}</td>
-                    <td class="p-2 border text-center font-bold text-[10px]"><span class="${item.resultado === 'Venda' ? 'text-green-600' : 'text-red-500'}">${item.resultado || 'Pendente'}</span><br>${vTotal > 0 ? 'R$ '+vTotal.toFixed(2) : ''}</td>
+                    <td class="p-2 border uppercase font-bold text-gray-700 text-[10px]">${item.nome_formando}<br><span class="text-blue-600 font-normal lowercase">${item.cidade || ''}</span></td>
+                    <td class="p-2 border text-gray-500 text-[9px]">${item.endereco || 'Manual'}</td>
+                    <td class="p-2 border text-center font-bold text-[10px]"><span class="${statusColor}">${item.resultado || 'Pendente'}</span><br>${vTotal > 0 ? 'R$ '+vTotal.toFixed(2) : ''}</td>
                     <td class="p-2 border text-center space-y-1">
                         <button onclick="registrarResultado('${item.tipo}','${item.data}','${item.id}')" class="bg-green-600 text-white p-1 rounded text-[9px] w-full font-bold uppercase shadow-sm">Resultado</button>
                         <button onclick="excluirRegistro('${item.tipo}','${item.data}','${item.id}')" class="bg-red-500 text-white p-1 rounded text-[9px] w-full font-bold uppercase shadow-sm">Excluir</button>
@@ -198,11 +197,11 @@
 
             resumoAtual = t;
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="bg-white p-2 border rounded shadow-sm text-center"><p class="text-[8px] font-bold text-gray-400 uppercase">Vend/NQ</p><p class="text-sm font-black">${t.vendidos}/${t.nq}</p></div>
-                <div class="bg-white p-2 border rounded shadow-sm text-center text-green-600"><p class="text-[8px] font-bold uppercase">Cash (D/P)</p><p class="text-[10px] font-bold">R$${(t.dinheiro+t.pix).toFixed(0)}</p></div>
-                <div class="bg-white p-2 border rounded shadow-sm text-center text-blue-600"><p class="text-[8px] font-bold uppercase">Cartão D/C</p><p class="text-[10px] font-bold">R$${(t.debito+t.credito).toFixed(0)}</p></div>
-                <div class="bg-white p-2 border rounded shadow-sm text-center text-orange-600"><p class="text-[8px] font-bold uppercase">Boleto</p><p class="text-[10px] font-bold">R$${t.boleto.toFixed(0)}</p></div>
-                <div class="bg-blue-600 p-2 rounded shadow text-center text-white"><p class="text-[8px] font-bold uppercase">Vendas</p><p class="text-[10px] font-black">R$${t.totalVendas.toFixed(2)}</p></div>
+                <div class="bg-white p-2 border rounded shadow-sm text-center"><p class="text-[8px] font-bold text-gray-400">VENDAS/NQ</p><p class="text-sm font-black">${t.vendidos}/${t.nq}</p></div>
+                <div class="bg-white p-2 border rounded shadow-sm text-center text-green-600"><p class="text-[8px] font-bold uppercase">Cash (D/P)</p><p class="text-[10px] font-bold">R$${(t.dinheiro+t.pix).toFixed(2)}</p></div>
+                <div class="bg-white p-2 border rounded shadow-sm text-center text-blue-600"><p class="text-[8px] font-bold uppercase">Cartões</p><p class="text-[10px] font-bold">R$${(t.debito+t.credito).toFixed(2)}</p></div>
+                <div class="bg-white p-2 border rounded shadow-sm text-center text-orange-600"><p class="text-[8px] font-bold uppercase">Boleto</p><p class="text-[10px] font-bold">R$${t.boleto.toFixed(2)}</p></div>
+                <div class="bg-blue-600 p-2 rounded shadow text-center text-white"><p class="text-[8px] font-bold uppercase">Total Vendas</p><p class="text-[10px] font-black">R$${t.totalVendas.toFixed(2)}</p></div>
                 <div class="bg-yellow-400 p-2 rounded shadow text-center text-gray-900"><p class="text-[8px] font-bold uppercase">Vale</p><p class="text-[10px] font-black">R$${t.vale.toFixed(2)}</p></div>
             `;
             document.getElementById('admin-content').innerHTML = htmlTable + '</tbody></table>';
@@ -213,13 +212,34 @@
             document.getElementById('fechamento-final').innerHTML = `
                 <div class="flex justify-between items-center">
                     <div><p class="text-xs font-bold text-gray-500 uppercase">Comissões: R$ ${t.totalComissao.toFixed(2)}</p><p class="text-xs font-bold text-gray-500 uppercase">Vales: R$ ${t.vale.toFixed(2)}</p></div>
-                    <div class="text-right">${saldo >= 0 ? `<p class="text-lg font-black text-green-700 uppercase italic">A Receber: R$ ${saldo.toFixed(2)}</p>` : `<p class="text-lg font-black text-red-600 uppercase italic">Devolver: R$ ${Math.abs(saldo).toFixed(2)}</p>`}</div>
+                    <div class="text-right">${saldo >= 0 ? `<p class="text-lg font-black text-green-700 uppercase italic">A Receber: R$ ${saldo.toFixed(2)}</p>` : `<p class="text-lg font-black text-red-600 uppercase italic">Devolver à Empresa: R$ ${Math.abs(saldo).toFixed(2)}</p>`}</div>
                 </div>
             `;
         }
 
+        window.filtrarLista = () => {
+            const termo = document.getElementById('busca-admin').value.toLowerCase();
+            const filtrados = dadosCompletos.filter(i => i.nome_formando.toLowerCase().includes(termo) || (i.cidade && i.cidade.toLowerCase().includes(termo)));
+            renderizarLista(termo ? filtrados : dadosCompletos);
+        };
+
+        window.exportarExcel = () => {
+            let csv = "Data,Horario,Cliente,Cidade,Endereco,Resultado,Pagamento,Valor,Comissao\n";
+            dadosCompletos.forEach(i => {
+                csv += `${i.data},${i.horario},${i.nome_formando},${i.cidade || ''},${(i.endereco || 'Manual').replace(/,/g, ' ')},${i.resultado},${i.pagamento || ''},${i.valor || 0},${i.comissao || 0}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", "relatorio_vendas.csv");
+            link.click();
+        };
+
         window.registrarResultado = async (tipo, data, id) => {
-            const res = prompt("1-VENDA | 2-NQ");
+            const res = prompt("Escolha o Resultado:\n1-VENDA\n2-NQ\n3-NÃO ATENDEU\n4-REAGENDAR");
+            const statusMap = {"1":"Venda", "2":"NQ", "3":"Não Atendeu", "4":"Reagendar"};
+            if (!statusMap[res]) return;
+
             if (res === "1") {
                 const fP = prompt("1-Din | 2-Pix | 3-Déb | 4-Créd | 5-Bol");
                 const formas = {"1":"Dinheiro","2":"Pix","3":"Cartão Débito","4":"Cartão Crédito","5":"Boleto"};
@@ -230,38 +250,23 @@
                         rest = prompt("Com Restrição SPC? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
                         if (prompt("Teve Entrada? 1-Sim | 2-Não") === "1") { vE = prompt("Valor Entrada?"); fE = prompt("1-Din | 2-Pix") === "1" ? "Dinheiro" : "Pix"; }
                     }
-                    const upd = { resultado: "Venda", pagamento: formas[fP], valor: parseFloat(total || 0), entrada: parseFloat(vE || 0), forma_entrada: fE, restricao: rest };
-                    await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), upd);
-                    carregarRelatorio();
+                    await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { resultado: "Venda", pagamento: formas[fP], valor: parseFloat(total || 0), entrada: parseFloat(vE || 0), forma_entrada: fE, restricao: rest });
                 }
-            } else if (res === "2") {
-                await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { resultado: "NQ", pagamento:"", valor:0, entrada:0 });
-                carregarRelatorio();
+            } else {
+                await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { resultado: statusMap[res], pagamento:"", valor:0, entrada:0 });
             }
+            carregarRelatorio();
         };
 
         window.lancarAvulso = async () => {
-            const nome = prompt("Nome do Cliente?"); if(!nome) return;
-            const res = prompt("1-Venda | 2-NQ");
-            let d = { nome_formando: nome, data: new Date().toISOString().split('T')[0], horario: "Avulso", resultado: res==="1"?"Venda":"NQ", pagamento:"", valor:0, entrada:0, forma_entrada:"", restricao:"" };
-            if (res === "1") {
-                const fP = prompt("1-Din | 2-Pix | 3-Déb | 4-Créd | 5-Bol");
-                const formas = {"1":"Dinheiro","2":"Pix","3":"Cartão Débito","4":"Cartão Crédito","5":"Boleto"};
-                if (formas[fP]) {
-                    d.pagamento = formas[fP]; d.valor = parseFloat(prompt("Total?") || 0);
-                    if (fP === "5") {
-                        d.restricao = prompt("Com Restrição? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
-                        if (prompt("Entrada? 1-Sim | 2-Não") === "1") { d.entrada = parseFloat(prompt("Valor Entrada?") || 0); d.forma_entrada = prompt("1-Din | 2-Pix") === "1" ? "Dinheiro" : "Pix"; }
-                    }
-                }
-            }
-            await push(ref(db, AVULSO_PATH), d); carregarRelatorio();
+            const nome = prompt("Nome?"); if(!nome) return;
+            await push(ref(db, AVULSO_PATH), { nome_formando: nome, data: new Date().toISOString().split('T')[0], horario: "Manual", resultado: "Pendente" });
+            carregarRelatorio();
         };
 
         window.copiarRelatorio = () => {
+            const cid = prompt("Nome da cidade para o WhatsApp:"); if (!cid) return;
             const t = resumoAtual;
-            const cid = prompt("Nome da cidade para o relatório WhatsApp:", ultimaCidade);
-            if (!cid) return;
             const msg = `**${cid}**\nVendidos = ${String(t.vendidos).padStart(2,'0')}\nNQ = ${String(t.nq).padStart(2,'0')}\nDinheiro = R$ ${t.dinheiro.toFixed(2)}\nPix = R$ ${t.pix.toFixed(2)}\nCartão Débito = R$ ${t.debito.toFixed(2)}\nBoleto = R$ ${t.boleto.toFixed(2)}\nCartão Crédito = R$ ${t.credito.toFixed(2)}\nTotal de vendas = R$ ${t.totalVendas.toFixed(2)}\nVale = ${t.vale.toFixed(2).replace('.', ',')}`;
             const el = document.createElement('textarea'); el.value = msg; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
             alert("Relatório copiado!");
