@@ -40,14 +40,16 @@
         <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-6xl mx-4 max-h-[95vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4 border-b pb-2">
                 <h2 class="text-xl font-bold text-gray-800">Painel Administrativo</h2>
-                <button onclick="fecharAdmin()" class="bg-gray-200 hover:bg-gray-300 px-4 py-1 rounded-lg font-bold">Fechar</button>
+                <div class="flex gap-2">
+                    <button onclick="copiarRelatorio()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded-lg font-bold text-xs transition">Gerar Relatório WhatsApp</button>
+                    <button onclick="fecharAdmin()" class="bg-gray-200 hover:bg-gray-300 px-4 py-1 rounded-lg font-bold text-xs">Fechar</button>
+                </div>
             </div>
             
-            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6 bg-blue-50 p-4 rounded-xl border border-blue-100">
+            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-6 gap-2 mb-6 bg-blue-50 p-4 rounded-xl border border-blue-100">
                 </div>
 
-            <div id="admin-content" class="text-sm overflow-x-auto">
-                </div>
+            <div id="admin-content" class="text-sm overflow-x-auto"></div>
         </div>
     </div>
 
@@ -123,41 +125,35 @@
         const dayButtons = document.querySelectorAll('.day-btn');
         const hiddenDataInput = document.getElementById('data-selecionada');
         const selectHorario = document.getElementById('horario');
-        const modalSucesso = document.getElementById('success-modal');
         const modalAdmin = document.getElementById('admin-modal');
 
+        // Geração de Horários
         dayButtons.forEach(btn => {
             btn.addEventListener('click', async () => {
                 dayButtons.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 const dataVal = btn.getAttribute('data-date');
                 hiddenDataInput.value = dataVal;
-                
                 selectHorario.innerHTML = '<option value="">Consultando...</option>';
                 const dataObj = new Date(dataVal + 'T00:00:00');
                 const diaSemana = dataObj.getDay(); 
-                let inicioHora = 9;
-                let fimHora = (diaSemana === 0 || diaSemana === 6) ? 15 : 20;
-
+                let inicioHora = 9, fimHora = (diaSemana === 0 || diaSemana === 6) ? 15 : 20;
                 let ocupados = [];
                 try {
                     const snapshot = await get(ref(db, `${COLLECTION_PATH}/${dataVal}`));
                     if (snapshot.exists()) ocupados = Object.keys(snapshot.val());
-                } catch (e) { console.error(e); }
+                } catch (e) {}
 
                 selectHorario.innerHTML = '<option value="">Escolha um horário</option>';
-                const agora = new Date();
-                const limiteCarencia = new Date(agora.getTime() + (6 * 60 * 60 * 1000));
-
+                const agora = new Date(), limiteCarencia = new Date(agora.getTime() + (6 * 60 * 60 * 1000));
                 let cursor = new Date(`${dataVal}T${inicioHora.toString().padStart(2, '0')}:00:00`);
                 let horarioFinal = new Date(`${dataVal}T${fimHora.toString().padStart(2, '0')}:00:00`);
 
                 while (cursor <= horarioFinal) {
-                    const horaFormatada = cursor.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                    const chaveFirebase = horaFormatada.replace(':', '-');
-                    if (!ocupados.includes(chaveFirebase) && cursor > limiteCarencia) {
+                    const horaF = cursor.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    if (!ocupados.includes(horaF.replace(':','-')) && cursor > limiteCarencia) {
                         const opt = document.createElement('option');
-                        opt.value = horaFormatada; opt.textContent = horaFormatada;
+                        opt.value = horaF; opt.textContent = horaF;
                         selectHorario.appendChild(opt);
                     }
                     cursor.setMinutes(cursor.getMinutes() + 30);
@@ -167,30 +163,26 @@
 
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const data = hiddenDataInput.value;
-            const horario = selectHorario.value;
-            if(!data) { alert("Escolha o dia primeiro."); return; }
+            const data = hiddenDataInput.value, horario = selectHorario.value;
             try {
                 const path = `${COLLECTION_PATH}/${data}/${horario.replace(':', '-')}`;
                 await set(ref(db, path), {
-                    data, horario, 
-                    nome_formando: document.getElementById('nome').value,
-                    telefone: document.getElementById('telefone').value,
-                    endereco: document.getElementById('endereco').value,
+                    data, horario, nome_formando: document.getElementById('nome').value,
+                    telefone: document.getElementById('telefone').value, endereco: document.getElementById('endereco').value,
                     resultado: "", pagamento: "", valor: 0, entrada: 0, forma_entrada: ""
                 });
-                modalSucesso.style.display = 'flex';
+                document.getElementById('success-modal').style.display = 'flex';
                 e.target.reset();
-                dayButtons.forEach(b => b.classList.remove('active'));
-                setTimeout(() => modalSucesso.style.display = 'none', 10000);
+                setTimeout(() => document.getElementById('success-modal').style.display = 'none', 10000);
             } catch (err) { alert("Erro ao salvar."); }
         });
 
         window.acessoAdmin = async () => {
             const senha = prompt("Senha ADM:");
             if (senha === "2025") carregarRelatorio();
-            else if (senha !== null) alert("Senha incorreta.");
         };
+
+        let dadosGlobaisParaRelatorio = {}; // Armazena os totais para o WhatsApp
 
         async function carregarRelatorio() {
             modalAdmin.style.display = 'flex';
@@ -198,92 +190,73 @@
             const snapshot = await get(ref(db, COLLECTION_PATH));
             const data = snapshot.val() || {};
             
-            // Variáveis do Dashboard
-            let totais = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, vale: 0 };
-            
+            let totais = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, vale: 0, totalVendas: 0 };
             const lista = [];
             for(let d in data) for(let h in data[d]) lista.push({...data[d][h], id: h});
             lista.sort((a,b) => new Date(a.data+'T'+a.horario.replace('-',':')) - new Date(b.data+'T'+b.horario.replace('-',':')));
 
-            let html = '<table class="w-full border-collapse border mt-4 text-xs"><thead><tr class="bg-gray-100"><th class="border p-2 text-left">Data/Hora</th><th class="border p-2 text-left">Formando</th><th class="border p-2 text-left">Endereço</th><th class="border p-2">Resultado/Valor</th><th class="border p-2">Ações</th></tr></thead><tbody>';
+            let html = '<table class="w-full border-collapse border mt-4 text-[10px] md:text-xs"><thead><tr class="bg-gray-100"><th class="border p-2">Data/Hora</th><th class="border p-2">Formando</th><th class="border p-2">Resultado/Valor</th><th class="border p-2">Ações</th></tr></thead><tbody>';
 
             lista.forEach(item => {
-                const valorNumerico = parseFloat(item.valor || 0);
-                const entradaNumerica = parseFloat(item.entrada || 0);
-
+                const val = parseFloat(item.valor || 0), ent = parseFloat(item.entrada || 0);
                 if (item.resultado === "Venda") {
                     totais.vendidos++;
-                    // Pagamento Principal
-                    if (item.pagamento === "Dinheiro") { totais.dinheiro += valorNumerico; totais.vale += valorNumerico; }
-                    if (item.pagamento === "Pix") { totais.pix += valorNumerico; totais.vale += valorNumerico; }
-                    if (item.pagamento === "Cartão Débito") totais.debito += valorNumerico;
-                    if (item.pagamento === "Cartão Crédito") totais.credito += valorNumerico;
-                    if (item.pagamento === "Boleto") totais.boleto += valorNumerico;
+                    totais.totalVendas += val;
+                    if (item.pagamento === "Dinheiro") { totais.dinheiro += val; totais.vale += val; }
+                    else if (item.pagamento === "Pix") { totais.pix += val; totais.vale += val; }
+                    else if (item.pagamento === "Cartão Débito") totais.debito += val;
+                    else if (item.pagamento === "Cartão Crédito") totais.credito += val;
+                    else if (item.pagamento === "Boleto") totais.boleto += val;
 
-                    // Entrada (Boleto)
-                    if (entradaNumerica > 0) {
-                        if (item.forma_entrada === "Dinheiro") { totais.dinheiro += entradaNumerica; totais.vale += entradaNumerica; }
-                        if (item.forma_entrada === "Pix") { totais.pix += entradaNumerica; totais.vale += entradaNumerica; }
+                    if (ent > 0) {
+                        if (item.forma_entrada === "Dinheiro") { totais.dinheiro += ent; totais.vale += ent; }
+                        else if (item.forma_entrada === "Pix") { totais.pix += ent; totais.vale += ent; }
                     }
-                } else if (item.resultado === "NQ") {
-                    totais.nq++;
-                }
-
-                const displayResultado = item.resultado ? 
-                    `<div class="font-bold text-blue-700">${item.resultado} ${item.pagamento ? '- ' + item.pagamento : ''}</div>
-                     <div class="text-green-600 font-bold">R$ ${valorNumerico.toFixed(2)}</div>
-                     ${entradaNumerica > 0 ? `<div class="text-[9px] text-gray-500 font-bold italic">Entrada: R$ ${entradaNumerica.toFixed(2)} (${item.forma_entrada})</div>` : ''}` 
-                    : "Pendente";
+                } else if (item.resultado === "NQ") totais.nq++;
 
                 html += `<tr>
                     <td class="border p-2 font-bold">${item.data.split('-').reverse().join('/')}<br>${item.horario}</td>
-                    <td class="border p-2 uppercase">${item.nome_formando}<br><span class="text-gray-500 font-normal normal-case">${item.telefone}</span></td>
-                    <td class="border p-2 text-[10px]">${item.endereco}</td>
-                    <td class="border p-2 text-center">${displayResultado}</td>
+                    <td class="border p-2 uppercase">${item.nome_formando}</td>
+                    <td class="border p-2 text-center font-bold">${item.resultado || 'Pendente'}<br>R$ ${val.toFixed(2)}</td>
                     <td class="border p-2 text-center space-y-1">
-                        <button onclick="registrarResultadoVenda('${item.data}', '${item.id}')" class="bg-green-600 text-white px-2 py-1 rounded text-[10px] font-bold block w-full">RESULTADO</button>
-                        <button onclick="cancelarAgendamento('${item.data}', '${item.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-[10px] font-bold block w-full">EXCLUIR</button>
+                        <button onclick="registrarResultadoVenda('${item.data}', '${item.id}')" class="bg-green-600 text-white px-2 py-1 rounded text-[10px] block w-full">RES</button>
+                        <button onclick="cancelarAgendamento('${item.data}', '${item.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-[10px] block w-full">DEL</button>
                     </td>
                 </tr>`;
             });
 
-            // Atualiza Dashboard com o campo VALE
-            document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="p-2 border-r border-blue-100 bg-white rounded-l-xl"><p class="text-[9px] uppercase text-gray-500 font-bold">Vendidos / NQ</p><p class="text-lg font-black text-blue-800">${totais.vendidos} / ${totais.nq}</p></div>
-                <div class="p-2 border-r border-blue-100 bg-white"><p class="text-[9px] uppercase text-gray-500 font-bold">Dinh / Pix</p><p class="text-xs font-bold text-green-700">R$ ${totais.dinheiro.toFixed(2)} / R$ ${totais.pix.toFixed(2)}</p></div>
-                <div class="p-2 border-r border-blue-100 bg-white"><p class="text-[9px] uppercase text-gray-500 font-bold">Cartões (D/C)</p><p class="text-xs font-bold text-blue-700">R$ ${totais.debito.toFixed(2)} / R$ ${totais.credito.toFixed(2)}</p></div>
-                <div class="p-2 border-r border-blue-100 bg-white"><p class="text-[9px] uppercase text-gray-500 font-bold">Boleto</p><p class="text-xs font-bold text-orange-700">R$ ${totais.boleto.toFixed(2)}</p></div>
-                <div class="p-2 bg-yellow-400 rounded-r-xl shadow-inner"><p class="text-[10px] uppercase text-gray-900 font-black">VALE (CASH)</p><p class="text-base font-black text-gray-900 italic">R$ ${totais.vale.toFixed(2)}</p></div>
-            `;
+            dadosGlobaisParaRelatorio = totais;
 
-            document.getElementById('admin-content').innerHTML = lista.length ? html + '</tbody></table>' : "Nenhum agendamento encontrado.";
+            document.getElementById('resumo-financeiro').innerHTML = `
+                <div class="p-2 bg-white border rounded"><p class="text-[8px] font-bold">VEND/NQ</p><p class="text-sm font-black">${totais.vendidos}/${totais.nq}</p></div>
+                <div class="p-2 bg-white border rounded"><p class="text-[8px] font-bold">DINH/PIX</p><p class="text-[10px] font-bold text-green-700">R$${totais.dinheiro.toFixed(0)}/R$${totais.pix.toFixed(0)}</p></div>
+                <div class="p-2 bg-white border rounded"><p class="text-[8px] font-bold">CARTÕES</p><p class="text-[10px] font-bold text-blue-700">D R$${totais.debito.toFixed(0)}/C R$${totais.credito.toFixed(0)}</p></div>
+                <div class="p-2 bg-white border rounded"><p class="text-[8px] font-bold">BOLETO</p><p class="text-[10px] font-bold text-orange-700">R$ ${totais.boleto.toFixed(2)}</p></div>
+                <div class="p-2 bg-blue-600 text-white rounded shadow"><p class="text-[8px] font-bold">TOTAL VENDAS</p><p class="text-xs font-black">R$ ${totais.totalVendas.toFixed(2)}</p></div>
+                <div class="p-2 bg-yellow-400 text-gray-900 rounded shadow"><p class="text-[8px] font-bold">VALE</p><p class="text-xs font-black">R$ ${totais.vale.toFixed(2)}</p></div>
+            `;
+            document.getElementById('admin-content').innerHTML = html + '</tbody></table>';
         }
 
+        window.copiarRelatorio = () => {
+            const t = dadosGlobaisParaRelatorio;
+            const msg = `Vendidos = ${String(t.vendidos).padStart(2, '0')}\nNQ = ${String(t.nq).padStart(2, '0')}\nDinheiro = R$ ${t.dinheiro.toFixed(2)}\nPix = R$ ${t.pix.toFixed(2)}\nCartão Débito = R$ ${t.debito.toFixed(2)}\nBoleto = R$ ${t.boleto.toFixed(2)}\nCartão Crédito = R$ ${t.credito.toFixed(2)}\nTotal de vendas = R$ ${t.totalVendas.toFixed(2)}\nVale = R$ ${t.vale.toFixed(2)}`;
+            
+            const el = document.createElement('textarea');
+            el.value = msg; document.body.appendChild(el); el.select();
+            document.execCommand('copy'); document.body.removeChild(el);
+            alert("Relatório copiado para a área de transferência! Agora é só colar no WhatsApp.");
+        };
+
         window.registrarResultadoVenda = async (data, horaId) => {
-            const res = prompt("Digite: \n1 para VENDA \n2 para NQ");
+            const res = prompt("1-VENDA | 2-NQ");
             if (res === "1") {
-                const pag = prompt("Forma de Pagamento Principal: \n1-Dinheiro\n2-Pix\n3-Cartão Débito\n4-Cartão Crédito\n5-Boleto");
+                const pag = prompt("1-Dinheiro | 2-Pix | 3-Débito | 4-Crédito | 5-Boleto");
                 const formas = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito", "4": "Cartão Crédito", "5": "Boleto" };
-                
                 if (formas[pag]) {
-                    const valorTotal = prompt("Qual o valor TOTAL da venda?");
-                    let valorEntrada = 0;
-                    let formaEntrada = "";
-
-                    if (formas[pag] === "Boleto") {
-                        const ent = prompt("Boleto: \n1-Com Entrada \n2-Sem Entrada");
-                        if (ent === "1") {
-                            valorEntrada = prompt("Valor da Entrada?");
-                            const fEnt = prompt("Forma da Entrada: \n1-Dinheiro \n2-Pix");
-                            formaEntrada = fEnt === "1" ? "Dinheiro" : "Pix";
-                        }
-                    }
-
+                    const total = prompt("Valor TOTAL da venda?"), ent = (formas[pag] === "Boleto" && prompt("1-Com Entrada | 2-Sem") === "1") ? {v: prompt("Valor Entrada?"), f: prompt("1-Dinh | 2-Pix") === "1" ? "Dinheiro" : "Pix"} : {v:0, f:""};
                     await update(ref(db, `${COLLECTION_PATH}/${data}/${horaId}`), { 
-                        resultado: "Venda", pagamento: formas[pag],
-                        valor: parseFloat(valorTotal || 0),
-                        entrada: parseFloat(valorEntrada || 0),
-                        forma_entrada: formaEntrada
+                        resultado: "Venda", pagamento: formas[pag], valor: parseFloat(total || 0), entrada: parseFloat(ent.v || 0), forma_entrada: ent.f
                     });
                     carregarRelatorio();
                 }
@@ -293,14 +266,8 @@
             }
         };
 
-        window.cancelarAgendamento = async (data, horaId) => {
-            if (confirm("Tem certeza que deseja excluir?")) {
-                await remove(ref(db, `${COLLECTION_PATH}/${data}/${horaId}`));
-                carregarRelatorio();
-            }
-        };
-
+        window.cancelarAgendamento = async (data, horaId) => { if (confirm("Excluir?")) { await remove(ref(db, `${COLLECTION_PATH}/${data}/${horaId}`)); carregarRelatorio(); } };
         window.fecharAdmin = () => modalAdmin.style.display = 'none';
     </script>
 </body>
-</html>
+</html>           
