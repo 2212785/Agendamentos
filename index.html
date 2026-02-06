@@ -27,7 +27,7 @@
                 <span class="text-4xl">🚀</span>
             </div>
             <h2 class="text-2xl font-extrabold mb-2 text-white">Agendado!</h2>
-            <p class="text-slate-400 text-sm">Dados sincronizados. Siga para o WhatsApp para confirmar.</p>
+            <p class="text-slate-400 text-sm">Dados sincronizados. Siga para o WhatsApp.</p>
         </div>
     </div>
 
@@ -36,7 +36,7 @@
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
                 <div>
                     <h1 class="text-3xl font-extrabold tracking-tight text-white italic">MASTER <span class="text-blue-500">DASHBOARD</span></h1>
-                    <p class="text-slate-400 text-sm font-medium text-uppercase">CONTROLE DE COMISSÕES SEPARADO POR MODALIDADE</p>
+                    <p class="text-slate-400 text-sm font-medium">CONTROLE DE COMISSÕES E VENDAS</p>
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <button onclick="lancarAvulso()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase shadow transition">Lançamento Direto</button>
@@ -81,16 +81,14 @@
             <div class="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-blue-600 via-indigo-400 to-blue-600"></div>
             <div class="text-center mb-10">
                 <h2 class="text-3xl font-black text-white mb-2 tracking-tight">Agendar Visita</h2>
-                <p class="text-slate-400 text-sm">Preencha os dados para reserva de horário</p>
+                <p class="text-slate-400 text-sm">Datas disponíveis até 09/02</p>
             </div>
             <form id="form-agendamento" class="space-y-6">
-                <div class="grid grid-cols-3 gap-2" id="day-selector">
+                <div class="grid grid-cols-2 gap-2" id="day-selector">
                     <button type="button" data-date="2026-02-06" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">06/02<br>Hoje</button>
                     <button type="button" data-date="2026-02-07" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">07/02<br>Sáb</button>
                     <button type="button" data-date="2026-02-08" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">08/02<br>Dom</button>
                     <button type="button" data-date="2026-02-09" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">09/02<br>Seg</button>
-                    <button type="button" data-date="2026-02-10" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">10/02<br>Ter</button>
-                    <button type="button" data-date="2026-02-11" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">11/02<br>Qua</button>
                 </div>
                 <input type="hidden" id="data-selecionada" required>
                 <div class="space-y-4">
@@ -216,90 +214,6 @@
                 htmlTable += `<tr class="hover:bg-slate-800/40 transition">
                     <td class="p-4 font-bold text-slate-300 text-[10px] uppercase">${item.data.split('-').reverse().join('/')}<br><span class="font-light text-slate-500 tracking-widest">${item.horario}</span></td>
                     <td class="p-4 uppercase font-black text-slate-100">${item.nome_formando}<br><span class="text-blue-500 font-bold lowercase text-[9px]">${item.cidade || ''}</span></td>
-                    <td class="p-4 text-center"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${statusStyle[item.resultado] || statusStyle['Pendente']}">${item.resultado || 'Pendente'}</span><br><span class="text-[9px] text-slate-500">${item.pagamento || ''}</span></td>
+                    <td class="p-4 text-center"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${statusStyle[item.resultado] || statusStyle['Pendente']}">${item.resultado || 'Pendente'}</span></td>
                     <td class="p-4 text-center space-y-1">
-                        <button onclick="registrarResultado('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1 rounded-lg text-[8px] w-full font-black uppercase transition border border-blue-400/30">Gerenciar</button>
-                    </td>
-                </tr>`;
-            });
-
-            resumoAtual = t;
-            document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Efetividade</p><p class="text-lg font-black">${t.vendidos}/${lista.length}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-emerald-500 shadow-xl text-emerald-400"><p class="text-[8px] font-bold uppercase tracking-widest">CASH (D+P)</p><p class="text-[11px] font-black">${formatBRL(t.dinheiro+t.pix)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-400 shadow-xl text-blue-300"><p class="text-[8px] font-bold uppercase tracking-widest">DÉBITO</p><p class="text-[11px] font-black">${formatBRL(t.debito)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-indigo-400 shadow-xl text-indigo-300"><p class="text-[8px] font-bold uppercase tracking-widest">CRÉDITO</p><p class="text-[11px] font-black">${formatBRL(t.credito)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-orange-500 shadow-xl text-orange-400"><p class="text-[8px] font-bold uppercase tracking-widest">BOLETO</p><p class="text-[11px] font-black">${formatBRL(t.boleto)}</p></div>
-                <div class="bg-blue-600 p-3 rounded-2xl text-center shadow-2xl"><p class="text-[8px] font-bold text-blue-100 uppercase tracking-widest text-white">VENDAS</p><p class="text-[11px] font-black text-white">${formatBRL(t.totalVendas)}</p></div>
-                <div class="bg-amber-500 p-3 rounded-2xl text-center shadow-2xl text-amber-950"><p class="text-[8px] font-bold uppercase tracking-widest">VALES</p><p class="text-[11px] font-black">${formatBRL(t.vale)}</p></div>
-            `;
-            document.getElementById('admin-content').innerHTML = htmlTable + '</tbody></table>';
-            document.getElementById('comissao-content').innerHTML = htmlComissao + '</tbody></table>';
-            
-            const saldo = t.totalComissao - t.vale;
-            document.getElementById('fechamento-final').className = `mt-4 p-6 rounded-[2rem] border-2 ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}`;
-            document.getElementById('fechamento-final').innerHTML = `
-                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div class="text-center md:text-left">
-                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Comissões Acumuladas: ${formatBRL(t.totalComissao)}</p>
-                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Adiantamentos (Vales): ${formatBRL(t.vale)}</p>
-                    </div>
-                    <div class="px-8 py-3 bg-black/50 rounded-2xl border border-white/10">
-                        ${saldo >= 0 ? `<p class="text-[9px] text-emerald-400 font-black tracking-widest uppercase mb-1">A Receber</p><p class="text-3xl font-black text-emerald-500 tracking-tighter italic">${formatBRL(saldo)}</p>` : `<p class="text-[9px] text-rose-400 font-black tracking-widest uppercase mb-1">Devolver</p><p class="text-3xl font-black text-rose-500 tracking-tighter italic">${formatBRL(Math.abs(saldo))}</p>`}
-                    </div>
-                </div>
-            `;
-        }
-
-        window.filtrarLista = () => {
-            const t = document.getElementById('busca-admin').value.toLowerCase();
-            renderizarLista(dadosCompletos.filter(i => i.nome_formando.toLowerCase().includes(t) || (i.cidade && i.cidade.toLowerCase().includes(t))));
-        };
-
-        window.exportarExcel = () => {
-            let csv = "\ufeffDATA;CLIENTE;CIDADE;STATUS;PGTO;TOTAL;COMISSAO\n";
-            dadosCompletos.forEach(i => { csv += `${i.data};${i.nome_formando.toUpperCase()};${(i.cidade || '').toUpperCase()};${i.resultado.toUpperCase()};${(i.pagamento || 'N/A').toUpperCase()};${(i.valor || 0).toFixed(2)};${(i.comissao || 0).toFixed(2)}\n`; });
-            const link = document.createElement("a");
-            link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-            link.download = "RELATORIO_ELITE_VENDAS.csv";
-            link.click();
-        };
-
-        window.registrarResultado = async (tipo, data, id) => {
-            const r = prompt("STATUS:\n1-VENDA | 2-NQ\n3-NÃO ATENDEU | 4-REAGENDAR");
-            if(!{"1":1,"2":1,"3":1,"4":1}[r]) return;
-            if (r === "1") {
-                const fP = prompt("FORMA PGTO:\n1-Dinheiro | 2-Pix\n3-Cartão Débito\n4-Cartão Crédito\n5-Boleto");
-                const fM = {"1":"Dinheiro","2":"Pix","3":"Cartão Débito","4":"Cartão Crédito","5":"Boleto"};
-                if (fM[fP]) {
-                    const vT = parseFloat(prompt("VALOR TOTAL?") || 0);
-                    let rest = "", vE = 0, fE = "";
-                    if (fP === "5") {
-                        rest = prompt("TEM RESTRIÇÃO? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
-                        if (prompt("VALOR ENTRADA? 1-Sim | 2-Não") === "1") { vE = parseFloat(prompt("VALOR?") || 0); fE = prompt("FORMA: 1-Din | 2-Pix") === "1" ? "Dinheiro" : "Pix"; }
-                    }
-                    await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { resultado: "Venda", pagamento: fM[fP], valor: vT, entrada: vE, forma_entrada: fE, restricao: rest });
-                }
-            } else await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], valor:0 });
-            carregarRelatorio();
-        };
-
-        window.lancarAvulso = async () => {
-            const n = prompt("Nome Completo:"); if(!n) return;
-            await push(ref(db, AVULSO_PATH), { nome_formando: n, data: new Date().toISOString().split('T')[0], horario: "Avulso", resultado: "Pendente" });
-            carregarRelatorio();
-        };
-
-        window.copiarRelatorio = () => {
-            const c = prompt("Cidade:"); if(!c) return;
-            const t = resumoAtual;
-            const msg = `**${c}**\nVendidos = ${String(t.vendidos).padStart(2,'0')}\nNQ = ${String(t.nq).padStart(2,'0')}\nDinheiro = ${formatBRL(t.dinheiro)}\nPix = ${formatBRL(t.pix)}\nCartão Débito = ${formatBRL(t.debito)}\nBoleto = ${formatBRL(t.boleto)}\nCartão Crédito = ${formatBRL(t.credito)}\nTotal de vendas = ${formatBRL(t.totalVendas)}\nVale = ${t.vale.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-            const el = document.createElement('textarea'); el.value = msg; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-            alert("Copiado!");
-        };
-
-        window.fecharAdmin = () => modalAdmin.style.display = 'none';
-        window.excluirRegistro = async (tipo, data, id) => { if (confirm("Deseja EXCLUIR?")) { await remove(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}`:`${AVULSO_PATH}/${id}`))); carregarRelatorio(); } };
-    </script>
-</body>
-</html>
+                        <button onclick="registrarResultado('${item.tipo}','${
