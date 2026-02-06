@@ -170,10 +170,10 @@
                     if (snap.exists()) ocupados = Object.keys(snap.val()); 
                 } catch(e){}
 
-                // LÓGICA DA TRAVA DE 6 HORAS
+                // LÓGICA DA TRAVA DE 4 HORAS
                 const agora = new Date();
                 const hojeStr = agora.toISOString().split('T')[0];
-                const limiteMinimo = new Date(agora.getTime() + (6 * 60 * 60 * 1000)); // Agora + 6h
+                const limiteMinimo = new Date(agora.getTime() + (4 * 60 * 60 * 1000)); // Agora + 4h
 
                 selectHorario.innerHTML = '<option value="">Horários Livres</option>';
                 let cursor = new Date(`${dVal}T09:00:00`), final = new Date(`${dVal}T20:00:00`);
@@ -469,6 +469,7 @@
     </script>
 </body>
 </html>
+
 
 
 
