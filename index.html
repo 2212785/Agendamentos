@@ -24,7 +24,7 @@
     <div id="success-modal" class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80">
         <div class="glass p-10 rounded-3xl text-center max-w-sm border-t-4 border-blue-500 shadow-2xl">
             <span class="text-5xl block mb-4">🚀</span>
-            <h2 class="text-2xl font-extrabold mb-2 text-white uppercase">Confirmado!</h2>
+            <h2 class="text-2xl font-extrabold mb-2 text-white uppercase text-white">Confirmado!</h2>
             <p class="text-slate-400 text-sm font-bold">Sincronizando com WhatsApp...</p>
         </div>
     </div>
@@ -33,14 +33,14 @@
         <div class="max-w-7xl mx-auto">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
                 <div>
-                    <h1 class="text-3xl font-extrabold tracking-tight text-white italic uppercase">Master <span class="text-blue-500">Dashboard</span></h1>
-                    <p class="text-slate-400 text-sm font-medium tracking-widest uppercase">Sistema Elite de Gestão</p>
+                    <h1 class="text-3xl font-extrabold tracking-tight text-white italic uppercase text-white">Master <span class="text-blue-500">Dashboard</span></h1>
+                    <p class="text-slate-400 text-sm font-medium tracking-widest uppercase text-white">Sistema Elite de Gestão</p>
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <button onclick="lancarAvulso()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase shadow transition">Lançamento Direto</button>
                     <button onclick="exportarExcel()" class="bg-slate-700 hover:bg-slate-600 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase shadow transition">Exportar Planilha</button>
                     <button onclick="copiarRelatorio()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase shadow transition">Relatório WhatsApp</button>
-                    <button onclick="fecharAdmin()" class="bg-rose-600/20 text-rose-500 border border-rose-500/50 px-5 py-2.5 rounded-xl font-bold text-xs uppercase hover:bg-rose-600 hover:text-white transition">Sair</button>
+                    <button onclick="fecharAdmin()" class="bg-rose-600/20 text-rose-500 border border-rose-500/50 px-5 py-2.5 rounded-xl font-bold text-xs uppercase hover:bg-rose-600 hover:text-white transition text-white">Sair</button>
                 </div>
             </div>
 
@@ -49,14 +49,14 @@
             <div class="grid lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold text-white flex items-center gap-2"><span class="w-2 h-6 bg-blue-500 rounded-full"></span> ATENDIMENTOS</h3>
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2 tracking-widest uppercase text-white"><span class="w-2 h-6 bg-blue-500 rounded-full"></span> Atendimentos</h3>
                         <input type="text" id="busca-admin" onkeyup="filtrarLista()" placeholder="Pesquisar..." class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 w-64 text-white">
                     </div>
                     <div id="admin-content" class="glass rounded-3xl overflow-hidden border-white/5"></div>
                 </div>
 
-                <div class="space-y-6">
-                    <h3 class="text-lg font-bold text-white flex items-center gap-2"><span class="w-2 h-6 bg-emerald-500 rounded-full"></span> EXTRATO FINANCEIRO</h3>
+                <div class="space-y-6 text-white">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2 tracking-widest uppercase text-white"><span class="w-2 h-6 bg-emerald-500 rounded-full"></span> Extrato Financeiro</h3>
                     <div id="comissao-content" class="glass rounded-3xl p-5 border-white/5 shadow-inner"></div>
                     <div id="fechamento-final"></div>
                 </div>
@@ -65,10 +65,10 @@
     </div>
 
     <header class="p-6">
-        <div class="container mx-auto flex justify-between items-center">
+        <div class="container mx-auto flex justify-between items-center text-white">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-800 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg">P</div>
-                <span class="text-2xl font-black tracking-tighter text-white uppercase italic text-white">Portal <span class="text-blue-500 font-light lowercase not-italic text-lg text-white">do formando</span></span>
+                <span class="text-2xl font-black tracking-tighter text-white uppercase italic">Portal <span class="text-blue-500 font-light lowercase not-italic text-lg">do formando</span></span>
             </div>
             <button onclick="acessoAdmin()" class="glass px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition border-white/20">Login ADM</button>
         </div>
@@ -76,8 +76,8 @@
 
     <main class="container mx-auto p-4 flex-grow flex items-center justify-center">
         <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-blue-600 via-indigo-400 to-blue-600"></div>
-            <div class="text-center mb-10">
+            <div class="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-blue-600 via-indigo-400 to-blue-600 text-white"></div>
+            <div class="text-center mb-10 text-white">
                 <h2 class="text-3xl font-black text-white mb-2 tracking-tight">Agendar Visita</h2>
                 <p class="text-slate-400 text-sm font-medium">Datas disponíveis até 09/02</p>
             </div>
@@ -94,7 +94,7 @@
                     <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl outline-none focus:border-blue-500 text-white transition placeholder:text-slate-600">
                     <input type="text" id="cidade" required placeholder="Cidade" class="w-full bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl outline-none focus:border-blue-500 text-white transition placeholder:text-slate-600">
                     <select id="horario" required class="w-full bg-slate-800 border border-slate-700 p-4 rounded-2xl outline-none focus:border-blue-500 text-white transition cursor-pointer">
-                        <option value="">Aguardando data...</option>
+                        <option value="">Aguardando seleção de data...</option>
                     </select>
                     <textarea id="endereco" required placeholder="Endereço de Visita" class="w-full bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl outline-none focus:border-blue-500 text-white transition placeholder:text-slate-600" rows="2"></textarea>
                 </div>
@@ -155,7 +155,8 @@
             const d = hiddenDataInput.value, h = selectHorario.value, n = document.getElementById('nome').value, c = document.getElementById('cidade').value, ev = document.getElementById('endereco').value;
             await set(ref(db, `${COLLECTION_PATH}/${d}/${h.replace(':','-')}`), { data:d, horario:h, nome_formando:n, telefone: document.getElementById('telefone').value, endereco:ev, cidade:c, resultado:"Pendente" });
             document.getElementById('success-modal').style.display='flex';
-            setTimeout(() => { window.open(`https://wa.me/${MEU_WHATSAPP}?text=${window.encodeURIComponent('*Solicitação de Visita*\n\n*Nome:* '+n+'\n*Data:* '+d.split('-').reverse().join('/')+'\n*Horário:* '+h+'\n*Cidade:* '+c)}`); location.reload(); }, 2000);
+            const msg = window.encodeURIComponent(`*Nova Visita*\n\n*Nome:* ${n}\n*Data:* ${d.split('-').reverse().join('/')}\n*Horário:* ${h}\n*Cidade:* ${c}\n*Endereço:* ${ev}`);
+            setTimeout(() => { window.open(`https://wa.me/${MEU_WHATSAPP}?text=${msg}`); location.reload(); }, 2000);
         });
 
         window.acessoAdmin = () => { if(prompt("Expert Key:")==="2025") carregarRelatorio(); };
@@ -177,8 +178,8 @@
             let t = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, totalVendas: 0, vale: 0, totalComissao: 0 };
             lista.sort((a,b) => new Date(a.data) - new Date(b.data));
             
-            let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 font-bold uppercase border-b border-slate-700"><tr><th class="p-4 text-white">DATA</th><th class="p-4 text-white">CLIENTE</th><th class="p-4 text-white">ENDEREÇO</th><th class="p-4 text-center text-white">STATUS</th><th class="p-4 text-center text-white">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
-            let htmlComissao = '<table class="w-full text-[10px] text-left"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase tracking-tighter"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Total</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
+            let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 font-bold uppercase"><tr class="border-b border-slate-700 text-white"><th class="p-4">DATA</th><th class="p-4">CLIENTE</th><th class="p-4">ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
+            let htmlComissao = '<table class="w-full text-[10px] text-left"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase tracking-tighter"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Valor</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
 
             lista.forEach(item => {
                 const vT = parseFloat(item.valor || 0), vE = parseFloat(item.entrada || 0);
@@ -199,17 +200,18 @@
                         if(item.forma_entrada === "Dinheiro") { t.dinheiro += vE; t.vale += vE; }
                         if(item.forma_entrada === "Pix") { t.pix += vE; t.vale += vE; }
                     }
+                    item.comissao_calculada = com; // Atribui para exportação
                     t.totalComissao += com;
-                    htmlComissao += `<tr><td class="py-3 uppercase font-bold text-slate-200 truncate max-w-[100px]">${item.nome_formando}</td><td class="py-3 text-right font-medium text-slate-300">${formatBRL(vT)}</td><td class="py-3 text-right text-emerald-400 font-black italic">${formatBRL(com)}</td></tr>`;
+                    htmlComissao += `<tr><td class="py-3 uppercase font-bold text-slate-200 truncate max-w-[100px]">${item.nome_formando}</td><td class="py-3 text-right font-medium text-white">${formatBRL(vT)}</td><td class="py-3 text-right text-emerald-400 font-black italic">${formatBRL(com)}</td></tr>`;
                 } else if (item.resultado === "NQ") t.nq++;
 
                 const statusMap = { 'Venda': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', 'NQ': 'bg-rose-500/10 text-rose-500 border-rose-500/20', 'Não Atendeu': 'bg-amber-500/10 text-amber-500 border-amber-500/20', 'Reagendar': 'bg-blue-500/10 text-blue-500 border-blue-500/20', 'Pendente': 'bg-slate-500/10 text-slate-400 border-slate-500/20' };
 
                 htmlTable += `<tr class="hover:bg-slate-800/40 transition">
-                    <td class="p-4 font-bold text-slate-300 uppercase">${item.data.split('-').reverse().join('/')}<br><span class="font-light text-slate-500">${item.horario}</span></td>
+                    <td class="p-4 font-bold text-slate-300 uppercase">${item.data.split('-').reverse().join('/')}<br><span class="font-light text-slate-500 tracking-widest">${item.horario}</span></td>
                     <td class="p-4 uppercase font-black text-slate-100">${item.nome_formando}<br><span class="text-blue-500 font-bold lowercase text-[9px]">${item.cidade || ''}</span></td>
                     <td class="p-4 text-slate-400 text-[10px] max-w-[120px] truncate">${item.endereco || 'Manual'}</td>
-                    <td class="p-4 text-center"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${statusMap[item.resultado] || statusMap['Pendente']}">${item.resultado || 'Pendente'}</span></td>
+                    <td class="p-4 text-center text-white"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${statusMap[item.resultado] || statusMap['Pendente']}">${item.resultado || 'Pendente'}</span></td>
                     <td class="p-4 text-center">
                         <button onclick="gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-[9px] w-full font-black uppercase transition border border-blue-400/30">Gerenciar</button>
                     </td>
@@ -218,11 +220,11 @@
 
             resumoAtual = t;
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Efetividade</p><p class="text-lg font-black">${t.vendidos}/${lista.length}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-emerald-500 shadow-xl text-emerald-400"><p class="text-[8px] font-bold uppercase tracking-widest text-emerald-500">CASH (D+P)</p><p class="text-[11px] font-black">${formatBRL(t.dinheiro+t.pix)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-400 shadow-xl text-blue-300"><p class="text-[8px] font-bold uppercase tracking-widest text-blue-400">DÉBITO</p><p class="text-[11px] font-black">${formatBRL(t.debito)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-indigo-400 shadow-xl text-indigo-300"><p class="text-[8px] font-bold uppercase tracking-widest text-indigo-400">CRÉDITO</p><p class="text-[11px] font-black">${formatBRL(t.credito)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-orange-500 shadow-xl text-orange-400"><p class="text-[8px] font-bold uppercase tracking-widest text-orange-400">BOLETO</p><p class="text-[11px] font-black">${formatBRL(t.boleto)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Efetividade</p><p class="text-lg font-black text-white">${t.vendidos}/${lista.length}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-emerald-500 shadow-xl text-emerald-400"><p class="text-[8px] font-bold uppercase tracking-widest">CASH (D+P)</p><p class="text-[10px] font-black">${formatBRL(t.dinheiro+t.pix)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-400 shadow-xl text-blue-300"><p class="text-[8px] font-bold uppercase tracking-widest">DÉBITO</p><p class="text-[10px] font-black">${formatBRL(t.debito)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-indigo-400 shadow-xl text-indigo-300"><p class="text-[8px] font-bold uppercase tracking-widest">CRÉDITO</p><p class="text-[10px] font-black">${formatBRL(t.credito)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-orange-500 shadow-xl text-orange-400"><p class="text-[8px] font-bold uppercase tracking-widest">BOLETO</p><p class="text-[10px] font-black">${formatBRL(t.boleto)}</p></div>
                 <div class="bg-blue-600 p-3 rounded-2xl text-center shadow-2xl text-white"><p class="text-[8px] font-bold text-blue-100 uppercase tracking-widest">VENDAS</p><p class="text-[11px] font-black">${formatBRL(t.totalVendas)}</p></div>
                 <div class="bg-amber-500 p-3 rounded-2xl text-center shadow-2xl text-amber-950"><p class="text-[8px] font-bold uppercase tracking-widest">VALES</p><p class="text-[11px] font-black">${formatBRL(t.vale)}</p></div>
             `;
@@ -235,7 +237,7 @@
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                     <div class="text-center md:text-left">
                         <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Comissões: ${formatBRL(t.totalComissao)}</p>
-                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Vales: ${formatBRL(t.vale)}</p>
+                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest text-white">Adiantamentos (Vales): ${formatBRL(t.vale)}</p>
                     </div>
                     <div class="px-8 py-3 bg-black/50 rounded-2xl border border-white/10 shadow-2xl text-right">
                         ${saldo >= 0 ? `<p class="text-[9px] text-emerald-400 font-black tracking-widest uppercase mb-1">A Receber</p><p class="text-3xl font-black text-emerald-500 tracking-tighter italic">${formatBRL(saldo)}</p>` : `<p class="text-[9px] text-rose-400 font-black tracking-widest uppercase mb-1">Devolver</p><p class="text-3xl font-black text-rose-500 tracking-tighter italic">${formatBRL(Math.abs(saldo))}</p>`}
@@ -244,18 +246,24 @@
             `;
         }
 
+        // LÓGICA DE EXPORTAÇÃO CORRIGIDA (BLOB + LINK FÍSICO)
         window.exportarExcel = () => {
             const BOM = "\ufeff";
             let csv = "DATA;HORARIO;CLIENTE;CIDADE;ENDERECO;STATUS;PAGAMENTO;VALOR TOTAL;COMISSAO\r\n";
             dadosCompletos.forEach(i => {
                 const total = (i.valor || 0).toFixed(2).replace('.', ',');
-                const comissao = (i.comissao || 0).toFixed(2).replace('.', ',');
+                const comissao = (i.comissao_calculada || 0).toFixed(2).replace('.', ',');
                 csv += `${i.data};${i.horario};${i.nome_formando.toUpperCase()};${(i.cidade || '').toUpperCase()};${(i.endereco || 'Venda Direta').replace(/;/g,' ')};${i.resultado.toUpperCase()};${(i.pagamento || 'N/A').toUpperCase()};${total};${comissao}\r\n`;
             });
+            
             const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.setAttribute("download", `RELATORIO_ELITE_${new Date().toLocaleDateString()}.csv`);
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute("href", url);
+            link.setAttribute("download", `RELATORIO_ELITE_EXPORT.csv`);
+            link.style.visibility = 'hidden';
+            
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
