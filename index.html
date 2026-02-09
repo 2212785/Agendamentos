@@ -91,13 +91,16 @@
         <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl relative overflow-hidden text-center">
             <div class="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-blue-600 via-indigo-400 to-blue-600"></div>
             <h2 class="text-3xl font-black mb-2 uppercase text-white">Agendar Visita</h2>
-            <p class="text-slate-400 text-sm font-medium italic mb-10">Datas disponíveis até 09/02</p>
+            <p class="text-slate-400 text-sm font-medium italic mb-10">Datas disponíveis até 13/02</p>
             <form id="form-agendamento" class="space-y-6 text-left">
                 <div class="grid grid-cols-2 gap-2" id="day-selector">
                     <button type="button" data-date="2026-02-06" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">06/02<br>Hoje</button>
                     <button type="button" data-date="2026-02-07" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">07/02<br>Sáb</button>
                     <button type="button" data-date="2026-02-08" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">08/02<br>Dom</button>
                     <button type="button" data-date="2026-02-09" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">09/02<br>Seg</button>
+                    <button type="button" data-date="2026-02-10" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">10/02<br>Seg</button>
+                    <button type="button" data-date="2026-02-12" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">12/02<br>Seg</button>
+                    <button type="button" data-date="2026-02-13" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">13/02<br>Seg</button>
                 </div>
                 <input type="hidden" id="data-selecionada" required>
                 <div class="space-y-4">
@@ -155,10 +158,10 @@
                 let ocupados = [];
                 try { const snap = await get(ref(db, `${COLLECTION_PATH}/${dVal}`)); if (snap.exists()) ocupados = Object.keys(snap.val()); } catch(e){}
 
-                // TRAVA DE 4 HORAS
+                // TRAVA DE 3 HORAS
                 const agora = new Date();
                 const hojeStr = agora.toISOString().split('T')[0];
-                const limiteMinimo = new Date(agora.getTime() + (4 * 60 * 60 * 1000)); 
+                const limiteMinimo = new Date(agora.getTime() + (3 * 60 * 60 * 1000)); 
 
                 selectHorario.innerHTML = '<option value="">Horários Livres</option>';
                 
@@ -340,3 +343,4 @@
     </script>
 </body>
 </html>
+
