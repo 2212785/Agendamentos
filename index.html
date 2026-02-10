@@ -102,7 +102,7 @@
                 <input type="hidden" id="data-selecionada" required>
                 <div class="space-y-4">
                     <input type="text" id="nome" required placeholder="Nome do Formando" class="w-full bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl outline-none focus:border-blue-500 transition text-white">
-                    <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl outline-none focus:border-blue-500 transition text-white">
+                    <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl outline-none focus:border-blue-500 transition text-white text-white">
                     <input type="text" id="cidade" required placeholder="Cidade" class="w-full bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl outline-none focus:border-blue-500 transition text-white">
                     <select id="horario" required class="w-full bg-slate-800 border border-slate-700 p-4 rounded-2xl outline-none focus:border-blue-500 transition text-white">
                         <option value="">Selecione a Data</option>
@@ -216,10 +216,17 @@
         function renderizarLista(lista) {
             let t = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, totalVendas: 0, vale: 0, totalComissao: 0 };
             
-            // ORDENAÇÃO CRONOLÓGICA GLOBAL
+            // LÓGICA DE ORDENAÇÃO CORRIGIDA
             lista.sort((a,b) => {
-                if (a.data !== b.data) return new Date(a.data) - new Date(b.data);
-                return a.horario.localeCompare(b.horario);
+                // Compara as datas (AAAA-MM-DD)
+                if (a.data !== b.data) return a.data.localeCompare(b.data);
+                
+                // Se as datas forem iguais, compara os horários
+                // "Avulso" é tratado como 00:00 para ficar no topo do dia ou conforme sua preferência
+                let horaA = a.horario === "Avulso" ? "00:00" : a.horario;
+                let horaB = b.horario === "Avulso" ? "00:00" : b.horario;
+                
+                return horaA.localeCompare(horaB);
             });
 
             let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
@@ -244,36 +251,36 @@
                         if(item.forma_entrada === "Pix") { t.pix += vE; t.vale += vE; }
                     }
                     item.comissao_fix_v3 = com; t.totalComissao += com;
-                    htmlComissao += `<tr><td class="py-3 uppercase font-bold text-slate-200 truncate max-w-[100px]">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black italic">${formatBRL(com)}</td></tr>`;
+                    htmlComissao += `<tr><td class="py-3 uppercase font-bold text-slate-200 truncate max-w-[100px] text-white">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black italic text-white">${formatBRL(com)}</td></tr>`;
                 } else if (item.resultado === "NQ") t.nq++;
 
                 const colors = { 'Venda': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', 'NQ': 'bg-rose-500/10 text-rose-500 border-rose-500/20', 'Não Atendeu': 'bg-amber-500/10 text-amber-500 border-amber-500/20', 'Reagendar': 'bg-blue-500/10 text-blue-500 border-blue-500/20', 'Pendente': 'bg-slate-500/10 text-slate-400 border-slate-500/20' };
 
                 htmlTable += `<tr class="hover:bg-slate-800/40 transition">
-                    <td class="p-4 font-bold text-slate-300 uppercase">${item.data.split('-').reverse().join('/')}<br><span class="font-light text-slate-500 text-[10px]">${item.horario}</span></td>
-                    <td class="p-4 uppercase font-black text-slate-100">
+                    <td class="p-4 font-bold text-slate-300 uppercase">${item.data.split('-').reverse().join('/')}<br><span class="font-light text-slate-500 text-[10px] text-white">${item.horario}</span></td>
+                    <td class="p-4 uppercase font-black text-slate-100 text-white">
                         ${item.nome_formando}<br>
-                        <span class="text-blue-400 font-black lowercase text-[11px] block mt-1 leading-tight">${item.endereco || 'Manual'}</span>
+                        <span class="text-blue-400 font-black lowercase text-[11px] block mt-1 leading-tight text-white">${item.endereco || 'Manual'}</span>
                     </td>
-                    <td class="p-4 text-center"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${colors[item.resultado] || colors['Pendente']}">${item.resultado || 'Pendente'}</span></td>
-                    <td class="p-4 text-center"><button onclick="gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-[9px] w-full font-black uppercase transition border border-blue-400/30">Gerenciar</button></td>
+                    <td class="p-4 text-center text-white"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${colors[item.resultado] || colors['Pendente']} text-white">${item.resultado || 'Pendente'}</span></td>
+                    <td class="p-4 text-center text-white"><button onclick="gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-[9px] w-full font-black uppercase transition border border-blue-400/30 text-white">Gerenciar</button></td>
                 </tr>`;
             });
 
             resumoAtual = t;
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Efetividade</p><p class="text-lg font-black">${t.vendidos}/${lista.length}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-emerald-500 shadow-xl text-emerald-400"><p class="text-[8px] font-bold uppercase tracking-widest">CASH (D+P)</p><p class="text-[10px] font-black">${formatBRL(t.dinheiro+t.pix)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-400 shadow-xl text-blue-300"><p class="text-[8px] font-bold uppercase tracking-widest">DÉBITO</p><p class="text-[10px] font-black">${formatBRL(t.debito)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-indigo-400 shadow-xl text-indigo-300"><p class="text-[8px] font-bold uppercase tracking-widest">CRÉDITO</p><p class="text-[10px] font-black">${formatBRL(t.credito)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-orange-500 shadow-xl text-orange-400"><p class="text-[8px] font-bold uppercase tracking-widest">BOLETO</p><p class="text-[10px] font-black">${formatBRL(t.boleto)}</p></div>
-                <div class="bg-blue-600 p-3 rounded-2xl text-center shadow-2xl text-white"><p class="text-[8px] font-bold text-blue-100 uppercase tracking-widest">VENDAS</p><p class="text-[11px] font-black">${formatBRL(t.totalVendas)}</p></div>
-                <div class="bg-amber-500 p-3 rounded-2xl text-center shadow-2xl text-amber-950"><p class="text-[8px] font-bold uppercase tracking-widest">VALES</p><p class="text-[11px] font-black">${formatBRL(t.vale)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest text-white">Efetividade</p><p class="text-lg font-black text-white text-white">${t.vendidos}/${lista.length}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-emerald-500 shadow-xl text-emerald-400 text-white text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">CASH (D+P)</p><p class="text-[10px] font-black text-white text-white text-white">${formatBRL(t.dinheiro+t.pix)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-400 shadow-xl text-blue-300 text-white text-white text-white text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">DÉBITO</p><p class="text-[10px] font-black text-white text-white text-white text-white">${formatBRL(t.debito)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-indigo-400 shadow-xl text-indigo-300 text-white text-white text-white text-white text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white text-white text-white">CRÉDITO</p><p class="text-[10px] font-black text-white text-white text-white text-white text-white">${formatBRL(t.credito)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-orange-500 shadow-xl text-orange-400 text-white text-white text-white text-white text-white text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white text-white text-white text-white text-white text-white">BOLETO</p><p class="text-[10px] font-black text-white text-white text-white text-white text-white text-white">${formatBRL(t.boleto)}</p></div>
+                <div class="bg-blue-600 p-3 rounded-2xl text-center shadow-2xl text-white text-white text-white text-white text-white text-white text-white"><p class="text-[8px] font-bold text-blue-100 uppercase tracking-widest text-white">VENDAS</p><p class="text-[11px] font-black text-white text-white text-white text-white text-white text-white text-white">${formatBRL(t.totalVendas)}</p></div>
+                <div class="bg-amber-500 p-3 rounded-2xl text-center shadow-2xl text-amber-950 text-white text-white text-white text-white text-white text-white text-white text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white uppercase text-white">VALES</p><p class="text-[11px] font-black text-white text-white text-white text-white text-white text-white text-white text-white">${formatBRL(t.vale)}</p></div>
             `;
             document.getElementById('admin-content').innerHTML = htmlTable + '</tbody></table>';
             document.getElementById('comissao-content').innerHTML = htmlComissao + '</tbody></table>';
             const saldo = t.totalComissao - t.vale;
-            document.getElementById('fechamento-final').innerHTML = `<div class="mt-4 p-6 rounded-[2rem] border-2 shadow-2xl text-right ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}"><p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Saldo Comissões: ${formatBRL(t.totalComissao)}</p><p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4">Total Vale: ${formatBRL(t.vale)}</p>${saldo >= 0 ? `<p class="text-[10px] text-emerald-400 font-black uppercase mb-1">A Receber</p><p class="text-4xl font-black text-emerald-500 italic">${formatBRL(saldo)}</p>` : `<p class="text-[10px] text-rose-400 font-black uppercase mb-1">Devolver</p><p class="text-4xl font-black text-rose-500 italic">${formatBRL(Math.abs(saldo))}</p>`}</div>`;
+            document.getElementById('fechamento-final').innerHTML = `<div class="mt-4 p-6 rounded-[2rem] border-2 shadow-2xl text-right ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}"><p class="text-[9px] font-black text-slate-500 uppercase tracking-widest text-white">Saldo Comissões: ${formatBRL(t.totalComissao)}</p><p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4 text-white">Total Vale: ${formatBRL(t.vale)}</p>${saldo >= 0 ? `<p class="text-[10px] text-emerald-400 font-black uppercase mb-1 text-white">A Receber</p><p class="text-4xl font-black text-emerald-500 italic text-white">${formatBRL(saldo)}</p>` : `<p class="text-[10px] text-rose-400 font-black uppercase mb-1 text-white">Devolver</p><p class="text-4xl font-black text-rose-500 italic text-white">${formatBRL(Math.abs(saldo))}</p>`}</div>`;
         }
 
         window.abrirDashboardExcel = () => {
@@ -283,16 +290,19 @@
             excelModal.style.display = 'flex';
             excelModal.style.alignItems = 'center';
             excelModal.style.justifyContent = 'center';
-            let headHtml = '<table class="w-full text-left text-sm" id="tabela-export-real"><thead class="bg-blue-600 text-white font-black uppercase text-[10px]"><tr><th class="p-3">DATA</th><th class="p-3">CLIENTE</th><th class="p-3">ENDEREÇO</th><th class="p-3">STATUS</th><th class="p-3 text-right">VALOR</th><th class="p-3 text-right">COMISSÃO</th></tr></thead><tbody class="divide-y divide-gray-100 text-slate-900">';
+            let headHtml = '<table class="w-full text-left text-sm" id="tabela-export-real"><thead class="bg-blue-600 text-white font-black uppercase text-[10px]"><tr><th class="p-3 text-white">DATA</th><th class="p-3 text-white">CLIENTE</th><th class="p-3 text-white">ENDEREÇO</th><th class="p-3 text-white">STATUS</th><th class="p-3 text-right text-white">VALOR</th><th class="p-3 text-right text-white text-white">COMISSÃO</th></tr></thead><tbody class="divide-y divide-gray-100 text-slate-900 text-white">';
             
+            // Re-ordena também para o Excel
             const listaOrdenada = [...dadosCompletos].sort((a,b) => {
-                if (a.data !== b.data) return new Date(a.data) - new Date(b.data);
-                return a.horario.localeCompare(b.horario);
+                if (a.data !== b.data) return a.data.localeCompare(b.data);
+                let horaA = a.horario === "Avulso" ? "00:00" : a.horario;
+                let horaB = b.horario === "Avulso" ? "00:00" : b.horario;
+                return horaA.localeCompare(horaB);
             });
 
             listaOrdenada.forEach(item => {
                 const dataFormatada = item.data ? item.data.split('-').reverse().join('/') : "-";
-                headHtml += `<tr><td class="p-3 text-xs">${dataFormatada}</td><td class="p-3 font-bold uppercase text-xs">${item.nome_formando || "-"}</td><td class="p-3 text-xs text-slate-500">${item.endereco || "-"}</td><td class="p-3 text-xs">${(item.resultado || "Pendente").toUpperCase()}</td><td class="p-3 text-right font-bold text-blue-600 text-xs">${formatBRL(item.valor || 0)}</td><td class="p-3 text-right font-black text-emerald-600 text-xs">${formatBRL(item.comissao_fix_v3 || 0)}</td></tr>`;
+                headHtml += `<tr><td class="p-3 text-xs text-slate-900 text-white">${dataFormatada}</td><td class="p-3 font-bold uppercase text-xs text-slate-900 text-white">${item.nome_formando || "-"}</td><td class="p-3 text-xs text-slate-500 text-white">${item.endereco || "-"}</td><td class="p-3 text-xs text-slate-900 text-white">${(item.resultado || "Pendente").toUpperCase()}</td><td class="p-3 text-right font-bold text-blue-600 text-xs text-slate-900 text-white">${formatBRL(item.valor || 0)}</td><td class="p-3 text-right font-black text-emerald-600 text-xs text-slate-900 text-white">${formatBRL(item.comissao_fix_v3 || 0)}</td></tr>`;
             });
             headHtml += `</tbody></table>`;
             previewArea.innerHTML = headHtml;
