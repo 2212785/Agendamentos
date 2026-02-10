@@ -124,6 +124,29 @@
         const modalAdmin = document.getElementById('admin-modal');
         const formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 
+        // FUNÇÃO DE PARSE REAL PARA ORDENAR DATA + HORA (CORRIGE QUALQUER FORMATO)
+        function parseDataHora(item) {
+            let data = item.data || "";
+
+            // Converte formato BR (DD/MM/AAAA) para AAAA-MM-DD
+            if (data.includes("/")) {
+                const [dd, mm, yyyy] = data.split("/");
+                data = `${yyyy}-${mm}-${dd}`;
+            }
+
+            // Se vier formato DD-MM-AAAA, também converte
+            if (data.includes("-") && data.split("-")[0].length === 2) {
+                const [dd, mm, yyyy] = data.split("-");
+                data = `${yyyy}-${mm}-${dd}`;
+            }
+
+            let hora = item.horario || "00:00";
+            if (hora === "Avulso") hora = "00:00";
+            if (!hora.includes(":")) hora = "00:00";
+
+            return new Date(`${data}T${hora}:00`).getTime();
+        }
+
         // LÓGICA DE AGENDAMENTO
         document.querySelectorAll('.day-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
@@ -168,28 +191,29 @@
             const [sAg, sAv] = await Promise.all([get(ref(db, COLLECTION_PATH)), get(ref(db, AVULSO_PATH))]);
             const ag = sAg.val() || {}, av = sAv.val() || {};
             dadosCompletos = [];
-            for(let d in ag) for(let h in ag[d]) dadosCompletos.push({...ag[d][h], id:h, tipo:'agenda'});
+
+            // GARANTE QUE TODOS OS ITENS DA AGENDA TENHAM DATA
+            for (let d in ag) {
+                for (let h in ag[d]) {
+                    dadosCompletos.push({
+                        ...ag[d][h],
+                        id: h,
+                        tipo: 'agenda',
+                        data: ag[d][h].data || d
+                    });
+                }
+            }
+
             for(let id in av) dadosCompletos.push({...av[id], id:id, tipo:'avulso'});
+
             renderizarLista(dadosCompletos);
         }
 
         function renderizarLista(lista) {
             let t = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, totalVendas: 0, vale: 0, totalComissao: 0 };
             
-            // LÓGICA DE ORDENAÇÃO CRONOLÓGICA REAL (DATA E HORA)
-            lista.sort((a, b) => {
-    const dataA = a.data || "9999-12-31";
-    const dataB = b.data || "9999-12-31";
-
-    if (dataA !== dataB) {
-        return dataA.localeCompare(dataB);
-    }
-
-    const horaA = (!a.horario || a.horario === "Avulso") ? "00:00" : a.horario;
-    const horaB = (!b.horario || b.horario === "Avulso") ? "00:00" : b.horario;
-
-    return horaA.localeCompare(horaB);
-});
+            // ORDENAÇÃO CRONOLÓGICA REAL (DATA + HORA) - CORRIGIDA
+            lista.sort((a, b) => parseDataHora(a) - parseDataHora(b));
 
             let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
             let htmlComissao = '<table class="w-full text-[10px] text-left text-white"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase tracking-tighter"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
@@ -254,15 +278,8 @@
             excelModal.style.justifyContent = 'center';
             let headHtml = '<table class="w-full text-left text-sm" id="tabela-export-real"><thead class="bg-blue-600 text-white font-black uppercase text-[10px]"><tr><th class="p-3 text-white">DATA</th><th class="p-3 text-white">CLIENTE</th><th class="p-3 text-white">ENDEREÇO</th><th class="p-3 text-white">STATUS</th><th class="p-3 text-right text-white">VALOR</th><th class="p-3 text-right text-white text-white">COMISSÃO</th></tr></thead><tbody class="divide-y divide-gray-100 text-slate-900 text-white">';
             
-            // MESMA LÓGICA DE ORDENAÇÃO PARA O EXCEL
-            const listaOrdenada = [...dadosCompletos].sort((a, b) => {
-                const dataA = new Date(a.data + "T00:00:00").getTime();
-                const dataB = new Date(b.data + "T00:00:00").getTime();
-                if (dataA !== dataB) return dataA - dataB;
-                const hA = a.horario === "Avulso" ? "00:00" : a.horario;
-                const hB = b.horario === "Avulso" ? "00:00" : b.horario;
-                return hA.localeCompare(hB);
-            });
+            // MESMA LÓGICA DE ORDENAÇÃO PARA O EXCEL - CORRIGIDA
+            const listaOrdenada = [...dadosCompletos].sort((a, b) => parseDataHora(a) - parseDataHora(b));
 
             listaOrdenada.forEach(item => {
                 const dataFormatada = item.data ? item.data.split('-').reverse().join('/') : "-";
@@ -346,4 +363,3 @@
     </script>
 </body>
 </html>
-
