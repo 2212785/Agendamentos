@@ -124,28 +124,38 @@
         const modalAdmin = document.getElementById('admin-modal');
         const formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 
-        // FUNÇÃO DE PARSE REAL PARA ORDENAR DATA + HORA (CORRIGE QUALQUER FORMATO)
-        function parseDataHora(item) {
-            let data = item.data || "";
+        // ==========================================================
+        // OCULTAR DIA ATUAL SE NÃO DER MAIS TEMPO DE AGENDAR
+        // SEG-SEX: some após 17:00
+        // SAB-DOM: some após 12:00
+        // ==========================================================
+        (function ocultarDiaAtualSePassouHorario() {
+            const agora = new Date();
+            const hojeStr = agora.toISOString().split("T")[0];
 
-            // Converte formato BR (DD/MM/AAAA) para AAAA-MM-DD
-            if (data.includes("/")) {
-                const [dd, mm, yyyy] = data.split("/");
-                data = `${yyyy}-${mm}-${dd}`;
-            }
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                const dataBotao = btn.getAttribute("data-date");
+                if (!dataBotao) return;
 
-            // Se vier formato DD-MM-AAAA, também converte
-            if (data.includes("-") && data.split("-")[0].length === 2) {
-                const [dd, mm, yyyy] = data.split("-");
-                data = `${yyyy}-${mm}-${dd}`;
-            }
+                if (dataBotao === hojeStr) {
+                    const diaSemana = agora.getDay(); 
+                    // 0 = Domingo | 6 = Sábado
 
-            let hora = item.horario || "00:00";
-            if (hora === "Avulso") hora = "00:00";
-            if (!hora.includes(":")) hora = "00:00";
+                    let horaLimite = 17; // padrão seg-sex
 
-            return new Date(`${data}T${hora}:00`).getTime();
-        }
+                    if (diaSemana === 0 || diaSemana === 6) {
+                        horaLimite = 12; // fim de semana
+                    }
+
+                    const horaAtual = agora.getHours();
+                    const minutoAtual = agora.getMinutes();
+
+                    if (horaAtual > horaLimite || (horaAtual === horaLimite && minutoAtual >= 0)) {
+                        btn.style.display = "none";
+                    }
+                }
+            });
+        })();
 
         // LÓGICA DE AGENDAMENTO
         document.querySelectorAll('.day-btn').forEach(btn => {
@@ -191,28 +201,30 @@
             const [sAg, sAv] = await Promise.all([get(ref(db, COLLECTION_PATH)), get(ref(db, AVULSO_PATH))]);
             const ag = sAg.val() || {}, av = sAv.val() || {};
             dadosCompletos = [];
+            for(let d in ag) for(let h in ag[d]) dadosCompletos.push({...ag[d][h], id:h, tipo:'agenda'});
+            for(let id in av) dadosCompletos.push({...av[id], id:id, tipo:'avulso'});
+            renderizarLista(dadosCompletos);
+        }
 
-            // GARANTE QUE TODOS OS ITENS DA AGENDA TENHAM DATA
-            for (let d in ag) {
-                for (let h in ag[d]) {
-                    dadosCompletos.push({
-                        ...ag[d][h],
-                        id: h,
-                        tipo: 'agenda',
-                        data: ag[d][h].data || d
-                    });
-                }
+        function parseDataHora(item) {
+            let data = item.data || "";
+
+            if (data.includes("/")) {
+                const [dd, mm, yyyy] = data.split("/");
+                data = `${yyyy}-${mm}-${dd}`;
             }
 
-            for(let id in av) dadosCompletos.push({...av[id], id:id, tipo:'avulso'});
+            let hora = item.horario || "00:00";
+            if (hora === "Avulso") hora = "00:00";
+            if (!hora.includes(":")) hora = "00:00";
 
-            renderizarLista(dadosCompletos);
+            return new Date(`${data}T${hora}:00`);
         }
 
         function renderizarLista(lista) {
             let t = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, totalVendas: 0, vale: 0, totalComissao: 0 };
             
-            // ORDENAÇÃO CRONOLÓGICA REAL (DATA + HORA) - CORRIGIDA
+            // LÓGICA DE ORDENAÇÃO CRONOLÓGICA REAL (DATA E HORA)
             lista.sort((a, b) => parseDataHora(a) - parseDataHora(b));
 
             let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
@@ -255,18 +267,18 @@
 
             resumoAtual = t;
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest text-white">Efetividade</p><p class="text-lg font-black text-white text-white">${t.vendidos}/${lista.length}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-emerald-500 shadow-xl text-emerald-400 text-white text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">CASH (D+P)</p><p class="text-[10px] font-black text-white text-white text-white">${formatBRL(t.dinheiro+t.pix)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-400 shadow-xl text-blue-300 text-white text-white text-white text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">DÉBITO</p><p class="text-[10px] font-black text-white text-white text-white text-white">${formatBRL(t.debito)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-indigo-400 shadow-xl text-indigo-300 text-white text-white text-white text-white text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">CRÉDITO</p><p class="text-[10px] font-black text-white text-white text-white text-white text-white">${formatBRL(t.credito)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-orange-500 shadow-xl text-orange-400 text-white text-white text-white text-white text-white text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white uppercase text-white text-white text-white text-white">BOLETO</p><p class="text-[10px] font-black text-white text-white text-white text-white text-white text-white text-white">${formatBRL(t.boleto)}</p></div>
-                <div class="bg-blue-600 p-3 rounded-2xl text-center shadow-2xl text-white text-white text-white text-white text-white text-white text-white"><p class="text-[8px] font-bold text-blue-100 uppercase tracking-widest text-white">VENDAS</p><p class="text-[11px] font-black text-white text-white text-white text-white text-white text-white text-white">${formatBRL(t.totalVendas)}</p></div>
-                <div class="bg-amber-500 p-3 rounded-2xl text-center shadow-2xl text-amber-950 text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white uppercase text-white uppercase text-white text-white text-white text-white">VALES</p><p class="text-[11px] font-black text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white">${formatBRL(t.vale)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest text-white">Efetividade</p><p class="text-lg font-black text-white">${t.vendidos}/${lista.length}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-emerald-500 shadow-xl text-emerald-400"><p class="text-[8px] font-bold uppercase tracking-widest text-white">CASH (D+P)</p><p class="text-[10px] font-black text-white">${formatBRL(t.dinheiro+t.pix)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-400 shadow-xl text-blue-300"><p class="text-[8px] font-bold uppercase tracking-widest text-white">DÉBITO</p><p class="text-[10px] font-black text-white">${formatBRL(t.debito)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-indigo-400 shadow-xl text-indigo-300"><p class="text-[8px] font-bold uppercase tracking-widest text-white">CRÉDITO</p><p class="text-[10px] font-black text-white">${formatBRL(t.credito)}</p></div>
+                <div class="glass p-3 rounded-2xl text-center border-t-2 border-orange-500 shadow-xl text-orange-400"><p class="text-[8px] font-bold uppercase tracking-widest text-white">BOLETO</p><p class="text-[10px] font-black text-white">${formatBRL(t.boleto)}</p></div>
+                <div class="bg-blue-600 p-3 rounded-2xl text-center shadow-2xl text-white"><p class="text-[8px] font-bold text-blue-100 uppercase tracking-widest text-white">VENDAS</p><p class="text-[11px] font-black text-white">${formatBRL(t.totalVendas)}</p></div>
+                <div class="bg-amber-500 p-3 rounded-2xl text-center shadow-2xl text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">VALES</p><p class="text-[11px] font-black text-white">${formatBRL(t.vale)}</p></div>
             `;
             document.getElementById('admin-content').innerHTML = htmlTable + '</tbody></table>';
             document.getElementById('comissao-content').innerHTML = htmlComissao + '</tbody></table>';
             const saldo = t.totalComissao - t.vale;
-            document.getElementById('fechamento-final').innerHTML = `<div class="mt-4 p-6 rounded-[2rem] border-2 shadow-2xl text-right ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}"><p class="text-[9px] font-black text-slate-500 uppercase tracking-widest text-white">Saldo Comissões: ${formatBRL(t.totalComissao)}</p><p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4 text-white text-white">Total Vale: ${formatBRL(t.vale)}</p>${saldo >= 0 ? `<p class="text-[10px] text-emerald-400 font-black uppercase mb-1 text-white">A Receber</p><p class="text-4xl font-black text-emerald-500 italic text-white">${formatBRL(saldo)}</p>` : `<p class="text-[10px] text-rose-400 font-black uppercase mb-1 text-white">Devolver</p><p class="text-4xl font-black text-rose-500 italic text-white">${formatBRL(Math.abs(saldo))}</p>`}</div>`;
+            document.getElementById('fechamento-final').innerHTML = `<div class="mt-4 p-6 rounded-[2rem] border-2 shadow-2xl text-right ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}"><p class="text-[9px] font-black text-slate-500 uppercase tracking-widest text-white">Saldo Comissões: ${formatBRL(t.totalComissao)}</p><p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4 text-white">Total Vale: ${formatBRL(t.vale)}</p>${saldo >= 0 ? `<p class="text-[10px] text-emerald-400 font-black uppercase mb-1 text-white">A Receber</p><p class="text-4xl font-black text-emerald-500 italic text-white">${formatBRL(saldo)}</p>` : `<p class="text-[10px] text-rose-400 font-black uppercase mb-1 text-white">Devolver</p><p class="text-4xl font-black text-rose-500 italic text-white">${formatBRL(Math.abs(saldo))}</p>`}</div>`;
         }
 
         window.abrirDashboardExcel = () => {
@@ -276,14 +288,13 @@
             excelModal.style.display = 'flex';
             excelModal.style.alignItems = 'center';
             excelModal.style.justifyContent = 'center';
-            let headHtml = '<table class="w-full text-left text-sm" id="tabela-export-real"><thead class="bg-blue-600 text-white font-black uppercase text-[10px]"><tr><th class="p-3 text-white">DATA</th><th class="p-3 text-white">CLIENTE</th><th class="p-3 text-white">ENDEREÇO</th><th class="p-3 text-white">STATUS</th><th class="p-3 text-right text-white">VALOR</th><th class="p-3 text-right text-white text-white">COMISSÃO</th></tr></thead><tbody class="divide-y divide-gray-100 text-slate-900 text-white">';
+            let headHtml = '<table class="w-full text-left text-sm" id="tabela-export-real"><thead class="bg-blue-600 text-white font-black uppercase text-[10px]"><tr><th class="p-3 text-white">DATA</th><th class="p-3 text-white">CLIENTE</th><th class="p-3 text-white">ENDEREÇO</th><th class="p-3 text-white">STATUS</th><th class="p-3 text-right text-white">VALOR</th><th class="p-3 text-right text-white">COMISSÃO</th></tr></thead><tbody class="divide-y divide-gray-100 text-slate-900 text-white">';
             
-            // MESMA LÓGICA DE ORDENAÇÃO PARA O EXCEL - CORRIGIDA
             const listaOrdenada = [...dadosCompletos].sort((a, b) => parseDataHora(a) - parseDataHora(b));
 
             listaOrdenada.forEach(item => {
                 const dataFormatada = item.data ? item.data.split('-').reverse().join('/') : "-";
-                headHtml += `<tr><td class="p-3 text-xs text-slate-900 text-white">${dataFormatada}</td><td class="p-3 font-bold uppercase text-xs text-slate-900 text-white">${item.nome_formando || "-"}</td><td class="p-3 text-xs text-slate-500 text-white">${item.endereco || "-"}</td><td class="p-3 text-xs text-slate-900 text-white">${(item.resultado || "Pendente").toUpperCase()}</td><td class="p-3 text-right font-bold text-blue-600 text-xs text-slate-900 text-white">${formatBRL(item.valor || 0)}</td><td class="p-3 text-right font-black text-emerald-600 text-xs text-slate-900 text-white">${formatBRL(item.comissao_fix_v3 || 0)}</td></tr>`;
+                headHtml += `<tr><td class="p-3 text-xs text-white">${dataFormatada}</td><td class="p-3 font-bold uppercase text-xs text-white">${item.nome_formando || "-"}</td><td class="p-3 text-xs text-white">${item.endereco || "-"}</td><td class="p-3 text-xs text-white">${(item.resultado || "Pendente").toUpperCase()}</td><td class="p-3 text-right font-bold text-white text-xs">${formatBRL(item.valor || 0)}</td><td class="p-3 text-right font-black text-white text-xs">${formatBRL(item.comissao_fix_v3 || 0)}</td></tr>`;
             });
             headHtml += `</tbody></table>`;
             previewArea.innerHTML = headHtml;
