@@ -215,7 +215,14 @@
 
         function renderizarLista(lista) {
             let t = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, totalVendas: 0, vale: 0, totalComissao: 0 };
-            lista.sort((a,b) => new Date(a.data) - new Date(b.data));
+            
+            // ORDENAÇÃO CRONOLÓGICA: Primeiro pela Data, depois pelo Horário
+            lista.sort((a,b) => {
+                if (a.data !== b.data) return new Date(a.data) - new Date(b.data);
+                // Para o mesmo dia, ordena pelo horário
+                return a.horario.localeCompare(b.horario);
+            });
+
             let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
             let htmlComissao = '<table class="w-full text-[10px] text-left text-white"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase tracking-tighter"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
 
@@ -278,7 +285,14 @@
             excelModal.style.alignItems = 'center';
             excelModal.style.justifyContent = 'center';
             let headHtml = '<table class="w-full text-left text-sm" id="tabela-export-real"><thead class="bg-blue-600 text-white font-black uppercase text-[10px]"><tr><th class="p-3">DATA</th><th class="p-3">CLIENTE</th><th class="p-3">ENDEREÇO</th><th class="p-3">STATUS</th><th class="p-3 text-right">VALOR</th><th class="p-3 text-right">COMISSÃO</th></tr></thead><tbody class="divide-y divide-gray-100 text-slate-900">';
-            dadosCompletos.forEach(item => {
+            
+            // Re-ordena também para o Excel
+            const listaOrdenada = [...dadosCompletos].sort((a,b) => {
+                if (a.data !== b.data) return new Date(a.data) - new Date(b.data);
+                return a.horario.localeCompare(b.horario);
+            });
+
+            listaOrdenada.forEach(item => {
                 const dataFormatada = item.data ? item.data.split('-').reverse().join('/') : "-";
                 headHtml += `<tr><td class="p-3 text-xs">${dataFormatada}</td><td class="p-3 font-bold uppercase text-xs">${item.nome_formando || "-"}</td><td class="p-3 text-xs text-slate-500">${item.endereco || "-"}</td><td class="p-3 text-xs">${(item.resultado || "Pendente").toUpperCase()}</td><td class="p-3 text-right font-bold text-blue-600 text-xs">${formatBRL(item.valor || 0)}</td><td class="p-3 text-right font-black text-emerald-600 text-xs">${formatBRL(item.comissao_fix_v3 || 0)}</td></tr>`;
             });
@@ -315,7 +329,6 @@
                     if(snap.exists()){
                         const d = snap.val();
                         d.data = novaData;
-                        // Se for agenda, precisamos mover para o novo nó de data
                         if(tipo === 'agenda'){
                             await remove(ref(db, `${COLLECTION_PATH}/${data}/${id}`));
                             await set(ref(db, `${COLLECTION_PATH}/${novaData}/${id}`), d);
@@ -364,4 +377,3 @@
     </script>
 </body>
 </html>
-
