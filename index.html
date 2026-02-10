@@ -125,24 +125,37 @@
         const formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 
         // ==========================================================
-        // OCULTAR DIA ATUAL SE NÃO DER MAIS TEMPO DE AGENDAR
-        // SEG-SEX: some após 17:00
-        // SAB-DOM: some após 12:00
+        // OCULTAR DATAS PASSADAS E OCULTAR DIA ATUAL APÓS HORÁRIO LIMITE
+        //
+        // - Datas passadas (ontem ou anteriores): NÃO aparecem
+        // - Dia atual:
+        //      SEG-SEX: some após 17:00
+        //      SAB-DOM: some após 12:00
         // ==========================================================
-        (function ocultarDiaAtualSePassouHorario() {
+        (function ocultarBotoesDeDatasInvalidas() {
             const agora = new Date();
-            const hojeStr = agora.toISOString().split("T")[0];
+
+            // Zera hora para comparar somente datas
+            const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
 
             document.querySelectorAll('.day-btn').forEach(btn => {
                 const dataBotao = btn.getAttribute("data-date");
                 if (!dataBotao) return;
 
-                if (dataBotao === hojeStr) {
-                    const diaSemana = agora.getDay(); 
-                    // 0 = Domingo | 6 = Sábado
+                const [ano, mes, dia] = dataBotao.split("-").map(Number);
+                const dataBtnObj = new Date(ano, mes - 1, dia);
 
-                    let horaLimite = 17; // padrão seg-sex
+                // 1) Se for data passada (antes de hoje), esconde
+                if (dataBtnObj < hoje) {
+                    btn.style.display = "none";
+                    return;
+                }
 
+                // 2) Se for hoje, aplica regra do horário limite
+                if (dataBtnObj.getTime() === hoje.getTime()) {
+                    const diaSemana = hoje.getDay(); // 0=domingo, 6=sábado
+
+                    let horaLimite = 17; // seg-sex
                     if (diaSemana === 0 || diaSemana === 6) {
                         horaLimite = 12; // fim de semana
                     }
@@ -166,13 +179,19 @@
                 hiddenDataInput.value = dVal;
                 selectHorario.innerHTML = '<option>Sincronizando...</option>';
                 let ocupados = [];
-                try { const snap = await get(ref(db, `${COLLECTION_PATH}/${dVal}`)); if (snap.exists()) ocupados = Object.keys(snap.val()); } catch(e){}
+                try { 
+                    const snap = await get(ref(db, `${COLLECTION_PATH}/${dVal}`)); 
+                    if (snap.exists()) ocupados = Object.keys(snap.val()); 
+                } catch(e){}
                 selectHorario.innerHTML = '<option value="">Horários Livres</option>';
                 let cursor = new Date(`${dVal}T09:00:00`), final = new Date(`${dVal}T20:00:00`);
                 while(cursor <= final){
                     let hF = cursor.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
                     if(!ocupados.includes(hF.replace(':','-'))) {
-                        let opt = document.createElement('option'); opt.value = hF; opt.textContent = hF; selectHorario.appendChild(opt);
+                        let opt = document.createElement('option'); 
+                        opt.value = hF; 
+                        opt.textContent = hF; 
+                        selectHorario.appendChild(opt);
                     }
                     cursor.setMinutes(cursor.getMinutes() + 30);
                 }
