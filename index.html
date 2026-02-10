@@ -32,25 +32,11 @@
         </div>
     </div>
 
-    <div id="excel-modal">
-        <div class="max-w-5xl mx-auto bg-white text-slate-900 rounded-3xl p-8 shadow-2xl overflow-hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-black uppercase text-blue-600 italic">📊 Relatório Estratégico</h2>
-                <div class="flex gap-2">
-                    <button onclick="copiarTabelaExcel()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase shadow hover:bg-emerald-700 transition">Copiar Dados</button>
-                    <button onclick="document.getElementById('excel-modal').style.display='none'" class="bg-slate-200 text-slate-600 px-4 py-2 rounded-lg font-bold text-xs uppercase">Fechar</button>
-                </div>
-            </div>
-            <div id="excel-preview-content" class="overflow-x-auto border rounded-xl bg-slate-50"></div>
-        </div>
-    </div>
-
     <div id="admin-modal">
         <div class="max-w-7xl mx-auto">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
                 <div>
-                    <h1 class="text-3xl font-extrabold tracking-tight italic uppercase">Master <span class="text-blue-500 font-black">Dashboard</span></h1>
-                    <p class="text-slate-400 text-sm font-medium tracking-widest uppercase">Expert Management System</p>
+                    <h1 class="text-3xl font-extrabold tracking-tight italic uppercase text-white">Master <span class="text-blue-500 font-black">Dashboard</span></h1>
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <button onclick="lancarAvulso()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase shadow transition">Venda Direta</button>
@@ -62,7 +48,7 @@
             <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8"></div>
             <div class="grid lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2">
-                    <div class="flex justify-between items-center mb-4">
+                    <div class="flex justify-between items-center mb-4 text-white">
                         <h3 class="text-lg font-bold flex items-center gap-2 uppercase"><span class="w-2 h-6 bg-blue-500 rounded-full"></span> Roteiro de Atendimento</h3>
                         <input type="text" id="busca-admin" onkeyup="filtrarLista()" placeholder="Pesquisar..." class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 w-64 text-white">
                     </div>
@@ -78,8 +64,8 @@
     </div>
 
     <header class="p-6">
-        <div class="container mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3 text-white">
+        <div class="container mx-auto flex justify-between items-center text-white">
+            <div class="flex items-center gap-3">
                 <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-800 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg">P</div>
                 <span class="text-2xl font-black tracking-tighter uppercase italic">Portal <span class="text-blue-500 font-light lowercase not-italic text-lg">do formando</span></span>
             </div>
@@ -88,11 +74,11 @@
     </header>
 
     <main class="container mx-auto p-4 flex-grow flex items-center justify-center text-white">
-        <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl relative overflow-hidden text-center text-white">
+        <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl relative overflow-hidden text-center">
             <div class="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-blue-600 via-indigo-400 to-blue-600"></div>
-            <h2 class="text-3xl font-black mb-2 uppercase text-white">Agendar Visita</h2>
+            <h2 class="text-3xl font-black mb-10 uppercase text-white">Agendar Visita</h2>
             <form id="form-agendamento" class="space-y-6 text-left">
-                <div class="grid grid-cols-2 gap-2" id="day-selector text-white">
+                <div class="grid grid-cols-2 gap-2" id="day-selector">
                     <button type="button" data-date="2026-02-09" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">09/02<br>Seg</button>
                     <button type="button" data-date="2026-02-10" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">10/02<br>Ter</button>
                     <button type="button" data-date="2026-02-12" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">12/02<br>Qui</button>
@@ -138,34 +124,25 @@
         const modalAdmin = document.getElementById('admin-modal');
         const formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 
+        // LÓGICA DE AGENDAMENTO
         document.querySelectorAll('.day-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 const dVal = btn.getAttribute('data-date');
                 hiddenDataInput.value = dVal;
-                const dateObj = new Date(dVal + 'T00:00:00');
-                const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
                 selectHorario.innerHTML = '<option>Sincronizando...</option>';
                 let ocupados = [];
                 try { const snap = await get(ref(db, `${COLLECTION_PATH}/${dVal}`)); if (snap.exists()) ocupados = Object.keys(snap.val()); } catch(e){}
-                const agora = new Date();
-                const hojeStr = agora.toISOString().split('T')[0];
-                const limiteMinimo = new Date(agora.getTime() + (3 * 60 * 60 * 1000)); 
                 selectHorario.innerHTML = '<option value="">Horários Livres</option>';
-                let cursor = new Date(`${dVal}T09:00:00`);
-                let finalStr = isWeekend ? "15:00:00" : "20:00:00";
-                let final = new Date(`${dVal}T${finalStr}`);
+                let cursor = new Date(`${dVal}T09:00:00`), final = new Date(`${dVal}T20:00:00`);
                 while(cursor <= final){
                     let hF = cursor.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-                    const isFuturoSuficiente = (dVal !== hojeStr) || (cursor > limiteMinimo);
-                    if(!ocupados.includes(hF.replace(':','-')) && isFuturoSuficiente) {
-                        let opt = document.createElement('option'); 
-                        opt.value = hF; opt.textContent = hF; selectHorario.appendChild(opt);
+                    if(!ocupados.includes(hF.replace(':','-'))) {
+                        let opt = document.createElement('option'); opt.value = hF; opt.textContent = hF; selectHorario.appendChild(opt);
                     }
                     cursor.setMinutes(cursor.getMinutes() + 30);
                 }
-                if (selectHorario.options.length <= 1) selectHorario.innerHTML = '<option value="">Sem horários disponíveis</option>';
             });
         });
 
@@ -199,11 +176,20 @@
         function renderizarLista(lista) {
             let t = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, totalVendas: 0, vale: 0, totalComissao: 0 };
             
-            // LÓGICA DE ORDENAÇÃO POR DATA PURA (TIMESTAMP)
-            lista.sort((a,b) => {
+            // LÓGICA DE ORDENAÇÃO CRONOLÓGICA REAL (DATA E HORA)
+            lista.sort((a, b) => {
+                // Compara as datas transformando em objeto Date (garante ordem cronológica física)
                 const dataA = new Date(a.data + "T00:00:00").getTime();
                 const dataB = new Date(b.data + "T00:00:00").getTime();
-                return dataA - dataB;
+
+                if (dataA !== dataB) return dataA - dataB;
+
+                // Se a data for igual, ordena pelo horário
+                // Para "Avulso", definimos um peso de 00:00 para ficar no início do dia
+                const horaA = a.horario === "Avulso" ? "00:00" : a.horario;
+                const horaB = b.horario === "Avulso" ? "00:00" : b.horario;
+
+                return horaA.localeCompare(horaB);
             });
 
             let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
@@ -234,7 +220,7 @@
                 const colors = { 'Venda': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', 'NQ': 'bg-rose-500/10 text-rose-500 border-rose-500/20', 'Não Atendeu': 'bg-amber-500/10 text-amber-500 border-amber-500/20', 'Reagendar': 'bg-blue-500/10 text-blue-500 border-blue-500/20', 'Pendente': 'bg-slate-500/10 text-slate-400 border-slate-500/20' };
 
                 htmlTable += `<tr class="hover:bg-slate-800/40 transition">
-                    <td class="p-4 font-bold text-slate-300 uppercase">${item.data.split('-').reverse().join('/')}<br><span class="font-light text-slate-500 text-[10px] text-white">${item.horario}</span></td>
+                    <td class="p-4 font-bold text-slate-300 uppercase text-white">${item.data.split('-').reverse().join('/')}<br><span class="font-light text-slate-500 text-[10px] text-white">${item.horario}</span></td>
                     <td class="p-4 uppercase font-black text-slate-100 text-white">
                         ${item.nome_formando}<br>
                         <span class="text-blue-400 font-black lowercase text-[11px] block mt-1 leading-tight text-white">${item.endereco || 'Manual'}</span>
@@ -252,12 +238,12 @@
                 <div class="glass p-3 rounded-2xl text-center border-t-2 border-indigo-400 shadow-xl text-indigo-300 text-white text-white text-white text-white text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">CRÉDITO</p><p class="text-[10px] font-black text-white text-white text-white text-white text-white">${formatBRL(t.credito)}</p></div>
                 <div class="glass p-3 rounded-2xl text-center border-t-2 border-orange-500 shadow-xl text-orange-400 text-white text-white text-white text-white text-white text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white uppercase text-white text-white text-white text-white">BOLETO</p><p class="text-[10px] font-black text-white text-white text-white text-white text-white text-white text-white">${formatBRL(t.boleto)}</p></div>
                 <div class="bg-blue-600 p-3 rounded-2xl text-center shadow-2xl text-white text-white text-white text-white text-white text-white text-white"><p class="text-[8px] font-bold text-blue-100 uppercase tracking-widest text-white">VENDAS</p><p class="text-[11px] font-black text-white text-white text-white text-white text-white text-white text-white">${formatBRL(t.totalVendas)}</p></div>
-                <div class="bg-amber-500 p-3 rounded-2xl text-center shadow-2xl text-amber-950 text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white uppercase text-white uppercase text-white text-white text-white">VALES</p><p class="text-[11px] font-black text-white text-white text-white text-white text-white text-white text-white text-white text-white">${formatBRL(t.vale)}</p></div>
+                <div class="bg-amber-500 p-3 rounded-2xl text-center shadow-2xl text-amber-950 text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white uppercase text-white uppercase text-white text-white text-white text-white">VALES</p><p class="text-[11px] font-black text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white">${formatBRL(t.vale)}</p></div>
             `;
             document.getElementById('admin-content').innerHTML = htmlTable + '</tbody></table>';
             document.getElementById('comissao-content').innerHTML = htmlComissao + '</tbody></table>';
             const saldo = t.totalComissao - t.vale;
-            document.getElementById('fechamento-final').innerHTML = `<div class="mt-4 p-6 rounded-[2rem] border-2 shadow-2xl text-right ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}"><p class="text-[9px] font-black text-slate-500 uppercase tracking-widest text-white">Saldo Comissões: ${formatBRL(t.totalComissao)}</p><p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4 text-white">Total Vale: ${formatBRL(t.vale)}</p>${saldo >= 0 ? `<p class="text-[10px] text-emerald-400 font-black uppercase mb-1 text-white">A Receber</p><p class="text-4xl font-black text-emerald-500 italic text-white">${formatBRL(saldo)}</p>` : `<p class="text-[10px] text-rose-400 font-black uppercase mb-1 text-white">Devolver</p><p class="text-4xl font-black text-rose-500 italic text-white">${formatBRL(Math.abs(saldo))}</p>`}</div>`;
+            document.getElementById('fechamento-final').innerHTML = `<div class="mt-4 p-6 rounded-[2rem] border-2 shadow-2xl text-right ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}"><p class="text-[9px] font-black text-slate-500 uppercase tracking-widest text-white">Saldo Comissões: ${formatBRL(t.totalComissao)}</p><p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4 text-white text-white">Total Vale: ${formatBRL(t.vale)}</p>${saldo >= 0 ? `<p class="text-[10px] text-emerald-400 font-black uppercase mb-1 text-white">A Receber</p><p class="text-4xl font-black text-emerald-500 italic text-white">${formatBRL(saldo)}</p>` : `<p class="text-[10px] text-rose-400 font-black uppercase mb-1 text-white">Devolver</p><p class="text-4xl font-black text-rose-500 italic text-white">${formatBRL(Math.abs(saldo))}</p>`}</div>`;
         }
 
         window.abrirDashboardExcel = () => {
@@ -269,11 +255,17 @@
             excelModal.style.justifyContent = 'center';
             let headHtml = '<table class="w-full text-left text-sm" id="tabela-export-real"><thead class="bg-blue-600 text-white font-black uppercase text-[10px]"><tr><th class="p-3 text-white">DATA</th><th class="p-3 text-white">CLIENTE</th><th class="p-3 text-white">ENDEREÇO</th><th class="p-3 text-white">STATUS</th><th class="p-3 text-right text-white">VALOR</th><th class="p-3 text-right text-white text-white">COMISSÃO</th></tr></thead><tbody class="divide-y divide-gray-100 text-slate-900 text-white">';
             
-            const listaOrdenadaExcel = [...dadosCompletos].sort((a,b) => {
-                return new Date(a.data + "T00:00:00").getTime() - new Date(b.data + "T00:00:00").getTime();
+            // MESMA LÓGICA DE ORDENAÇÃO PARA O EXCEL
+            const listaOrdenada = [...dadosCompletos].sort((a, b) => {
+                const dataA = new Date(a.data + "T00:00:00").getTime();
+                const dataB = new Date(b.data + "T00:00:00").getTime();
+                if (dataA !== dataB) return dataA - dataB;
+                const hA = a.horario === "Avulso" ? "00:00" : a.horario;
+                const hB = b.horario === "Avulso" ? "00:00" : b.horario;
+                return hA.localeCompare(hB);
             });
 
-            listaOrdenadaExcel.forEach(item => {
+            listaOrdenada.forEach(item => {
                 const dataFormatada = item.data ? item.data.split('-').reverse().join('/') : "-";
                 headHtml += `<tr><td class="p-3 text-xs text-slate-900 text-white">${dataFormatada}</td><td class="p-3 font-bold uppercase text-xs text-slate-900 text-white">${item.nome_formando || "-"}</td><td class="p-3 text-xs text-slate-500 text-white">${item.endereco || "-"}</td><td class="p-3 text-xs text-slate-900 text-white">${(item.resultado || "Pendente").toUpperCase()}</td><td class="p-3 text-right font-bold text-blue-600 text-xs text-slate-900 text-white">${formatBRL(item.valor || 0)}</td><td class="p-3 text-right font-black text-emerald-600 text-xs text-slate-900 text-white">${formatBRL(item.comissao_fix_v3 || 0)}</td></tr>`;
             });
@@ -303,7 +295,7 @@
                     await carregarRelatorio(); 
                 }
             } else if(acao === "3") {
-                const novaData = prompt("DIGITE A NOVA DATA (AAAA-MM-DD):");
+                const novaData = prompt("NOVA DATA (AAAA-MM-DD):");
                 if(novaData && novaData.length === 10) {
                     const snap = await get(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}`:`${AVULSO_PATH}/${id}`)));
                     if(snap.exists()){
@@ -318,8 +310,6 @@
                         alert("DATA ALTERADA!");
                         await carregarRelatorio();
                     }
-                } else {
-                    alert("DATA INVÁLIDA! USE O FORMATO AAAA-MM-DD");
                 }
             } else if(acao === "1") {
                 const r = prompt("STATUS: 1-Venda | 2-NQ | 3-Não Atendeu | 4-Reagendar");
@@ -357,3 +347,4 @@
     </script>
 </body>
 </html>
+
