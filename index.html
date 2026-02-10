@@ -20,14 +20,13 @@
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col text-white">
+<body class="min-h-screen flex flex-col">
 
     <div id="admin-modal">
         <div class="max-w-7xl mx-auto">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
                 <div>
                     <h1 class="text-3xl font-extrabold tracking-tight italic uppercase">Master <span class="text-blue-500 font-black">Dashboard</span></h1>
-                    <p class="text-slate-400 text-sm font-medium tracking-widest uppercase">Expert Management System</p>
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <button onclick="lancarAvulso()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase shadow transition">Venda Direta</button>
@@ -36,13 +35,11 @@
                     <button onclick="fecharAdmin()" class="bg-rose-600/20 text-rose-500 border border-rose-500/50 px-5 py-2.5 rounded-xl font-bold text-xs uppercase hover:bg-rose-600 hover:text-white transition">Sair</button>
                 </div>
             </div>
-            
             <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8"></div>
-
             <div class="grid lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2">
-                    <div class="flex justify-between items-center mb-4 text-white">
-                        <h3 class="text-lg font-bold flex items-center gap-2 uppercase"><span class="w-2 h-6 bg-blue-500 rounded-full"></span> Roteiro de Atendimento</h3>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold flex items-center gap-2 uppercase text-white"><span class="w-2 h-6 bg-blue-500 rounded-full"></span> Roteiro de Atendimento</h3>
                         <input type="text" id="busca-admin" onkeyup="filtrarLista()" placeholder="Pesquisar..." class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 w-64 text-white">
                     </div>
                     <div id="admin-content" class="glass rounded-3xl overflow-hidden border-white/5 shadow-2xl"></div>
@@ -57,7 +54,7 @@
     </div>
 
     <header class="p-6">
-        <div class="container mx-auto flex justify-between items-center">
+        <div class="container mx-auto flex justify-between items-center text-white">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-800 rounded-2xl flex items-center justify-center font-black text-xl italic shadow-lg">P</div>
                 <span class="text-2xl font-black tracking-tighter uppercase italic">Portal <span class="text-blue-500 font-light lowercase not-italic text-lg">do formando</span></span>
@@ -98,7 +95,7 @@
             const ag = sAg.val() || {}, av = sAv.val() || {};
             dadosCompletos = [];
             
-            // Unifica registros garantindo campos limpos
+            // Unifica todos os registros em uma lista única
             for(let d in ag) for(let h in ag[d]) dadosCompletos.push({...ag[d][h], id:h, tipo:'agenda'});
             for(let id in av) dadosCompletos.push({...av[id], id:id, tipo:'avulso'});
             
@@ -108,20 +105,21 @@
         function renderizarLista(lista) {
             let t = { vendidos: 0, nq: 0, dinheiro: 0, pix: 0, debito: 0, boleto: 0, credito: 0, totalVendas: 0, vale: 0, totalComissao: 0 };
             
-            // LÓGICA DE ORDENAÇÃO CRONOLÓGICA DEFINITIVA (DATA PURA)
+            // LÓGICA DE ORDENAÇÃO SIMPLIFICADA E CRONOLÓGICA (DATA PURA)
             lista.sort((a, b) => {
-    const dataA = a.data || "9999-12-31";
-    const dataB = b.data || "9999-12-31";
+                // Converte a string YYYY-MM-DD em um valor numérico comparável
+                const dataA = new Date(a.data + "T00:00:00").getTime();
+                const dataB = new Date(b.data + "T00:00:00").getTime();
 
-    if (dataA !== dataB) {
-        return dataA.localeCompare(dataB);
-    }
+                if (dataA !== dataB) return dataA - dataB;
 
-    const horaA = (!a.horario || a.horario === "Avulso") ? "00:00" : a.horario;
-    const horaB = (!b.horario || b.horario === "Avulso") ? "00:00" : b.horario;
-
-    return horaA.localeCompare(horaB);
-});
+                // Se as datas forem idênticas, usamos a hora como critério de desempate
+                // Caso seja "Avulso", colocamos no topo do dia (00:00)
+                const horaA = a.horario === "Avulso" ? "00:00" : a.horario;
+                const horaB = b.horario === "Avulso" ? "00:00" : b.horario;
+                
+                return horaA.localeCompare(horaB);
+            });
 
             let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
             let htmlComissao = '<table class="w-full text-[10px] text-left text-white"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase tracking-tighter"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
@@ -154,7 +152,7 @@
                     <td class="p-4 font-bold text-slate-300 uppercase text-white">${item.data.split('-').reverse().join('/')}<br><span class="font-light text-slate-500 text-[10px] text-white">${item.horario}</span></td>
                     <td class="p-4 uppercase font-black text-slate-100 text-white">
                         ${item.nome_formando}<br>
-                        <span class="text-blue-400 font-black lowercase text-[11px] block mt-1 leading-tight text-white">${item.endereco || 'Venda Direta'}</span>
+                        <span class="text-blue-400 font-black lowercase text-[11px] block mt-1 leading-tight text-white">${item.endereco || 'Manual'}</span>
                     </td>
                     <td class="p-4 text-center text-white"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${colors[item.resultado] || colors['Pendente']} text-white">${item.resultado || 'Pendente'}</span></td>
                     <td class="p-4 text-center text-white"><button onclick="gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-[9px] w-full font-black uppercase transition border border-blue-400/30 text-white">Gerenciar</button></td>
@@ -162,6 +160,7 @@
             });
 
             resumoAtual = t;
+            // Atualização dos cards financeiros simplificada
             document.getElementById('resumo-financeiro').innerHTML = `
                 <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest text-white">Efetividade</p><p class="text-lg font-black text-white">${t.vendidos}/${lista.length}</p></div>
                 <div class="glass p-3 rounded-2xl text-center border-t-2 border-emerald-500 shadow-xl text-emerald-400 text-white"><p class="text-[8px] font-bold uppercase tracking-widest text-white">CASH (D+P)</p><p class="text-[10px] font-black text-white">${formatBRL(t.dinheiro+t.pix)}</p></div>
@@ -178,13 +177,14 @@
         }
 
         window.lancarAvulso = async () => {
-            const n = prompt("Nome do Cliente:"); if(!n) return;
+            const n = prompt("Nome:"); if(!n) return;
             const d = prompt("Data da Venda (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
-            if(!d || d.length !== 10) { alert("Data Inválida"); return; }
+            if(!d) return;
             await push(ref(db, AVULSO_PATH), { nome_formando: n, data: d, horario: "Avulso", resultado: "Pendente" });
             await carregarRelatorio();
         };
 
+        window.fecharAdmin = () => modalAdmin.style.display = 'none';
         window.gerenciarItem = async (tipo, data, id) => {
             const acao = prompt("1-RESULTADO | 2-EXCLUIR | 3-ALTERAR DATA");
             if(acao === "2") { 
@@ -197,7 +197,8 @@
                 if(novaData && novaData.length === 10) {
                     const snap = await get(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}`:`${AVULSO_PATH}/${id}`)));
                     if(snap.exists()){
-                        const d = snap.val(); d.data = novaData;
+                        const d = snap.val();
+                        d.data = novaData;
                         if(tipo === 'agenda'){
                             await remove(ref(db, `${COLLECTION_PATH}/${data}/${id}`));
                             await set(ref(db, `${COLLECTION_PATH}/${novaData}/${id}`), d);
@@ -224,12 +225,6 @@
                 } else if ({"2":1,"3":1,"4":1}[r]) await update(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)), { resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], valor:0 });
                 await carregarRelatorio();
             }
-        };
-
-        window.fecharAdmin = () => modalAdmin.style.display = 'none';
-        window.filtrarLista = () => {
-            const t = document.getElementById('busca-admin').value.toLowerCase();
-            renderizarLista(dadosCompletos.filter(i => (i.nome_formando && i.nome_formando.toLowerCase().includes(t)) || (i.cidade && i.cidade.toLowerCase().includes(t))));
         };
     </script>
 </body>
