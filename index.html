@@ -147,7 +147,6 @@
                 const dVal = btn.getAttribute('data-date');
                 hiddenDataInput.value = dVal;
                 
-                // Determinar se é fim de semana (Sábado=5 ou Domingo=6 baseado no fuso/string ou objeto Date)
                 const dateObj = new Date(dVal + 'T00:00:00');
                 const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
 
@@ -155,14 +154,12 @@
                 let ocupados = [];
                 try { const snap = await get(ref(db, `${COLLECTION_PATH}/${dVal}`)); if (snap.exists()) ocupados = Object.keys(snap.val()); } catch(e){}
 
-                // TRAVA DE 3 HORAS
                 const agora = new Date();
                 const hojeStr = agora.toISOString().split('T')[0];
                 const limiteMinimo = new Date(agora.getTime() + (3 * 60 * 60 * 1000)); 
 
                 selectHorario.innerHTML = '<option value="">Horários Livres</option>';
                 
-                // AJUSTE DE HORÁRIO: Fim de semana até 15h, semana até 20h
                 let cursor = new Date(`${dVal}T09:00:00`);
                 let finalStr = isWeekend ? "15:00:00" : "20:00:00";
                 let final = new Date(`${dVal}T${finalStr}`);
@@ -304,8 +301,33 @@
         };
 
         window.gerenciarItem = async (tipo, data, id) => {
-            const acao = prompt("1-RESULTADO | 2-EXCLUIR");
-            if(acao === "2") { if(confirm("APAGAR?")) { await remove(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}`:`${AVULSO_PATH}/${id}`))); carregarRelatorio(); }
+            const acao = prompt("1-RESULTADO | 2-EXCLUIR | 3-ALTERAR DATA");
+            
+            if(acao === "2") { 
+                if(confirm("APAGAR?")) { 
+                    await remove(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}`:`${AVULSO_PATH}/${id}`))); 
+                    carregarRelatorio(); 
+                }
+            } else if(acao === "3") {
+                const novaData = prompt("DIGITE A NOVA DATA (AAAA-MM-DD):");
+                if(novaData && novaData.length === 10) {
+                    const snap = await get(ref(db, (tipo==='agenda'?`${COLLECTION_PATH}/${data}/${id}`:`${AVULSO_PATH}/${id}`)));
+                    if(snap.exists()){
+                        const d = snap.val();
+                        d.data = novaData;
+                        // Se for agenda, precisamos mover para o novo nó de data
+                        if(tipo === 'agenda'){
+                            await remove(ref(db, `${COLLECTION_PATH}/${data}/${id}`));
+                            await set(ref(db, `${COLLECTION_PATH}/${novaData}/${id}`), d);
+                        } else {
+                            await update(ref(db, `${AVULSO_PATH}/${id}`), { data: novaData });
+                        }
+                        alert("DATA ALTERADA!");
+                        carregarRelatorio();
+                    }
+                } else {
+                    alert("DATA INVÁLIDA! USE O FORMATO AAAA-MM-DD");
+                }
             } else if(acao === "1") {
                 const r = prompt("STATUS: 1-Venda | 2-NQ | 3-Não Atendeu | 4-Reagendar");
                 if (r === "1") {
@@ -332,7 +354,9 @@
 
         window.lancarAvulso = async () => {
             const n = prompt("Nome:"); if(!n) return;
-            await push(ref(db, AVULSO_PATH), { nome_formando: n, data: new Date().toISOString().split('T')[0], horario: "Avulso", resultado: "Pendente" });
+            const d = prompt("Data da Venda (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
+            if(!d) return;
+            await push(ref(db, AVULSO_PATH), { nome_formando: n, data: d, horario: "Avulso", resultado: "Pendente" });
             carregarRelatorio();
         };
 
@@ -340,6 +364,4 @@
     </script>
 </body>
 </html>
-
-
 
