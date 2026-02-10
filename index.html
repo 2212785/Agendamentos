@@ -178,19 +178,18 @@
             
             // LÓGICA DE ORDENAÇÃO CRONOLÓGICA REAL (DATA E HORA)
             lista.sort((a, b) => {
-                // Compara as datas transformando em objeto Date (garante ordem cronológica física)
-                const dataA = new Date(a.data + "T00:00:00").getTime();
-                const dataB = new Date(b.data + "T00:00:00").getTime();
+    const dataA = a.data || "9999-12-31";
+    const dataB = b.data || "9999-12-31";
 
-                if (dataA !== dataB) return dataA - dataB;
+    if (dataA !== dataB) {
+        return dataA.localeCompare(dataB);
+    }
 
-                // Se a data for igual, ordena pelo horário
-                // Para "Avulso", definimos um peso de 00:00 para ficar no início do dia
-                const horaA = a.horario === "Avulso" ? "00:00" : a.horario;
-                const horaB = b.horario === "Avulso" ? "00:00" : b.horario;
+    const horaA = (!a.horario || a.horario === "Avulso") ? "00:00" : a.horario;
+    const horaB = (!b.horario || b.horario === "Avulso") ? "00:00" : b.horario;
 
-                return horaA.localeCompare(horaB);
-            });
+    return horaA.localeCompare(horaB);
+});
 
             let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
             let htmlComissao = '<table class="w-full text-[10px] text-left text-white"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase tracking-tighter"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
@@ -347,3 +346,4 @@
     </script>
 </body>
 </html>
+
