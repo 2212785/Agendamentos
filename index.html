@@ -24,11 +24,11 @@
 
     <div id="modalHorario" class="flex">
         <div class="bg-white w-full max-w-md rounded-[2rem] shadow-2xl p-8 text-slate-900">
-            <h2 class="text-2xl font-black mb-6 uppercase text-blue-600">Alterar Visita</h2>
+            <h2 class="text-2xl font-black mb-6 uppercase text-blue-600 italic">Alterar Visita</h2>
             <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">Nova Data</label>
-            <input id="novaDataModal" type="date" class="w-full border-2 border-slate-100 rounded-2xl p-4 mb-4 outline-none">
+            <input id="novaDataModal" type="date" class="w-full border-2 border-slate-100 rounded-2xl p-4 mb-4 outline-none focus:border-blue-500">
             <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">Horário Disponível</label>
-            <select id="novoHorarioModal" class="w-full border-2 border-slate-100 rounded-2xl p-4 mb-6 outline-none">
+            <select id="novoHorarioModal" class="w-full border-2 border-slate-100 rounded-2xl p-4 mb-6 outline-none focus:border-blue-500">
                 <option value="">Selecione a Data</option>
             </select>
             <div class="flex gap-3">
@@ -48,28 +48,32 @@
                     <button onclick="fecharAdmin()" class="bg-rose-600/20 text-rose-500 border border-rose-500/50 px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase">Sair</button>
                 </div>
             </div>
-            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8"></div>
+            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-8"></div>
             <div class="grid lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2">
-                    <div id="admin-content" class="glass rounded-3xl overflow-hidden shadow-2xl"></div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold uppercase text-white"><span class="w-2 h-6 bg-blue-500 rounded-full"></span> Roteiro de Atendimento</h3>
+                        <input type="text" id="busca-admin" onkeyup="filtrarLista()" placeholder="Pesquisar..." class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white outline-none w-64">
+                    </div>
+                    <div id="admin-content" class="glass rounded-3xl overflow-hidden shadow-2xl border-white/5"></div>
                 </div>
                 <div class="space-y-6">
-                    <h3 class="text-lg font-bold text-white flex items-center gap-2 uppercase">Extrato Diário</h3>
-                    <div id="comissao-content" class="glass rounded-3xl p-5 shadow-inner"></div>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2 uppercase"><span class="w-2 h-6 bg-emerald-500 rounded-full"></span> Extrato Diário</h3>
+                    <div id="comissao-content" class="glass rounded-3xl p-5 shadow-inner border-white/5"></div>
                     <div id="fechamento-final"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <header class="p-6 flex justify-between items-center text-white">
+    <header class="p-6 flex justify-between items-center">
         <span class="text-2xl font-black italic uppercase">Portal <span class="text-blue-500">do formando</span></span>
         <button onclick="acessoAdmin()" class="glass px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase border-white/20">Login ADM</button>
     </header>
 
     <main class="container mx-auto p-4 flex-grow flex items-center justify-center">
-        <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl text-center">
-            <h2 class="text-3xl font-black mb-10 uppercase text-white">Agendar Visita</h2>
+        <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl text-center border-white/5">
+            <h2 class="text-3xl font-black mb-10 uppercase italic text-white">Agendar Visita</h2>
             <form id="form-agendamento" class="space-y-6 text-left">
                 <div class="grid grid-cols-2 gap-2" id="day-selector">
                     <button type="button" data-date="2026-02-12" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">12/02<br>Qui</button>
@@ -79,11 +83,11 @@
                 </div>
                 <input type="hidden" id="data-selecionada" required>
                 <div class="space-y-4">
-                    <input type="text" id="nome" required placeholder="Nome do Formando" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none">
+                    <input type="text" id="nome" required placeholder="Nome do Formando" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none focus:border-blue-500">
                     <select id="horario" required class="w-full bg-slate-800 border border-slate-700 p-4 rounded-2xl text-white outline-none">
                         <option value="">Selecione a Data</option>
                     </select>
-                    <textarea id="endereco" required placeholder="Endereço Completo" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none" rows="2"></textarea>
+                    <textarea id="endereco" required placeholder="Endereço de Visita" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none" rows="2"></textarea>
                 </div>
                 <button type="submit" class="btn-primary w-full text-white font-black py-5 rounded-2xl shadow-2xl uppercase">Finalizar Agendamento</button>
             </form>
@@ -122,36 +126,26 @@
             return new Date(y, m - 1, d, hh, mm).getTime();
         }
 
-        // --- LÓGICA DE GERAÇÃO DE HORÁRIOS COM REGRA DE 3 HORAS ---
         async function gerarHorariosDisponiveis(dataEscolhida, selectElement) {
             selectElement.innerHTML = '<option>Consultando...</option>';
             const snap = await get(ref(db, `${COLLECTION_PATH}/${dataEscolhida}`));
             const ocupados = snap.exists() ? Object.keys(snap.val()).map(k => k.replace("-", ":")) : [];
-
             const dateObj = new Date(dataEscolhida + 'T00:00:00');
             const isWeekend = (dateObj.getDay() === 0 || dateObj.getDay() === 6);
             const horaLimiteStr = isWeekend ? "15:00" : "20:30";
-
             const agora = new Date();
             const hojeStr = agora.toISOString().split('T')[0];
-
             selectElement.innerHTML = '<option value="">Escolha um Horário</option>';
-            
             let cursor = new Date(`${dataEscolhida}T09:00:00`);
             let final = new Date(`${dataEscolhida}T${horaLimiteStr}:00`);
-
             while(cursor <= final) {
                 let hF = cursor.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-                let ocupado = ocupados.includes(hF);
-                
-                // Regra das 3 horas: se for hoje, o horário deve ser > agora + 3h
                 let disponivelPeloTempo = true;
                 if(dataEscolhida === hojeStr) {
                     let minPermitido = new Date(agora.getTime() + (3 * 60 * 60 * 1000));
                     if(cursor < minPermitido) disponivelPeloTempo = false;
                 }
-
-                if(!ocupado && disponivelPeloTempo) {
+                if(!ocupados.includes(hF) && disponivelPeloTempo) {
                     let opt = document.createElement('option'); opt.value = hF; opt.textContent = hF;
                     selectElement.appendChild(opt);
                 }
@@ -160,28 +154,23 @@
         }
 
         window.fecharModalHorario = () => document.getElementById("modalHorario").style.display = "none";
-        
         window.abrirModalHorario = async (dataAtual, horarioAtual, callbackConfirmar) => {
             const modal = document.getElementById("modalHorario");
             const selectHora = document.getElementById("novoHorarioModal");
             const inputData = document.getElementById("novaDataModal");
             modal.style.display = "flex";
             inputData.value = dataAtual;
-
             inputData.onchange = (e) => gerarHorariosDisponiveis(e.target.value, selectHora);
             await gerarHorariosDisponiveis(dataAtual, selectHora);
-
             document.getElementById("confirmarHorarioBtn").onclick = () => {
                 if(!selectHora.value) return alert("Escolha um horário!");
-                fecharModalHorario();
-                callbackConfirmar(inputData.value, selectHora.value);
+                fecharModalHorario(); callbackConfirmar(inputData.value, selectHora.value);
             };
         };
 
         window.gerenciarItem = async (tipo, data, id) => {
             const acao = prompt("1-RESULTADO | 2-EXCLUIR | 3-ALTERAR DATA | 4-ALTERAR HORÁRIO | 5-ALTERAR DATA E HORÁRIO");
             const dbRef = tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`;
-
             if (acao === "2") { if (confirm("APAGAR?")) { await remove(ref(db, dbRef)); carregarRelatorio(); } }
             else if (acao === "3") {
                 const nD = prompt("NOVA DATA (AAAA-MM-DD):");
@@ -201,11 +190,8 @@
                 let o = snap.val();
                 abrirModalHorario(data, o.horario, async (nD, nH) => {
                     const nID = nH.replace(":", "-");
-                    if (tipo === 'agenda') {
-                        await remove(ref(db, dbRef));
-                        o.data = nD; o.horario = nH;
-                        await set(ref(db, `${COLLECTION_PATH}/${nD}/${nID}`), o);
-                    } else { await update(ref(db, dbRef), { data: nD, horario: nH }); }
+                    if (tipo === 'agenda') { await remove(ref(db, dbRef)); o.data = nD; o.horario = nH; await set(ref(db, `${COLLECTION_PATH}/${nD}/${nID}`), o); }
+                    else { await update(ref(db, dbRef), { data: nD, horario: nH }); }
                     carregarRelatorio();
                 });
             }
@@ -229,7 +215,6 @@
         function renderizarLista(lista) {
             let t = { vendidos: 0, totalVendas: 0, vale: 0, totalComissao: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boleto: 0, nq: 0 };
             lista.sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b));
-
             let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
             let htmlComissao = '<table class="w-full text-[10px] text-white"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
 
@@ -240,40 +225,36 @@
                     t.vendidos++; t.totalVendas += vT;
                     if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(item.pagamento)) {
                         com = vT * 0.12;
-                        if(item.pagamento === "Dinheiro" || item.pagamento === "Pix") { t.dinheiro += (item.pagamento === "Dinheiro" ? vT : 0); t.pix += (item.pagamento === "Pix" ? vT : 0); t.vale += vT; }
+                        if(item.pagamento === "Dinheiro") { t.dinheiro += vT; t.vale += vT; }
+                        if(item.pagamento === "Pix") { t.pix += vT; t.vale += vT; }
                         if(item.pagamento === "Cartão Débito") t.debito += vT;
                         if(item.pagamento === "Cartão Crédito") t.credito += vT;
                     } else if (item.pagamento === "Boleto") {
                         t.boleto += (vT - vE);
                         com = (vE * 0.12) + ((vT - vE) * (item.restricao === "Sim" ? 0.05 : 0.08));
-                        if(item.forma_entrada === "Dinheiro" || item.forma_entrada === "Pix") { t.dinheiro += (item.forma_entrada === "Dinheiro" ? vE : 0); t.pix += (item.forma_entrada === "Pix" ? vE : 0); t.vale += vE; }
+                        if(item.forma_entrada === "Dinheiro") { t.dinheiro += vE; t.vale += vE; }
+                        if(item.forma_entrada === "Pix") { t.pix += vE; t.vale += vE; }
                     }
-                    item.comissao_calculada = com; t.totalComissao += com;
-                    htmlComissao += `<tr><td class="py-3 uppercase font-bold text-white">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${formatBRL(com)}</td></tr>`;
+                    item.com_calc = com; t.totalComissao += com;
+                    htmlComissao += `<tr><td class="py-3 uppercase font-bold">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${formatBRL(com)}</td></tr>`;
                 } else if(item.resultado === "NQ") t.nq++;
-
                 const colors = { 'Venda': 'bg-emerald-500/10 text-emerald-500', 'NQ': 'bg-rose-500/10 text-rose-500', 'Não Atendeu': 'bg-amber-500/10 text-amber-500', 'Reagendar': 'bg-blue-500/10 text-blue-500', 'Pendente': 'bg-slate-500/10 text-slate-400' };
-
-                htmlTable += `<tr class="hover:bg-slate-800/40 transition">
-                    <td class="p-4 font-bold text-white">${paraDataBR(item.data)}<br><span class="text-slate-500 text-[10px]">${item.horario}</span></td>
-                    <td class="p-4 uppercase font-black text-white">${item.nome_formando}<br><span class="text-blue-400 font-black lowercase text-[11px] block mt-1">${item.endereco || 'Atendimento Direto'}</span></td>
-                    <td class="p-4 text-center"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${colors[item.resultado] || 'border-slate-500/20'}">${item.resultado || 'Pendente'}</span></td>
-                    <td class="p-4 text-center"><button onclick="gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-[9px] w-full font-black uppercase transition border border-blue-400/30">Gerenciar</button></td>
-                </tr>`;
+                htmlTable += `<tr class="hover:bg-slate-800/40 transition"><td class="p-4 font-bold text-white">${paraDataBR(item.data)}<br><span class="text-slate-500 text-[10px]">${item.horario}</span></td><td class="p-4 uppercase font-black text-white">${item.nome_formando}<br><span class="text-blue-400 font-black lowercase text-[11px] block mt-1">${item.endereco || 'Direto'}</span></td><td class="p-4 text-center"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${colors[item.resultado] || 'border-slate-500/20'}">${item.resultado || 'Pendente'}</span></td><td class="p-4 text-center"><button onclick="gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-[9px] w-full font-black uppercase transition border border-blue-400/30">Gerenciar</button></td></tr>`;
             });
 
             document.getElementById('admin-content').innerHTML = htmlTable + '</tbody></table>';
             document.getElementById('comissao-content').innerHTML = htmlComissao + '</tbody></table>';
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[7px] font-bold text-slate-400 uppercase">Efetividade</p><p class="text-sm font-black">${t.vendidos}/${lista.length}</p></div>
-                <div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500 text-emerald-400 shadow-xl"><p class="text-[7px] font-bold uppercase">CASH</p><p class="text-[9px] font-black">${formatBRL(t.dinheiro+t.pix)}</p></div>
-                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-400 text-blue-300 shadow-xl"><p class="text-[7px] font-bold uppercase">DÉBITO</p><p class="text-[9px] font-black">${formatBRL(t.debito)}</p></div>
-                <div class="glass p-2 rounded-xl text-center border-t-2 border-orange-500 text-orange-400 shadow-xl"><p class="text-[7px] font-bold uppercase text-white">BOLETO</p><p class="text-[9px] font-black">${formatBRL(t.boleto)}</p></div>
-                <div class="bg-blue-600 p-2 rounded-xl text-center shadow-2xl text-white"><p class="text-[7px] font-bold uppercase">VENDAS</p><p class="text-[10px] font-black">${formatBRL(t.totalVendas)}</p></div>
-                <div class="bg-amber-500 p-2 rounded-xl text-center shadow-2xl text-amber-950"><p class="text-[7px] font-bold uppercase">VALES</p><p class="text-[10px] font-black">${formatBRL(t.vale)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500"><p class="text-[7px] font-bold text-slate-400 uppercase">Efetividade</p><p class="text-sm font-black text-white">${t.vendidos}/${lista.length}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500 text-emerald-400"><p class="text-[7px] font-bold uppercase">CASH</p><p class="text-[9px] font-black">${formatBRL(t.dinheiro+t.pix)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-400 text-blue-300"><p class="text-[7px] font-bold uppercase">DÉBITO</p><p class="text-[9px] font-black">${formatBRL(t.debito)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-indigo-400 text-indigo-300"><p class="text-[7px] font-bold uppercase">CRÉDITO</p><p class="text-[9px] font-black">${formatBRL(t.credito)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-orange-500 text-orange-400"><p class="text-[7px] font-bold uppercase text-white">BOLETO</p><p class="text-[9px] font-black">${formatBRL(t.boleto)}</p></div>
+                <div class="bg-blue-600 p-2 rounded-xl text-center shadow-lg"><p class="text-[7px] font-bold uppercase text-white">VENDAS</p><p class="text-[10px] font-black text-white">${formatBRL(t.totalVendas)}</p></div>
+                <div class="bg-amber-500 p-2 rounded-xl text-center shadow-lg text-amber-950"><p class="text-[7px] font-bold uppercase">VALES</p><p class="text-[10px] font-black">${formatBRL(t.vale)}</p></div>
             `;
             const saldo = t.totalComissao - t.vale;
-            document.getElementById('fechamento-final').innerHTML = `<div class="mt-4 p-4 rounded-2xl border-2 shadow-2xl text-right ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}"><p class="text-[8px] font-black uppercase text-white">Saldo: ${formatBRL(t.totalComissao)}</p><p class="text-[8px] font-black uppercase text-white mb-2">Vale: ${formatBRL(t.vale)}</p><p class="text-3xl font-black italic text-white">${formatBRL(Math.abs(saldo))}</p></div>`;
+            document.getElementById('fechamento-final').innerHTML = `<div class="mt-4 p-4 rounded-2xl border-2 shadow-2xl text-right ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}"><p class="text-[8px] font-black uppercase text-white">Saldo Comissões: ${formatBRL(t.totalComissao)}</p><p class="text-[8px] font-black uppercase text-white mb-2">Total Vale: ${formatBRL(t.vale)}</p><p class="text-3xl font-black italic text-white">${formatBRL(Math.abs(saldo))}</p></div>`;
         }
 
         async function carregarRelatorio() {
@@ -281,42 +262,34 @@
             const ag = sAg.val() || {}, av = sAv.val() || {};
             window.dadosCompletos = [];
             for(let d in ag) for(let h in ag[d]) window.dadosCompletos.push({...ag[d][h], id: h, data: d, tipo: 'agenda'});
-            for(let id in av) {
-                let item = av[id];
-                if(!item.data || item.data.includes('undefined')) item.data = "2026-02-01";
-                window.dadosCompletos.push({...item, id: id, tipo: 'avulso'});
-            }
+            for(let id in av) { let i = av[id]; if(!i.data || i.data.includes('undef')) i.data = "2026-02-01"; window.dadosCompletos.push({...i, id: id, tipo: 'avulso'}); }
             renderizarLista(window.dadosCompletos);
         }
 
         document.querySelectorAll('.day-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
-                document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                const dVal = btn.getAttribute('data-date');
-                document.getElementById('data-selecionada').value = dVal;
+                document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+                const dVal = btn.getAttribute('data-date'); document.getElementById('data-selecionada').value = dVal;
                 await gerarHorariosDisponiveis(dVal, document.getElementById('horario'));
             });
         });
 
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const d = document.getElementById('data-selecionada').value, h = document.getElementById('horario').value;
+            e.preventDefault(); const d = document.getElementById('data-selecionada').value, h = document.getElementById('horario').value;
             await set(ref(db, `${COLLECTION_PATH}/${d}/${h.replace(':','-')}`), { data:d, horario:h, nome_formando:document.getElementById('nome').value, endereco:document.getElementById('endereco').value, resultado:"Pendente" });
             location.reload();
         });
 
         window.lancarVendaDireta = async () => {
             const n = prompt("Nome:"); if(!n) return;
-            const d = prompt("Data (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
-            const h = prompt("Hora (HH:MM):", "08:00");
-            await push(ref(db, AVULSO_PATH), { nome_formando: n, data: d, horario: h, resultado: "Pendente" });
-            carregarRelatorio();
+            const d = prompt("Data (AAAA-MM-DD):", new Date().toISOString().split('T')[0]); if(!d) return;
+            await push(ref(db, AVULSO_PATH), { nome_formando: n, data: d, horario: "08:00", resultado: "Pendente" }); carregarRelatorio();
         };
 
         window.acessoAdmin = () => { if(prompt("Key:")==="2025") { document.getElementById('admin-modal').style.display = 'block'; carregarRelatorio(); } };
         window.fecharAdmin = () => document.getElementById('admin-modal').style.display = 'none';
-        window.abrirDashboardExcel = () => { document.getElementById('excel-modal').style.display = 'flex'; };
+        window.abrirDashboardExcel = () => document.getElementById('excel-modal').style.display = 'flex';
+        window.filtrarLista = () => renderizarLista(window.dadosCompletos.filter(i => i.nome_formando?.toLowerCase().includes(document.getElementById('busca-admin').value.toLowerCase())));
     </script>
 </body>
 </html>
