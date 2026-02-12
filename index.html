@@ -26,14 +26,14 @@
         <div class="bg-white w-full max-w-md rounded-[2rem] shadow-2xl p-8 text-slate-900">
             <h2 class="text-2xl font-black mb-6 uppercase text-blue-600">Alterar Visita</h2>
             <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">Nova Data</label>
-            <input id="novaDataModal" type="date" class="w-full border-2 border-slate-100 rounded-2xl p-4 mb-4 outline-none focus:border-blue-500">
+            <input id="novaDataModal" type="date" class="w-full border-2 border-slate-100 rounded-2xl p-4 mb-4 outline-none">
             <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">Horário Disponível</label>
-            <select id="novoHorarioModal" class="w-full border-2 border-slate-100 rounded-2xl p-4 mb-6 outline-none focus:border-blue-500">
-                <option value="">Carregando horários...</option>
+            <select id="novoHorarioModal" class="w-full border-2 border-slate-100 rounded-2xl p-4 mb-6 outline-none">
+                <option value="">Selecione a Data</option>
             </select>
             <div class="flex gap-3">
-                <button onclick="fecharModalHorario()" class="w-1/2 py-4 rounded-2xl bg-slate-100 text-slate-500 font-bold uppercase text-xs">Cancelar</button>
-                <button id="confirmarHorarioBtn" class="w-1/2 py-4 rounded-2xl btn-primary text-white font-black uppercase text-xs">Confirmar</button>
+                <button onclick="fecharModalHorario()" class="w-1/2 py-4 rounded-2xl bg-slate-100 text-slate-500 font-bold uppercase text-[10px]">Cancelar</button>
+                <button id="confirmarHorarioBtn" class="w-1/2 py-4 rounded-2xl btn-primary text-white font-black uppercase text-[10px]">Confirmar</button>
             </div>
         </div>
     </div>
@@ -54,7 +54,7 @@
                     <div id="admin-content" class="glass rounded-3xl overflow-hidden shadow-2xl"></div>
                 </div>
                 <div class="space-y-6">
-                    <h3 class="text-lg font-bold text-white flex items-center gap-2 uppercase"><span class="w-2 h-6 bg-emerald-500 rounded-full"></span> Extrato Diário</h3>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2 uppercase">Extrato Diário</h3>
                     <div id="comissao-content" class="glass rounded-3xl p-5 shadow-inner"></div>
                     <div id="fechamento-final"></div>
                 </div>
@@ -108,6 +108,7 @@
         const AVULSO_PATH = 'avulsos';
 
         window.dadosCompletos = [];
+        window.resumoAtual = {};
         const formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
         const paraDataBR = (str) => { if(!str || !str.includes('-')) return "---"; const [y,m,d] = str.split("-"); return `${d}/${m}/${y}`; };
 
@@ -121,8 +122,43 @@
             return new Date(y, m - 1, d, hh, mm).getTime();
         }
 
-        // --- LÓGICA DO MODAL DE HORÁRIO ---
-        window.horariosPadrao = ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30"];
+        // --- LÓGICA DE GERAÇÃO DE HORÁRIOS COM REGRA DE 3 HORAS ---
+        async function gerarHorariosDisponiveis(dataEscolhida, selectElement) {
+            selectElement.innerHTML = '<option>Consultando...</option>';
+            const snap = await get(ref(db, `${COLLECTION_PATH}/${dataEscolhida}`));
+            const ocupados = snap.exists() ? Object.keys(snap.val()).map(k => k.replace("-", ":")) : [];
+
+            const dateObj = new Date(dataEscolhida + 'T00:00:00');
+            const isWeekend = (dateObj.getDay() === 0 || dateObj.getDay() === 6);
+            const horaLimiteStr = isWeekend ? "15:00" : "20:30";
+
+            const agora = new Date();
+            const hojeStr = agora.toISOString().split('T')[0];
+
+            selectElement.innerHTML = '<option value="">Escolha um Horário</option>';
+            
+            let cursor = new Date(`${dataEscolhida}T09:00:00`);
+            let final = new Date(`${dataEscolhida}T${horaLimiteStr}:00`);
+
+            while(cursor <= final) {
+                let hF = cursor.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+                let ocupado = ocupados.includes(hF);
+                
+                // Regra das 3 horas: se for hoje, o horário deve ser > agora + 3h
+                let disponivelPeloTempo = true;
+                if(dataEscolhida === hojeStr) {
+                    let minPermitido = new Date(agora.getTime() + (3 * 60 * 60 * 1000));
+                    if(cursor < minPermitido) disponivelPeloTempo = false;
+                }
+
+                if(!ocupado && disponivelPeloTempo) {
+                    let opt = document.createElement('option'); opt.value = hF; opt.textContent = hF;
+                    selectElement.appendChild(opt);
+                }
+                cursor.setMinutes(cursor.getMinutes() + 30);
+            }
+        }
+
         window.fecharModalHorario = () => document.getElementById("modalHorario").style.display = "none";
         
         window.abrirModalHorario = async (dataAtual, horarioAtual, callbackConfirmar) => {
@@ -132,37 +168,29 @@
             modal.style.display = "flex";
             inputData.value = dataAtual;
 
-            async function atualizarHorarios(d) {
-                selectHora.innerHTML = '<option>Consultando...</option>';
-                const snap = await get(ref(db, `${COLLECTION_PATH}/${d}`));
-                const ocupados = snap.exists() ? Object.keys(snap.val()).map(k => k.replace("-", ":")) : [];
-                let disp = horariosPadrao.filter(h => !ocupados.includes(h));
-                if(horarioAtual && !disp.includes(horarioAtual)) disp.unshift(horarioAtual);
-                selectHora.innerHTML = disp.map(h => `<option value="${h}">${h}</option>`).join('');
-            }
-            await atualizarHorarios(dataAtual);
-            inputData.onchange = (e) => atualizarHorarios(e.target.value);
+            inputData.onchange = (e) => gerarHorariosDisponiveis(e.target.value, selectHora);
+            await gerarHorariosDisponiveis(dataAtual, selectHora);
+
             document.getElementById("confirmarHorarioBtn").onclick = () => {
-                if(!inputData.value || !selectHora.value) return alert("Preencha tudo!");
+                if(!selectHora.value) return alert("Escolha um horário!");
                 fecharModalHorario();
                 callbackConfirmar(inputData.value, selectHora.value);
             };
         };
 
-        // --- FUNÇÃO GERENCIAR ITEM (ESTRUTURA COMPLETA) ---
         window.gerenciarItem = async (tipo, data, id) => {
             const acao = prompt("1-RESULTADO | 2-EXCLUIR | 3-ALTERAR DATA | 4-ALTERAR HORÁRIO | 5-ALTERAR DATA E HORÁRIO");
             const dbRef = tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`;
 
             if (acao === "2") { if (confirm("APAGAR?")) { await remove(ref(db, dbRef)); carregarRelatorio(); } }
             else if (acao === "3") {
-                const novaD = prompt("NOVA DATA (AAAA-MM-DD):");
-                if (novaD && novaD.length === 10) {
+                const nD = prompt("NOVA DATA (AAAA-MM-DD):");
+                if (nD && nD.length === 10) {
                     const snap = await get(ref(db, dbRef));
                     if (snap.exists()) {
-                        let obj = snap.val(); obj.data = novaD;
-                        if (tipo === 'agenda') { await remove(ref(db, dbRef)); await set(ref(db, `${COLLECTION_PATH}/${novaD}/${id}`), obj); }
-                        else { await update(ref(db, dbRef), { data: novaD }); }
+                        let o = snap.val(); o.data = nD;
+                        if (tipo === 'agenda') { await remove(ref(db, dbRef)); await set(ref(db, `${COLLECTION_PATH}/${nD}/${id}`), o); }
+                        else { await update(ref(db, dbRef), { data: nD }); }
                         carregarRelatorio();
                     }
                 }
@@ -170,14 +198,13 @@
             else if (acao === "4" || acao === "5") {
                 const snap = await get(ref(db, dbRef));
                 if (!snap.exists()) return;
-                let obj = snap.val();
-                abrirModalHorario(data, obj.horario, async (nD, nH) => {
+                let o = snap.val();
+                abrirModalHorario(data, o.horario, async (nD, nH) => {
                     const nID = nH.replace(":", "-");
                     if (tipo === 'agenda') {
-                        const ocupado = await get(ref(db, `${COLLECTION_PATH}/${nD}/${nID}`));
-                        if (ocupado.exists()) return alert("❌ Horário ocupado!");
-                        obj.data = nD; obj.horario = nH;
-                        await remove(ref(db, dbRef)); await set(ref(db, `${COLLECTION_PATH}/${nD}/${nID}`), obj);
+                        await remove(ref(db, dbRef));
+                        o.data = nD; o.horario = nH;
+                        await set(ref(db, `${COLLECTION_PATH}/${nD}/${nID}`), o);
                     } else { await update(ref(db, dbRef), { data: nD, horario: nH }); }
                     carregarRelatorio();
                 });
@@ -199,7 +226,6 @@
             }
         };
 
-        // --- RENDERIZAR LISTA COM FINANCEIRO COMPLETO (RESTAURADO) ---
         function renderizarLista(lista) {
             let t = { vendidos: 0, totalVendas: 0, vale: 0, totalComissao: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boleto: 0, nq: 0 };
             lista.sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b));
@@ -223,89 +249,53 @@
                         if(item.forma_entrada === "Dinheiro" || item.forma_entrada === "Pix") { t.dinheiro += (item.forma_entrada === "Dinheiro" ? vE : 0); t.pix += (item.forma_entrada === "Pix" ? vE : 0); t.vale += vE; }
                     }
                     item.comissao_calculada = com; t.totalComissao += com;
-                    htmlComissao += `<tr><td class="py-3 uppercase font-bold">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${formatBRL(com)}</td></tr>`;
+                    htmlComissao += `<tr><td class="py-3 uppercase font-bold text-white">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${formatBRL(com)}</td></tr>`;
                 } else if(item.resultado === "NQ") t.nq++;
 
                 const colors = { 'Venda': 'bg-emerald-500/10 text-emerald-500', 'NQ': 'bg-rose-500/10 text-rose-500', 'Não Atendeu': 'bg-amber-500/10 text-amber-500', 'Reagendar': 'bg-blue-500/10 text-blue-500', 'Pendente': 'bg-slate-500/10 text-slate-400' };
 
                 htmlTable += `<tr class="hover:bg-slate-800/40 transition">
                     <td class="p-4 font-bold text-white">${paraDataBR(item.data)}<br><span class="text-slate-500 text-[10px]">${item.horario}</span></td>
-                    <td class="p-4 uppercase font-black text-white">${item.nome_formando}<br><span class="text-blue-400 font-black lowercase text-[11px] block mt-1">${item.endereco || 'Venda Direta'}</span></td>
+                    <td class="p-4 uppercase font-black text-white">${item.nome_formando}<br><span class="text-blue-400 font-black lowercase text-[11px] block mt-1">${item.endereco || 'Atendimento Direto'}</span></td>
                     <td class="p-4 text-center"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${colors[item.resultado] || 'border-slate-500/20'}">${item.resultado || 'Pendente'}</span></td>
-                    <td class="p-4 text-center"><button onclick="gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-[9px] w-full font-black uppercase border border-blue-400/30">Gerenciar</button></td>
+                    <td class="p-4 text-center"><button onclick="gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-[9px] w-full font-black uppercase transition border border-blue-400/30">Gerenciar</button></td>
                 </tr>`;
             });
 
             document.getElementById('admin-content').innerHTML = htmlTable + '</tbody></table>';
             document.getElementById('comissao-content').innerHTML = htmlComissao + '</tbody></table>';
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[8px] font-bold text-slate-400 uppercase">Efetividade</p><p class="text-lg font-black">${t.vendidos}/${lista.length}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-emerald-500 text-emerald-400 shadow-xl"><p class="text-[8px] font-bold uppercase">CASH</p><p class="text-[10px] font-black">${formatBRL(t.dinheiro+t.pix)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-blue-400 text-blue-300 shadow-xl"><p class="text-[8px] font-bold uppercase">DÉBITO</p><p class="text-[10px] font-black">${formatBRL(t.debito)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-t-2 border-orange-500 text-orange-400 shadow-xl"><p class="text-[8px] font-bold uppercase text-white">BOLETO</p><p class="text-[10px] font-black">${formatBRL(t.boleto)}</p></div>
-                <div class="bg-blue-600 p-3 rounded-2xl text-center shadow-2xl text-white"><p class="text-[8px] font-bold uppercase">VENDAS</p><p class="text-[11px] font-black">${formatBRL(t.totalVendas)}</p></div>
-                <div class="bg-amber-500 p-3 rounded-2xl text-center shadow-2xl text-amber-950"><p class="text-[8px] font-bold uppercase">VALES</p><p class="text-[11px] font-black">${formatBRL(t.vale)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[7px] font-bold text-slate-400 uppercase">Efetividade</p><p class="text-sm font-black">${t.vendidos}/${lista.length}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500 text-emerald-400 shadow-xl"><p class="text-[7px] font-bold uppercase">CASH</p><p class="text-[9px] font-black">${formatBRL(t.dinheiro+t.pix)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-400 text-blue-300 shadow-xl"><p class="text-[7px] font-bold uppercase">DÉBITO</p><p class="text-[9px] font-black">${formatBRL(t.debito)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-orange-500 text-orange-400 shadow-xl"><p class="text-[7px] font-bold uppercase text-white">BOLETO</p><p class="text-[9px] font-black">${formatBRL(t.boleto)}</p></div>
+                <div class="bg-blue-600 p-2 rounded-xl text-center shadow-2xl text-white"><p class="text-[7px] font-bold uppercase">VENDAS</p><p class="text-[10px] font-black">${formatBRL(t.totalVendas)}</p></div>
+                <div class="bg-amber-500 p-2 rounded-xl text-center shadow-2xl text-amber-950"><p class="text-[7px] font-bold uppercase">VALES</p><p class="text-[10px] font-black">${formatBRL(t.vale)}</p></div>
             `;
             const saldo = t.totalComissao - t.vale;
-            document.getElementById('fechamento-final').innerHTML = `<div class="mt-4 p-6 rounded-[2rem] border-2 shadow-2xl text-right ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}"><p class="text-[9px] font-black text-slate-500 uppercase tracking-widest text-white">Saldo Comissões: ${formatBRL(t.totalComissao)}</p><p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4 text-white">Total Vale: ${formatBRL(t.vale)}</p><p class="text-4xl font-black italic text-white">${formatBRL(Math.abs(saldo))}</p></div>`;
+            document.getElementById('fechamento-final').innerHTML = `<div class="mt-4 p-4 rounded-2xl border-2 shadow-2xl text-right ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}"><p class="text-[8px] font-black uppercase text-white">Saldo: ${formatBRL(t.totalComissao)}</p><p class="text-[8px] font-black uppercase text-white mb-2">Vale: ${formatBRL(t.vale)}</p><p class="text-3xl font-black italic text-white">${formatBRL(Math.abs(saldo))}</p></div>`;
         }
 
-        // --- DEMAIS FUNÇÕES RESTAURADAS ---
         async function carregarRelatorio() {
             const [sAg, sAv] = await Promise.all([get(ref(db, COLLECTION_PATH)), get(ref(db, AVULSO_PATH))]);
             const ag = sAg.val() || {}, av = sAv.val() || {};
             window.dadosCompletos = [];
             for(let d in ag) for(let h in ag[d]) window.dadosCompletos.push({...ag[d][h], id: h, data: d, tipo: 'agenda'});
-            for(let id in av) window.dadosCompletos.push({...av[id], id: id, tipo: 'avulso'});
+            for(let id in av) {
+                let item = av[id];
+                if(!item.data || item.data.includes('undefined')) item.data = "2026-02-01";
+                window.dadosCompletos.push({...item, id: id, tipo: 'avulso'});
+            }
             renderizarLista(window.dadosCompletos);
         }
 
-        window.lancarVendaDireta = async () => {
-            const n = prompt("Nome:"); if(!n) return;
-            const d = prompt("Data (AAAA-MM-DD):", new Date().toISOString().split('T')[0]); if(!d) return;
-            const h = prompt("Hora (HH:MM):", "08:00");
-            await push(ref(db, AVULSO_PATH), { nome_formando: n, data: d, horario: h, resultado: "Pendente" });
-            carregarRelatorio();
-        };
-
-        window.abrirDashboardExcel = () => {
-            const excelModal = document.getElementById('excel-modal');
-            excelModal.style.display = 'flex';
-            let html = '<table class="w-full text-left text-xs" id="tabela-export-real"><thead class="bg-blue-600 text-white uppercase text-[10px]"><tr><th class="p-3">DATA</th><th class="p-3">CLIENTE</th><th class="p-3">STATUS</th><th class="p-3 text-right">VALOR</th></tr></thead><tbody class="divide-y divide-gray-100 text-slate-900">';
-            [...window.dadosCompletos].sort((a,b) => obterPesoCronologico(a) - obterPesoCronologico(b)).forEach(item => {
-                html += `<tr><td class="p-3">${paraDataBR(item.data)}</td><td class="p-3 uppercase font-bold">${item.nome_formando}</td><td class="p-3">${item.resultado || "Pendente"}</td><td class="p-3 text-right">${formatBRL(item.valor || 0)}</td></tr>`;
-            });
-            document.getElementById('excel-preview-content').innerHTML = html + '</tbody></table>';
-        };
-
-        window.acessoAdmin = () => { if(prompt("Key:")==="2025") { document.getElementById('admin-modal').style.display = 'block'; carregarRelatorio(); } };
-        window.fecharAdmin = () => document.getElementById('admin-modal').style.display = 'none';
-        window.copiarTabelaExcel = async () => { try { await navigator.clipboard.writeText(document.getElementById('tabela-export-real').innerText); alert("COPIADO!"); } catch (e) {} };
-        window.copiarRelatorio = async () => {
-            const cidade = prompt("Digite a Cidade:"); if(!cidade) return;
-            const t = window.resumoAtual;
-            const msg = `**${cidade} ${new Date().toLocaleDateString('pt-BR')}**\nVendidos = ${t.vendidos}\nCASH = ${formatBRL(t.dinheiro+t.pix)}\nTotal = ${formatBRL(t.totalVendas)}\nVale = ${formatBRL(t.vale)}`;
-            try { await navigator.clipboard.writeText(msg); alert("RELATÓRIO COPIADO!"); } catch (e) {}
-        };
-
-        // LÓGICA DE AGENDAMENTO PUBLICO
         document.querySelectorAll('.day-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 const dVal = btn.getAttribute('data-date');
                 document.getElementById('data-selecionada').value = dVal;
-                const selectH = document.getElementById('horario');
-                selectH.innerHTML = '<option>Sincronizando...</option>';
-                let ocupados = [];
-                try { const snap = await get(ref(db, `${COLLECTION_PATH}/${dVal}`)); if (snap.exists()) ocupados = Object.keys(snap.val()); } catch(e){}
-                selectH.innerHTML = '<option value="">Horários</option>';
-                for(let h=9; h<=19; h++) {
-                    let hF = `${h}:00`;
-                    if(!ocupados.includes(hF.replace(':','-'))) {
-                        let opt = document.createElement('option'); opt.value = hF; opt.textContent = hF; selectH.appendChild(opt);
-                    }
-                }
+                await gerarHorariosDisponiveis(dVal, document.getElementById('horario'));
             });
         });
 
@@ -316,10 +306,17 @@
             location.reload();
         });
 
-        window.filtrarLista = () => {
-            const t = document.getElementById('busca-admin').value.toLowerCase();
-            renderizarLista(window.dadosCompletos.filter(i => (i.nome_formando && i.nome_formando.toLowerCase().includes(t))));
+        window.lancarVendaDireta = async () => {
+            const n = prompt("Nome:"); if(!n) return;
+            const d = prompt("Data (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
+            const h = prompt("Hora (HH:MM):", "08:00");
+            await push(ref(db, AVULSO_PATH), { nome_formando: n, data: d, horario: h, resultado: "Pendente" });
+            carregarRelatorio();
         };
+
+        window.acessoAdmin = () => { if(prompt("Key:")==="2025") { document.getElementById('admin-modal').style.display = 'block'; carregarRelatorio(); } };
+        window.fecharAdmin = () => document.getElementById('admin-modal').style.display = 'none';
+        window.abrirDashboardExcel = () => { document.getElementById('excel-modal').style.display = 'flex'; };
     </script>
 </body>
 </html>
