@@ -140,13 +140,22 @@
             return `${d}/${m}/${y}`;
         };
 
-        // PESO MATEMÁTICO PARA ORDENAÇÃO ABSOLUTA
+        // PESO MATEMÁTICO PARA ORDENAÇÃO ABSOLUTA (CORRIGIDO)
         function obterPesoCronologico(item) {
             const data = item.data || "0000-00-00";
-            let hora = item.horario || "00:00";
+
+            let hora = item.horario || item.id || "00:00";
+
+            // Se vier como "09-00" converte para "09:00"
+            if (typeof hora === "string" && hora.includes("-") && !hora.includes(":")) {
+                hora = hora.replace("-", ":");
+            }
+
             if (hora === "Avulso") hora = "00:00"; 
+
             const dPartes = data.split("-").map(Number);
-            const hPartes = (hora.includes(':') ? hora.split(":") : [0,0]).map(Number);
+            const hPartes = (hora.includes(':') ? hora.split(":") : ["0","0"]).map(Number);
+
             return new Date(dPartes[0], dPartes[1]-1, dPartes[2], hPartes[0], hPartes[1]).getTime();
         }
 
