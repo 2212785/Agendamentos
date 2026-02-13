@@ -486,7 +486,26 @@
 
         window.filtrarLista = () => renderizarLista(window.dadosCompletos.filter(i => i.nome_formando?.toLowerCase().includes(document.getElementById('busca-admin').value.toLowerCase())));
         window.copiarTabelaExcel = async () => { try { await navigator.clipboard.writeText(document.getElementById('excel-preview-content').innerText); alert("DADOS COPIADOS!"); } catch (e) {} };
+        window.copiarRelatorio = async () => {
+    const cidade = prompt("Digite a Cidade:"); 
+    if(!cidade) return;
+    const t = window.resumoAtual;
+    const msg = `**${cidade} ${new Date().toLocaleDateString('pt-BR')}**\n` +
+                `Vendidos = ${t.vendidos}\n` +
+                `NQ = ${t.nq}\n` +
+                `CASH = ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.dinheiro + t.pix)}\n` +
+                `Total = ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.totalVendas)}\n` +
+                `Vale = ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(t.vale)}`;
+    
+    try { 
+        await navigator.clipboard.writeText(msg); 
+        alert("RELATÓRIO COPIADO!"); 
+    } catch (e) { 
+        alert("Erro ao copiar. Tente novamente."); 
+    }
+};
     </script>
 </body>
                         </html>
+
 
