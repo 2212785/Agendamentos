@@ -231,7 +231,7 @@
             }
         };
 
-        // --- FUNÇÃO DE RENDERIZAÇÃO CORRIGIDA ---
+        // --- RENDERIZAÇÃO COM SUA LÓGICA DE COMISSÃO ORIGINAL ---
         function renderizarLista(lista) {
             let t = { vendidos: 0, totalVendas: 0, vale: 0, totalComissao: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boletoRest: 0, boletoSemRest: 0, nq: 0 };
             lista.sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b));
@@ -248,24 +248,31 @@
 
                     if (item.pagamentos && Array.isArray(item.pagamentos)) {
                         item.pagamentos.forEach(pg => {
-                            const valorDestePg = parseFloat(pg.valor || 0);
+                            const vPg = parseFloat(pg.valor || 0);
+                            
                             if (pg.tipo === "Boleto") {
-                                const vEntrada = parseFloat(pg.vE || 0);
-                                const vFinanciado = valorDestePg - vEntrada;
-                                if(pg.rest === "Sim") t.boletoRest += vFinanciado;
-                                else t.boletoSemRest += vFinanciado;
+                                const vE = parseFloat(pg.vE || 0);
+                                const vFinanciado = vPg - vE;
                                 
-                                comissaoItem += (vEntrada * 0.12) + (vFinanciado * (pg.rest === "Sim" ? 0.05 : 0.08));
+                                // Sua lógica de comissão restaurada:
+                                if(pg.rest === "Sim") {
+                                    t.boletoRest += vFinanciado;
+                                    comissaoItem += (vE * 0.12) + (vFinanciado * 0.05); // 12% entrada + 5% com restrição
+                                } else {
+                                    t.boletoSemRest += vFinanciado;
+                                    comissaoItem += (vE * 0.12) + (vFinanciado * 0.08); // 12% entrada + 8% sem restrição
+                                }
 
-                                if(pg.fE === "Dinheiro") { t.dinheiro += vEntrada; t.vale += vEntrada; }
-                                if(pg.fE === "Pix") { t.pix += vEntrada; t.vale += vEntrada; }
-                                if(pg.fE === "Cartão Débito") t.debito += vEntrada;
+                                if(pg.fE === "Dinheiro") { t.dinheiro += vE; t.vale += vE; }
+                                if(pg.fE === "Pix") { t.pix += vE; t.vale += vE; }
+                                if(pg.fE === "Cartão Débito") t.debito += vE;
                             } else {
-                                comissaoItem += valorDestePg * 0.12;
-                                if(pg.tipo === "Dinheiro") { t.dinheiro += valorDestePg; t.vale += valorDestePg; }
-                                if(pg.tipo === "Pix") { t.pix += valorDestePg; t.vale += valorDestePg; }
-                                if(pg.tipo === "Cartão Débito") t.debito += valorDestePg;
-                                if(pg.tipo === "Cartão Crédito") t.credito += valorDestePg;
+                                // 12% para as demais formas de pagamento
+                                comissaoItem += vPg * 0.12;
+                                if(pg.tipo === "Dinheiro") { t.dinheiro += vPg; t.vale += vPg; }
+                                if(pg.tipo === "Pix") { t.pix += vPg; t.vale += vPg; }
+                                if(pg.tipo === "Cartão Débito") t.debito += vPg;
+                                if(pg.tipo === "Cartão Crédito") t.credito += vPg;
                             }
                         });
                     } else {
@@ -347,7 +354,7 @@
 
         window.acessoAdmin = () => { if(prompt("Key:")==="2025") { document.getElementById('admin-modal').style.display = 'block'; carregarRelatorio(); } };
         window.fecharAdmin = () => document.getElementById('admin-modal').style.display = 'none';
-        window.abrirDashboardExcel = () => { alert("Funcionalidade em desenvolvimento."); };
+        window.abrirDashboardExcel = () => { alert("Funcionalidade de planilha em desenvolvimento."); };
         
         window.copiarRelatorio = async () => {
             const cidade = prompt("Digite a Cidade:"); if(!cidade) return;
