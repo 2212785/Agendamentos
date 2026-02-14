@@ -49,7 +49,7 @@
                     <button onclick="fecharAdmin()" class="bg-rose-600/20 text-rose-500 border border-rose-500/50 px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase">Sair</button>
                 </div>
             </div>
-            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-8"></div>
+            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-3 mb-8"></div>
             <div class="grid lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2">
                     <div class="flex justify-between items-center mb-4">
@@ -113,26 +113,22 @@
         const db = getDatabase(app);
         const COLLECTION_PATH = 'agendamentos';
         const AVULSO_PATH = 'avulsos';
-        const MEU_WHATSAPP = "5516992590916"; // NÚMERO ATUALIZADO
+        const MEU_WHATSAPP = "5516992590916";
 
         window.dadosCompletos = [];
         window.resumoAtual = {};
         const formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
         const paraDataBR = (str) => { if(!str || !str.includes('-')) return "---"; const [y,m,d] = str.split("-"); return `${d}/${m}/${y}`; };
 
-        // 1. CORREÇÃO DA OCULTAÇÃO DE BOTÕES (DATA + HORA)
         (function filtrarBotoesDeData() {
             const agora = new Date();
             document.querySelectorAll('.day-btn').forEach(btn => {
                 const dataBtn = btn.getAttribute("data-date");
                 const dateObj = new Date(dataBtn + 'T00:00:00');
                 const isWeekend = (dateObj.getDay() === 0 || dateObj.getDay() === 6);
-                const horaLimite = isWeekend ? "15:00:00" : "17:30:00"; // 17:30 limite para agendar visita no dia
-                
+                const horaLimite = isWeekend ? "15:00:00" : "17:30:00"; 
                 const deadline = new Date(`${dataBtn}T${horaLimite}`);
-                if (agora > deadline) {
-                    btn.style.display = "none";
-                }
+                if (agora > deadline) btn.style.display = "none";
             });
         })();
 
@@ -163,49 +159,14 @@
             }
         }
 
-        // REDIRECIONAMENTO WHATSAPP RESTAURADO
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const d = document.getElementById('data-selecionada').value;
-            const h = document.getElementById('horario').value;
-            const n = document.getElementById('nome').value;
-            const tel = document.getElementById('telefone').value;
-            const cid = document.getElementById('cidade').value;
-            const end = document.getElementById('endereco').value;
-
-            await set(ref(db, `${COLLECTION_PATH}/${d}/${h.replace(':','-')}`), { 
-                data: d, horario: h, nome_formando: n, telefone: tel, cidade: cid, endereco: end, resultado: "Pendente" 
-            });
-
+            const d = document.getElementById('data-selecionada').value, h = document.getElementById('horario').value, n = document.getElementById('nome').value, tel = document.getElementById('telefone').value, cid = document.getElementById('cidade').value, end = document.getElementById('endereco').value;
+            await set(ref(db, `${COLLECTION_PATH}/${d}/${h.replace(':','-')}`), { data: d, horario: h, nome_formando: n, telefone: tel, cidade: cid, endereco: end, resultado: "Pendente" });
             const msg = `*NOVA VISITA AGENDADA*\n\n*Nome:* ${n}\n*Data:* ${paraDataBR(d)}\n*Horário:* ${h}\n*Cidade:* ${cid}\n*Endereço:* ${end}`;
             window.open(`https://wa.me/${MEU_WHATSAPP}?text=${encodeURIComponent(msg)}`);
             location.reload();
         });
-
-        // RESTANTE DAS FUNÇÕES (DASHBOARD E GERENCIAMENTO)
-        function obterPesoCronologico(item) {
-            const data = item.data || "0000-00-00";
-            let h = item.horario || item.id || "00:00";
-            if (typeof h === "string" && h.includes("-")) h = h.replace("-", ":");
-            const [y, m, d] = data.split("-").map(Number);
-            const [hh, mm] = (h.includes(':') ? h.split(":") : [0,0]).map(Number);
-            return new Date(y, m - 1, d, hh, mm).getTime();
-        }
-
-        window.fecharModalHorario = () => document.getElementById("modalHorario").style.display = "none";
-        window.abrirModalHorario = async (dataAtual, horarioAtual, callbackConfirmar) => {
-            const modal = document.getElementById("modalHorario");
-            const selectHora = document.getElementById("novoHorarioModal");
-            const inputData = document.getElementById("novaDataModal");
-            modal.style.display = "flex";
-            inputData.value = dataAtual;
-            inputData.onchange = (e) => gerarHorariosDisponiveis(e.target.value, selectHora);
-            await gerarHorariosDisponiveis(dataAtual, selectHora);
-            document.getElementById("confirmarHorarioBtn").onclick = () => {
-                if(!selectHora.value) return alert("Escolha um horário!");
-                fecharModalHorario(); callbackConfirmar(inputData.value, selectHora.value);
-            };
-        };
 
         window.gerenciarItem = async (tipo, data, id) => {
             const acao = prompt("1-RESULTADO | 2-EXCLUIR | 3-ALTERAR DATA | 4-ALTERAR HORÁRIO | 5-ALTERAR DATA E HORÁRIO");
@@ -252,16 +213,16 @@
         };
 
         function renderizarLista(lista) {
-            let t = { vendidos: 0, totalVendas: 0, vale: 0, totalComissao: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boleto: 0, nq: 0 };
+            let t = { vendidos: 0, totalVendas: 0, vale: 0, totalComissao: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boletoRest: 0, boletoSemRest: 0, nq: 0 };
             lista.sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b));
             let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
             let htmlComissao = '<table class="w-full text-[10px] text-white"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
 
             lista.forEach(item => {
                 const vT = parseFloat(item.valor || 0), vE = parseFloat(item.entrada || 0);
-                let com = 0;
                 if (item.resultado === "Venda") {
                     t.vendidos++; t.totalVendas += vT;
+                    let com = 0;
                     if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(item.pagamento)) {
                         com = vT * 0.12;
                         if(item.pagamento === "Dinheiro") { t.dinheiro += vT; t.vale += vT; }
@@ -269,12 +230,13 @@
                         if(item.pagamento === "Cartão Débito") t.debito += vT;
                         if(item.pagamento === "Cartão Crédito") t.credito += vT;
                     } else if (item.pagamento === "Boleto") {
-                        t.boleto += (vT - vE);
+                        if(item.restricao === "Sim") t.boletoRest += (vT - vE);
+                        else t.boletoSemRest += (vT - vE);
                         com = (vE * 0.12) + ((vT - vE) * (item.restricao === "Sim" ? 0.05 : 0.08));
                         if(item.forma_entrada === "Dinheiro") { t.dinheiro += vE; t.vale += vE; }
                         if(item.forma_entrada === "Pix") { t.pix += vE; t.vale += vE; }
                     }
-                    item.com_calc = com; t.totalComissao += com;
+                    t.totalComissao += com;
                     htmlComissao += `<tr><td class="py-3 uppercase font-bold">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${formatBRL(com)}</td></tr>`;
                 } else if(item.resultado === "NQ") t.nq++;
                 const colors = { 'Venda': 'bg-emerald-500/10 text-emerald-500', 'NQ': 'bg-rose-500/10 text-rose-500', 'Não Atendeu': 'bg-amber-500/10 text-amber-500', 'Reagendar': 'bg-blue-500/10 text-blue-500', 'Pendente': 'bg-slate-500/10 text-slate-400' };
@@ -289,7 +251,8 @@
                 <div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500 text-emerald-400 shadow-xl"><p class="text-[7px] font-bold uppercase">CASH</p><p class="text-[9px] font-black">${formatBRL(t.dinheiro+t.pix)}</p></div>
                 <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-400 text-blue-300 shadow-xl"><p class="text-[7px] font-bold uppercase">DÉBITO</p><p class="text-[9px] font-black">${formatBRL(t.debito)}</p></div>
                 <div class="glass p-2 rounded-xl text-center border-t-2 border-indigo-400 text-indigo-300 shadow-xl"><p class="text-[7px] font-bold uppercase">CRÉDITO</p><p class="text-[9px] font-black">${formatBRL(t.credito)}</p></div>
-                <div class="glass p-2 rounded-xl text-center border-t-2 border-orange-500 text-orange-400 shadow-xl"><p class="text-[7px] font-bold uppercase text-white">BOLETO</p><p class="text-[9px] font-black">${formatBRL(t.boleto)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-orange-500 text-orange-400 shadow-xl"><p class="text-[7px] font-bold uppercase">BOL S/ RESTR</p><p class="text-[9px] font-black">${formatBRL(t.boletoSemRest)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-red-500 text-red-400 shadow-xl"><p class="text-[7px] font-bold uppercase text-white">BOL C/ RESTR</p><p class="text-[9px] font-black">${formatBRL(t.boletoRest)}</p></div>
                 <div class="bg-blue-600 p-2 rounded-xl text-center shadow-2xl text-white"><p class="text-[7px] font-bold uppercase text-white">VENDAS</p><p class="text-[10px] font-black text-white">${formatBRL(t.totalVendas)}</p></div>
                 <div class="bg-amber-500 p-2 rounded-xl text-center shadow-2xl text-amber-950"><p class="text-[7px] font-bold uppercase">VALES</p><p class="text-[10px] font-black">${formatBRL(t.vale)}</p></div>
             `;
@@ -305,6 +268,30 @@
             for(let id in av) { let i = av[id]; if(!i.data || i.data.includes('undef')) i.data = "2026-02-01"; window.dadosCompletos.push({...i, id: id, tipo: 'avulso'}); }
             renderizarLista(window.dadosCompletos);
         }
+
+        function obterPesoCronologico(item) {
+            const data = item.data || "0000-00-00";
+            let h = item.horario || item.id || "00:00";
+            if (typeof h === "string" && h.includes("-")) h = h.replace("-", ":");
+            const [y, m, d] = data.split("-").map(Number);
+            const [hh, mm] = (h.includes(':') ? h.split(":") : [0,0]).map(Number);
+            return new Date(y, m - 1, d, hh, mm).getTime();
+        }
+
+        window.fecharModalHorario = () => document.getElementById("modalHorario").style.display = "none";
+        window.abrirModalHorario = async (dataAtual, horarioAtual, callbackConfirmar) => {
+            const modal = document.getElementById("modalHorario");
+            const selectHora = document.getElementById("novoHorarioModal");
+            const inputData = document.getElementById("novaDataModal");
+            modal.style.display = "flex";
+            inputData.value = dataAtual;
+            inputData.onchange = (e) => gerarHorariosDisponiveis(e.target.value, selectHora);
+            await gerarHorariosDisponiveis(dataAtual, selectHora);
+            document.getElementById("confirmarHorarioBtn").onclick = () => {
+                if(!selectHora.value) return alert("Escolha um horário!");
+                fecharModalHorario(); callbackConfirmar(inputData.value, selectHora.value);
+            };
+        };
 
         document.querySelectorAll('.day-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
@@ -330,7 +317,17 @@
             const cidade = prompt("Digite a Cidade:"); if(!cidade) return;
             const t = window.resumoAtual;
             const f = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-            const msg = `*${cidade} ${new Date().toLocaleDateString('pt-BR')}*\nVendidos = ${t.vendidos}\nNQ = ${t.nq}\nDinheiro = ${f(t.dinheiro)}\nPix = ${f(t.pix)}\nCartão Débito = ${f(t.debito)}\nBoleto = ${f(t.boleto)}\nCartão Crédito = ${f(t.credito)}\nTotal = ${f(t.totalVendas)}\nVale = ${f(t.vale)}`;
+            const msg = `*${cidade} ${new Date().toLocaleDateString('pt-BR')}*\n` +
+                        `Vendidos = ${t.vendidos}\n` +
+                        `NQ = ${t.nq}\n` +
+                        `Dinheiro = ${f(t.dinheiro)}\n` +
+                        `Pix = ${f(t.pix)}\n` +
+                        `Cartão Débito = ${f(t.debito)}\n` +
+                        `Boleto s/ Restrição = ${f(t.boletoSemRest)}\n` +
+                        `Boleto c/ Restrição = ${f(t.boletoRest)}\n` +
+                        `Cartão Crédito = ${f(t.credito)}\n` +
+                        `Total = ${f(t.totalVendas)}\n` +
+                        `Vale = ${f(t.vale)}`;
             try { await navigator.clipboard.writeText(msg); alert("RELATÓRIO COPIADO!"); } catch (e) { alert("Erro ao copiar."); }
         };
 
