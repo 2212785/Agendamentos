@@ -198,16 +198,65 @@
             else if (acao === "1") {
                 const r = prompt("STATUS: 1-Venda | 2-NQ | 3-Não Atendeu | 4-Reagendar");
                 if (r === "1") {
-                    const fP = prompt("PGTO: 1-Din | 2-Pix | 3-Déb | 4-Créd | 5-Bol");
-                    const fM = {"1":"Dinheiro","2":"Pix","3":"Cartão Débito","4":"Cartão Crédito","5":"Boleto"};
-                    if (fM[fP]) {
-                        const vT = parseFloat(prompt("TOTAL?") || 0);
-                        let vE = (fP === "5") ? parseFloat(prompt("ENTRADA?") || 0) : 0;
-                        let rest = (fP === "5") ? (prompt("SPC? 1-Sim | 2-Não") === "1" ? "Sim" : "Não") : "Não";
-                        let fE = (fP === "5") ? (prompt("FORMA ENTRADA: 1-Din | 2-Pix") === "1" ? "Dinheiro" : "Pix") : "";
-                        await update(ref(db, dbRef), { resultado: "Venda", pagamento: fM[fP], valor: vT, entrada: vE, forma_entrada: fE, restricao: rest });
+                    // BLOCO GPT: MÚLTIPLOS PAGAMENTOS
+                    const valorTotal = parseFloat(prompt("VALOR TOTAL DA VENDA?")?.replace(",", ".") || 0);
+                    if (!valorTotal || valorTotal <= 0) return alert("Valor inválido.");
+
+                    let restante = valorTotal;
+                    let pagamentos = [];
+
+                    const formas = {
+                        "1": "Dinheiro",
+                        "2": "Pix",
+                        "3": "Cartão Débito",
+                        "4": "Cartão Crédito",
+                        "5": "Boleto"
+                    };
+
+                    while (restante > 0) {
+                        let msgFormas = "FORMA DE PAGAMENTO:\n";
+                        Object.entries(formas).forEach(([k,v]) => msgFormas += `${k} - ${v}\n`);
+                        msgFormas += `\nRESTAM: R$ ${restante.toFixed(2)}`;
+
+                        const escolha = prompt(msgFormas);
+                        if (!formas[escolha]) return alert("Forma inválida.");
+
+                        let valorPago = parseFloat(prompt(`VALOR PAGO EM ${formas[escolha]}?`)?.replace(",", ".") || 0);
+                        if (!valorPago || valorPago <= 0) return alert("Valor inválido.");
+
+                        if (valorPago > (restante + 0.01)) { // Margem pequena para erros de arredondamento
+                            alert("Valor maior que o restante.");
+                            continue;
+                        }
+
+                        let pagamentoObj = {
+                            tipo: formas[escolha],
+                            valor: valorPago
+                        };
+
+                        if (formas[escolha] === "Boleto") {
+                            const entrada = parseFloat(prompt("ENTRADA NO BOLETO?")?.replace(",", ".") || 0);
+                            const restricao = prompt("SPC? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
+                            pagamentoObj.entrada = entrada;
+                            pagamentoObj.restricao = restricao;
+                        }
+
+                        pagamentos.push(pagamentoObj);
+                        restante -= valorPago;
+
+                        if (restante > 0.01) {
+                            alert(`FALTAM R$ ${restante.toFixed(2)} PARA FINALIZAR`);
+                        }
                     }
-                } else if ({"2":1,"3":1,"4":1}[r]) { await update(ref(db, dbRef), { resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], valor:0 }); }
+
+                    await update(ref(db, dbRef), {
+                        resultado: "Venda",
+                        valor: valorTotal,
+                        pagamentos: pagamentos
+                    });
+                } else if ({"2":1,"3":1,"4":1}[r]) { 
+                    await update(ref(db, dbRef), { resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], valor:0 }); 
+                }
                 carregarRelatorio();
             }
         };
@@ -219,23 +268,49 @@
             let htmlComissao = '<table class="w-full text-[10px] text-white"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
 
             lista.forEach(item => {
-                const vT = parseFloat(item.valor || 0), vE = parseFloat(item.entrada || 0);
+                const vT = parseFloat(item.valor || 0);
                 if (item.resultado === "Venda") {
-                    t.vendidos++; t.totalVendas += vT;
+                    t.vendidos++;
+                    t.totalVendas += vT;
                     let com = 0;
-                    if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(item.pagamento)) {
-                        com = vT * 0.12;
-                        if(item.pagamento === "Dinheiro") { t.dinheiro += vT; t.vale += vT; }
-                        if(item.pagamento === "Pix") { t.pix += vT; t.vale += vT; }
-                        if(item.pagamento === "Cartão Débito") t.debito += vT;
-                        if(item.pagamento === "Cartão Crédito") t.credito += vT;
-                    } else if (item.pagamento === "Boleto") {
-                        if(item.restricao === "Sim") t.boletoRest += (vT - vE);
-                        else t.boletoSemRest += (vT - vE);
-                        com = (vE * 0.12) + ((vT - vE) * (item.restricao === "Sim" ? 0.05 : 0.08));
-                        if(item.forma_entrada === "Dinheiro") { t.dinheiro += vE; t.vale += vE; }
-                        if(item.forma_entrada === "Pix") { t.pix += vE; t.vale += vE; }
+
+                    // BLOCO GPT: CÁLCULO MÚLTIPLOS PAGAMENTOS
+                    if (item.pagamentos && Array.isArray(item.pagamentos)) {
+                        item.pagamentos.forEach(p => {
+                            if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(p.tipo)) {
+                                com += p.valor * 0.12;
+                                if (p.tipo === "Dinheiro") { t.dinheiro += p.valor; t.vale += p.valor; }
+                                if (p.tipo === "Pix") { t.pix += p.valor; t.vale += p.valor; }
+                                if (p.tipo === "Cartão Débito") t.debito += p.valor;
+                                if (p.tipo === "Cartão Crédito") t.credito += p.valor;
+                            } else if (p.tipo === "Boleto") {
+                                let entrada = parseFloat(p.entrada || 0);
+                                let restanteBoleto = p.valor - entrada;
+                                if (p.restricao === "Sim") t.boletoRest += restanteBoleto;
+                                else t.boletoSemRest += restanteBoleto;
+                                com += (entrada * 0.12) + (restanteBoleto * (p.restricao === "Sim" ? 0.05 : 0.08));
+                                t.vale += entrada;
+                            }
+                        });
+                    } 
+                    // Suporte para vendas antigas (pagamento único)
+                    else if (item.pagamento) {
+                        const vE = parseFloat(item.entrada || 0);
+                        if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(item.pagamento)) {
+                            com = vT * 0.12;
+                            if(item.pagamento === "Dinheiro") { t.dinheiro += vT; t.vale += vT; }
+                            if(item.pagamento === "Pix") { t.pix += vT; t.vale += vT; }
+                            if(item.pagamento === "Cartão Débito") t.debito += vT;
+                            if(item.pagamento === "Cartão Crédito") t.credito += vT;
+                        } else if (item.pagamento === "Boleto") {
+                            if(item.restricao === "Sim") t.boletoRest += (vT - vE);
+                            else t.boletoSemRest += (vT - vE);
+                            com = (vE * 0.12) + ((vT - vE) * (item.restricao === "Sim" ? 0.05 : 0.08));
+                            if(item.forma_entrada === "Dinheiro") { t.dinheiro += vE; t.vale += vE; }
+                            if(item.forma_entrada === "Pix") { t.pix += vE; t.vale += vE; }
+                        }
                     }
+
                     t.totalComissao += com;
                     htmlComissao += `<tr><td class="py-3 uppercase font-bold">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${formatBRL(com)}</td></tr>`;
                 } else if(item.resultado === "NQ") t.nq++;
@@ -332,7 +407,6 @@
         };
 
         window.filtrarLista = () => renderizarLista(window.dadosCompletos.filter(i => i.nome_formando?.toLowerCase().includes(document.getElementById('busca-admin').value.toLowerCase())));
-        window.copiarTabelaExcel = async () => { try { await navigator.clipboard.writeText(document.getElementById('excel-preview-content').innerText); alert("DADOS COPIADOS!"); } catch (e) {} };
     </script>
 </body>
 </html>
