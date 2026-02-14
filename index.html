@@ -171,6 +171,7 @@
         window.gerenciarItem = async (tipo, data, id) => {
             const acao = prompt("1-RESULTADO | 2-EXCLUIR | 3-ALTERAR DATA | 4-ALTERAR HORÁRIO | 5-ALTERAR DATA E HORÁRIO");
             const dbRef = tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`;
+            
             if (acao === "2") { if (confirm("APAGAR?")) { await remove(ref(db, dbRef)); carregarRelatorio(); } }
             else if (acao === "3") {
                 const nD = prompt("NOVA DATA (AAAA-MM-DD):");
@@ -198,16 +199,37 @@
             else if (acao === "1") {
                 const r = prompt("STATUS: 1-Venda | 2-NQ | 3-Não Atendeu | 4-Reagendar");
                 if (r === "1") {
-                    const fP = prompt("PGTO: 1-Din | 2-Pix | 3-Déb | 4-Créd | 5-Bol");
+                    const fP = prompt("FORMA PGTO: 1-Din | 2-Pix | 3-Déb | 4-Créd | 5-Boleto");
                     const fM = {"1":"Dinheiro","2":"Pix","3":"Cartão Débito","4":"Cartão Crédito","5":"Boleto"};
+                    
                     if (fM[fP]) {
-                        const vT = parseFloat(prompt("TOTAL?") || 0);
-                        let vE = (fP === "5") ? parseFloat(prompt("ENTRADA?") || 0) : 0;
-                        let rest = (fP === "5") ? (prompt("SPC? 1-Sim | 2-Não") === "1" ? "Sim" : "Não") : "Não";
-                        let fE = (fP === "5") ? (prompt("FORMA ENTRADA: 1-Din | 2-Pix") === "1" ? "Dinheiro" : "Pix") : "";
-                        await update(ref(db, dbRef), { resultado: "Venda", pagamento: fM[fP], valor: vT, entrada: vE, forma_entrada: fE, restricao: rest });
+                        const vT = parseFloat(prompt("VALOR TOTAL?") || 0);
+                        let vE = 0;
+                        let fE = "";
+                        let rest = "Não";
+
+                        if (fP === "5") { // Se for Boleto
+                            const temEntrada = prompt("TEM ENTRADA? 1-Sim | 2-Não");
+                            if (temEntrada === "1") {
+                                vE = parseFloat(prompt("VALOR DA ENTRADA?") || 0);
+                                const optE = prompt("FORMA DA ENTRADA: 1-Din | 2-Pix | 3-Déb");
+                                fE = optE === "1" ? "Dinheiro" : (optE === "2" ? "Pix" : "Cartão Débito");
+                            }
+                            rest = prompt("TEM RESTRIÇÃO (SPC)? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
+                        }
+
+                        await update(ref(db, dbRef), { 
+                            resultado: "Venda", 
+                            pagamento: fM[fP], 
+                            valor: vT, 
+                            entrada: vE, 
+                            forma_entrada: fE, 
+                            restricao: rest 
+                        });
                     }
-                } else if ({"2":1,"3":1,"4":1}[r]) { await update(ref(db, dbRef), { resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], valor:0 }); }
+                } else if ({"2":1,"3":1,"4":1}[r]) { 
+                    await update(ref(db, dbRef), { resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], valor:0 }); 
+                }
                 carregarRelatorio();
             }
         };
@@ -215,6 +237,7 @@
         function renderizarLista(lista) {
             let t = { vendidos: 0, totalVendas: 0, vale: 0, totalComissao: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boletoRest: 0, boletoSemRest: 0, nq: 0 };
             lista.sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b));
+            
             let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
             let htmlComissao = '<table class="w-full text-[10px] text-white"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
 
@@ -233,12 +256,15 @@
                         if(item.restricao === "Sim") t.boletoRest += (vT - vE);
                         else t.boletoSemRest += (vT - vE);
                         com = (vE * 0.12) + ((vT - vE) * (item.restricao === "Sim" ? 0.05 : 0.08));
+                        
                         if(item.forma_entrada === "Dinheiro") { t.dinheiro += vE; t.vale += vE; }
                         if(item.forma_entrada === "Pix") { t.pix += vE; t.vale += vE; }
+                        if(item.forma_entrada === "Cartão Débito") { t.debito += vE; }
                     }
                     t.totalComissao += com;
                     htmlComissao += `<tr><td class="py-3 uppercase font-bold">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${formatBRL(com)}</td></tr>`;
                 } else if(item.resultado === "NQ") t.nq++;
+                
                 const colors = { 'Venda': 'bg-emerald-500/10 text-emerald-500', 'NQ': 'bg-rose-500/10 text-rose-500', 'Não Atendeu': 'bg-amber-500/10 text-amber-500', 'Reagendar': 'bg-blue-500/10 text-blue-500', 'Pendente': 'bg-slate-500/10 text-slate-400' };
                 htmlTable += `<tr class="hover:bg-slate-800/40 transition"><td class="p-4 font-bold text-white">${paraDataBR(item.data)}<br><span class="text-slate-500 text-[10px]">${item.horario || item.id}</span></td><td class="p-4 uppercase font-black text-white">${item.nome_formando}<br><span class="text-blue-400 font-black lowercase text-[11px] block mt-1">${item.endereco || 'Direto'}</span></td><td class="p-4 text-center"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${colors[item.resultado] || 'border-slate-500/20'}">${item.resultado || 'Pendente'}</span></td><td class="p-4 text-center"><button onclick="gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-[9px] w-full font-black uppercase transition border border-blue-400/30">Gerenciar</button></td></tr>`;
             });
@@ -332,7 +358,6 @@
         };
 
         window.filtrarLista = () => renderizarLista(window.dadosCompletos.filter(i => i.nome_formando?.toLowerCase().includes(document.getElementById('busca-admin').value.toLowerCase())));
-        window.copiarTabelaExcel = async () => { try { await navigator.clipboard.writeText(document.getElementById('excel-preview-content').innerText); alert("DADOS COPIADOS!"); } catch (e) {} };
     </script>
 </body>
 </html>
