@@ -199,36 +199,49 @@
             else if (acao === "1") {
                 const r = prompt("STATUS: 1-Venda | 2-NQ | 3-Não Atendeu | 4-Reagendar");
                 if (r === "1") {
-                    const fP = prompt("FORMA PGTO: 1-Din | 2-Pix | 3-Déb | 4-Créd | 5-Boleto");
-                    const fM = {"1":"Dinheiro","2":"Pix","3":"Cartão Débito","4":"Cartão Crédito","5":"Boleto"};
-                    
-                    if (fM[fP]) {
-                        const vT = parseFloat(prompt("VALOR TOTAL?") || 0);
-                        let vE = 0;
-                        let fE = "";
-                        let rest = "Não";
+                    const vT = parseFloat(prompt("VALOR TOTAL DA VENDA?") || 0);
+                    if (vT <= 0) return;
 
-                        if (fP === "5") { // Se for Boleto
-                            const temEntrada = prompt("TEM ENTRADA? 1-Sim | 2-Não");
+                    let pagamentosRealizados = [];
+                    let saldoRestante = vT;
+
+                    while (saldoRestante > 0.01) {
+                        const fP = prompt(`Saldo Restante: ${formatBRL(saldoRestante)}\nESCOLHA FORMA DE PAGAMENTO:\n1-Dinheiro\n2-Pix\n3-Déb\n4-Créd\n5-Boleto`);
+                        if (!fP) break;
+
+                        const fM = {"1":"Dinheiro","2":"Pix","3":"Cartão Débito","4":"Cartão Crédito","5":"Boleto"};
+                        const nomePagto = fM[fP];
+                        
+                        let valorDestaForma = parseFloat(prompt(`Valor no ${nomePagto}?`) || 0);
+                        if (valorDestaForma > saldoRestante) valorDestaForma = saldoRestante;
+
+                        let dadosPagto = { tipo: nomePagto, valor: valorDestaForma };
+
+                        if (fP === "5") { // Regra do Boleto
+                            const temEntrada = prompt("TEM ENTRADA NO BOLETO? 1-Sim | 2-Não");
                             if (temEntrada === "1") {
-                                vE = parseFloat(prompt("VALOR DA ENTRADA?") || 0);
+                                dadosPagto.vE = parseFloat(prompt("VALOR DA ENTRADA?") || 0);
                                 const optE = prompt("FORMA DA ENTRADA: 1-Din | 2-Pix | 3-Déb");
-                                fE = optE === "1" ? "Dinheiro" : (optE === "2" ? "Pix" : "Cartão Débito");
+                                dadosPagto.fE = optE === "1" ? "Dinheiro" : (optE === "2" ? "Pix" : "Cartão Débito");
+                            } else {
+                                dadosPagto.vE = 0;
+                                dadosPagto.fE = "";
                             }
-                            rest = prompt("TEM RESTRIÇÃO (SPC)? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
+                            dadosPagto.rest = prompt("TEM RESTRIÇÃO (SPC)? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
                         }
 
-                        await update(ref(db, dbRef), { 
-                            resultado: "Venda", 
-                            pagamento: fM[fP], 
-                            valor: vT, 
-                            entrada: vE, 
-                            forma_entrada: fE, 
-                            restricao: rest 
-                        });
+                        pagamentosRealizados.push(dadosPagto);
+                        saldoRestante -= valorDestaForma;
                     }
+
+                    await update(ref(db, dbRef), { 
+                        resultado: "Venda", 
+                        valor: vT,
+                        pagamentos: pagamentosRealizados 
+                    });
+
                 } else if ({"2":1,"3":1,"4":1}[r]) { 
-                    await update(ref(db, dbRef), { resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], valor:0 }); 
+                    await update(ref(db, dbRef), { resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], valor:0, pagamentos: null }); 
                 }
                 carregarRelatorio();
             }
@@ -242,27 +255,35 @@
             let htmlComissao = '<table class="w-full text-[10px] text-white"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
 
             lista.forEach(item => {
-                const vT = parseFloat(item.valor || 0), vE = parseFloat(item.entrada || 0);
                 if (item.resultado === "Venda") {
-                    t.vendidos++; t.totalVendas += vT;
-                    let com = 0;
-                    if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(item.pagamento)) {
-                        com = vT * 0.12;
-                        if(item.pagamento === "Dinheiro") { t.dinheiro += vT; t.vale += vT; }
-                        if(item.pagamento === "Pix") { t.pix += vT; t.vale += vT; }
-                        if(item.pagamento === "Cartão Débito") t.debito += vT;
-                        if(item.pagamento === "Cartão Crédito") t.credito += vT;
-                    } else if (item.pagamento === "Boleto") {
-                        if(item.restricao === "Sim") t.boletoRest += (vT - vE);
-                        else t.boletoSemRest += (vT - vE);
-                        com = (vE * 0.12) + ((vT - vE) * (item.restricao === "Sim" ? 0.05 : 0.08));
-                        
-                        if(item.forma_entrada === "Dinheiro") { t.dinheiro += vE; t.vale += vE; }
-                        if(item.forma_entrada === "Pix") { t.pix += vE; t.vale += vE; }
-                        if(item.forma_entrada === "Cartão Débito") { t.debito += vE; }
+                    t.vendidos++;
+                    t.totalVendas += parseFloat(item.valor || 0);
+                    let comissaoItem = 0;
+
+                    if (item.pagamentos) {
+                        item.pagamentos.forEach(pg => {
+                            if (pg.tipo === "Boleto") {
+                                const vFinanciado = pg.valor - (pg.vE || 0);
+                                if(pg.rest === "Sim") t.boletoRest += vFinanciado;
+                                else t.boletoSemRest += vFinanciado;
+                                
+                                // Comissão Boleto: 12% sobre entrada + % sobre saldo
+                                comissaoItem += (pg.vE * 0.12) + (vFinanciado * (pg.rest === "Sim" ? 0.05 : 0.08));
+
+                                if(pg.fE === "Dinheiro") { t.dinheiro += pg.vE; t.vale += pg.vE; }
+                                if(pg.fE === "Pix") { t.pix += pg.vE; t.vale += pg.vE; }
+                                if(pg.fE === "Cartão Débito") t.debito += pg.vE;
+                            } else {
+                                comissaoItem += pg.valor * 0.12;
+                                if(pg.tipo === "Dinheiro") { t.dinheiro += pg.valor; t.vale += pg.valor; }
+                                if(pg.tipo === "Pix") { t.pix += pg.valor; t.vale += pg.valor; }
+                                if(pg.tipo === "Cartão Débito") t.debito += pg.valor;
+                                if(pg.tipo === "Cartão Crédito") t.credito += pg.valor;
+                            }
+                        });
                     }
-                    t.totalComissao += com;
-                    htmlComissao += `<tr><td class="py-3 uppercase font-bold">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${formatBRL(com)}</td></tr>`;
+                    t.totalComissao += comissaoItem;
+                    htmlComissao += `<tr><td class="py-3 uppercase font-bold">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${formatBRL(comissaoItem)}</td></tr>`;
                 } else if(item.resultado === "NQ") t.nq++;
                 
                 const colors = { 'Venda': 'bg-emerald-500/10 text-emerald-500', 'NQ': 'bg-rose-500/10 text-rose-500', 'Não Atendeu': 'bg-amber-500/10 text-amber-500', 'Reagendar': 'bg-blue-500/10 text-blue-500', 'Pendente': 'bg-slate-500/10 text-slate-400' };
