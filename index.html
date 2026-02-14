@@ -201,45 +201,29 @@
                 if (r === "1") {
                     const vT = parseFloat(prompt("VALOR TOTAL DA VENDA?") || 0);
                     if (vT <= 0) return;
-
                     let pagamentosRealizados = [];
                     let saldoRestante = vT;
-
                     while (saldoRestante > 0.01) {
                         const fP = prompt(`Saldo Restante: ${formatBRL(saldoRestante)}\nESCOLHA FORMA DE PAGAMENTO:\n1-Dinheiro\n2-Pix\n3-Déb\n4-Créd\n5-Boleto`);
                         if (!fP) break;
-
                         const fM = {"1":"Dinheiro","2":"Pix","3":"Cartão Débito","4":"Cartão Crédito","5":"Boleto"};
                         const nomePagto = fM[fP];
-                        
                         let valorDestaForma = parseFloat(prompt(`Valor no ${nomePagto}?`) || 0);
                         if (valorDestaForma > saldoRestante) valorDestaForma = saldoRestante;
-
                         let dadosPagto = { tipo: nomePagto, valor: valorDestaForma };
-
-                        if (fP === "5") { // Regra do Boleto
+                        if (fP === "5") {
                             const temEntrada = prompt("TEM ENTRADA NO BOLETO? 1-Sim | 2-Não");
                             if (temEntrada === "1") {
                                 dadosPagto.vE = parseFloat(prompt("VALOR DA ENTRADA?") || 0);
                                 const optE = prompt("FORMA DA ENTRADA: 1-Din | 2-Pix | 3-Déb");
                                 dadosPagto.fE = optE === "1" ? "Dinheiro" : (optE === "2" ? "Pix" : "Cartão Débito");
-                            } else {
-                                dadosPagto.vE = 0;
-                                dadosPagto.fE = "";
-                            }
+                            } else { dadosPagto.vE = 0; dadosPagto.fE = ""; }
                             dadosPagto.rest = prompt("TEM RESTRIÇÃO (SPC)? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
                         }
-
                         pagamentosRealizados.push(dadosPagto);
                         saldoRestante -= valorDestaForma;
                     }
-
-                    await update(ref(db, dbRef), { 
-                        resultado: "Venda", 
-                        valor: vT,
-                        pagamentos: pagamentosRealizados 
-                    });
-
+                    await update(ref(db, dbRef), { resultado: "Venda", valor: vT, pagamentos: pagamentosRealizados });
                 } else if ({"2":1,"3":1,"4":1}[r]) { 
                     await update(ref(db, dbRef), { resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], valor:0, pagamentos: null }); 
                 }
@@ -247,6 +231,7 @@
             }
         };
 
+        // --- FUNÇÃO DE RENDERIZAÇÃO CORRIGIDA ---
         function renderizarLista(lista) {
             let t = { vendidos: 0, totalVendas: 0, vale: 0, totalComissao: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boletoRest: 0, boletoSemRest: 0, nq: 0 };
             lista.sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b));
@@ -257,15 +242,16 @@
             lista.forEach(item => {
                 if (item.resultado === "Venda") {
                     t.vendidos++;
-                    t.totalVendas += parseFloat(item.valor || 0);
+                    const vVenda = parseFloat(item.valor || 0);
+                    t.totalVendas += vVenda;
                     let comissaoItem = 0;
 
                     if (item.pagamentos && Array.isArray(item.pagamentos)) {
                         item.pagamentos.forEach(pg => {
-                            const vPg = parseFloat(pg.valor || 0);
+                            const valorDestePg = parseFloat(pg.valor || 0);
                             if (pg.tipo === "Boleto") {
                                 const vEntrada = parseFloat(pg.vE || 0);
-                                const vFinanciado = vPg - vEntrada;
+                                const vFinanciado = valorDestePg - vEntrada;
                                 if(pg.rest === "Sim") t.boletoRest += vFinanciado;
                                 else t.boletoSemRest += vFinanciado;
                                 
@@ -275,16 +261,15 @@
                                 if(pg.fE === "Pix") { t.pix += vEntrada; t.vale += vEntrada; }
                                 if(pg.fE === "Cartão Débito") t.debito += vEntrada;
                             } else {
-                                comissaoItem += vPg * 0.12;
-                                if(pg.tipo === "Dinheiro") { t.dinheiro += vPg; t.vale += vPg; }
-                                if(pg.tipo === "Pix") { t.pix += vPg; t.vale += vPg; }
-                                if(pg.tipo === "Cartão Débito") t.debito += vPg;
-                                if(pg.tipo === "Cartão Crédito") t.credito += vPg;
+                                comissaoItem += valorDestePg * 0.12;
+                                if(pg.tipo === "Dinheiro") { t.dinheiro += valorDestePg; t.vale += valorDestePg; }
+                                if(pg.tipo === "Pix") { t.pix += valorDestePg; t.vale += valorDestePg; }
+                                if(pg.tipo === "Cartão Débito") t.debito += valorDestePg;
+                                if(pg.tipo === "Cartão Crédito") t.credito += valorDestePg;
                             }
                         });
                     } else {
-                        // Cálculo de segurança para vendas sem array de pagamentos
-                        comissaoItem = parseFloat(item.valor || 0) * 0.12;
+                        comissaoItem = vVenda * 0.12;
                     }
                     t.totalComissao += comissaoItem;
                     htmlComissao += `<tr><td class="py-3 uppercase font-bold">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${formatBRL(comissaoItem)}</td></tr>`;
@@ -362,7 +347,7 @@
 
         window.acessoAdmin = () => { if(prompt("Key:")==="2025") { document.getElementById('admin-modal').style.display = 'block'; carregarRelatorio(); } };
         window.fecharAdmin = () => document.getElementById('admin-modal').style.display = 'none';
-        window.abrirDashboardExcel = () => { alert("Recurso de planilha em desenvolvimento."); };
+        window.abrirDashboardExcel = () => { alert("Funcionalidade em desenvolvimento."); };
         
         window.copiarRelatorio = async () => {
             const cidade = prompt("Digite a Cidade:"); if(!cidade) return;
@@ -386,4 +371,3 @@
     </script>
 </body>
 </html>
-
