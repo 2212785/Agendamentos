@@ -260,27 +260,31 @@
                     t.totalVendas += parseFloat(item.valor || 0);
                     let comissaoItem = 0;
 
-                    if (item.pagamentos) {
+                    if (item.pagamentos && Array.isArray(item.pagamentos)) {
                         item.pagamentos.forEach(pg => {
+                            const vPg = parseFloat(pg.valor || 0);
                             if (pg.tipo === "Boleto") {
-                                const vFinanciado = pg.valor - (pg.vE || 0);
+                                const vEntrada = parseFloat(pg.vE || 0);
+                                const vFinanciado = vPg - vEntrada;
                                 if(pg.rest === "Sim") t.boletoRest += vFinanciado;
                                 else t.boletoSemRest += vFinanciado;
                                 
-                                // Comissão Boleto: 12% sobre entrada + % sobre saldo
-                                comissaoItem += (pg.vE * 0.12) + (vFinanciado * (pg.rest === "Sim" ? 0.05 : 0.08));
+                                comissaoItem += (vEntrada * 0.12) + (vFinanciado * (pg.rest === "Sim" ? 0.05 : 0.08));
 
-                                if(pg.fE === "Dinheiro") { t.dinheiro += pg.vE; t.vale += pg.vE; }
-                                if(pg.fE === "Pix") { t.pix += pg.vE; t.vale += pg.vE; }
-                                if(pg.fE === "Cartão Débito") t.debito += pg.vE;
+                                if(pg.fE === "Dinheiro") { t.dinheiro += vEntrada; t.vale += vEntrada; }
+                                if(pg.fE === "Pix") { t.pix += vEntrada; t.vale += vEntrada; }
+                                if(pg.fE === "Cartão Débito") t.debito += vEntrada;
                             } else {
-                                comissaoItem += pg.valor * 0.12;
-                                if(pg.tipo === "Dinheiro") { t.dinheiro += pg.valor; t.vale += pg.valor; }
-                                if(pg.tipo === "Pix") { t.pix += pg.valor; t.vale += pg.valor; }
-                                if(pg.tipo === "Cartão Débito") t.debito += pg.valor;
-                                if(pg.tipo === "Cartão Crédito") t.credito += pg.valor;
+                                comissaoItem += vPg * 0.12;
+                                if(pg.tipo === "Dinheiro") { t.dinheiro += vPg; t.vale += vPg; }
+                                if(pg.tipo === "Pix") { t.pix += vPg; t.vale += vPg; }
+                                if(pg.tipo === "Cartão Débito") t.debito += vPg;
+                                if(pg.tipo === "Cartão Crédito") t.credito += vPg;
                             }
                         });
+                    } else {
+                        // Cálculo de segurança para vendas sem array de pagamentos
+                        comissaoItem = parseFloat(item.valor || 0) * 0.12;
                     }
                     t.totalComissao += comissaoItem;
                     htmlComissao += `<tr><td class="py-3 uppercase font-bold">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${formatBRL(comissaoItem)}</td></tr>`;
@@ -358,7 +362,7 @@
 
         window.acessoAdmin = () => { if(prompt("Key:")==="2025") { document.getElementById('admin-modal').style.display = 'block'; carregarRelatorio(); } };
         window.fecharAdmin = () => document.getElementById('admin-modal').style.display = 'none';
-        window.abrirDashboardExcel = () => { document.getElementById('excel-modal').style.display = 'flex'; };
+        window.abrirDashboardExcel = () => { alert("Recurso de planilha em desenvolvimento."); };
         
         window.copiarRelatorio = async () => {
             const cidade = prompt("Digite a Cidade:"); if(!cidade) return;
@@ -382,3 +386,4 @@
     </script>
 </body>
 </html>
+
