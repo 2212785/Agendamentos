@@ -28,7 +28,9 @@
             <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">Nova Data</label>
             <input id="novaDataModal" type="date" class="w-full border-2 border-slate-100 rounded-2xl p-4 mb-4 outline-none focus:border-blue-500">
             <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">Horário Disponível</label>
-            <select id="novoHorarioModal" class="w-full border-2 border-slate-100 rounded-2xl p-4 mb-6 outline-none focus:border-blue-500"><option value="">Selecione a Data</option></select>
+            <select id="novoHorarioModal" class="w-full border-2 border-slate-100 rounded-2xl p-4 mb-6 outline-none focus:border-blue-500">
+                <option value="">Selecione a Data</option>
+            </select>
             <div class="flex gap-3">
                 <button onclick="fecharModalHorario()" class="w-1/2 py-4 rounded-2xl bg-slate-100 text-slate-500 font-bold uppercase text-[10px]">Cancelar</button>
                 <button id="confirmarHorarioBtn" class="w-1/2 py-4 rounded-2xl btn-primary text-white font-black uppercase text-[10px]">Confirmar</button>
@@ -42,6 +44,7 @@
                 <h1 class="text-3xl font-extrabold italic uppercase">Master <span class="text-blue-500 font-black">Dashboard</span></h1>
                 <div class="flex flex-wrap gap-3">
                     <button onclick="lancarVendaDireta()" class="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase shadow">Venda Direta</button>
+                    <button onclick="abrirDashboardExcel()" class="bg-slate-700 text-white px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase shadow">Planilha</button>
                     <button onclick="copiarRelatorio()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase shadow transition">Relatório WhatsApp</button>
                     <button onclick="fecharAdmin()" class="bg-rose-600/20 text-rose-500 border border-rose-500/50 px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase">Sair</button>
                 </div>
@@ -50,13 +53,13 @@
             <div class="grid lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold uppercase text-white">Roteiro</h3>
+                        <h3 class="text-lg font-bold uppercase text-white"><span class="w-2 h-6 bg-blue-500 rounded-full inline-block mr-2"></span> Roteiro de Atendimento</h3>
                         <input type="text" id="busca-admin" onkeyup="filtrarLista()" placeholder="Pesquisar..." class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white outline-none w-64">
                     </div>
                     <div id="admin-content" class="glass rounded-3xl overflow-hidden shadow-2xl border-white/5"></div>
                 </div>
                 <div class="space-y-6">
-                    <h3 class="text-lg font-bold text-white flex items-center gap-2 uppercase">Extrato Diário</h3>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2 uppercase"><span class="w-2 h-6 bg-emerald-500 rounded-full"></span> Extrato Diário</h3>
                     <div id="comissao-content" class="glass rounded-3xl p-5 shadow-inner border-white/5"></div>
                     <div id="fechamento-final"></div>
                 </div>
@@ -70,24 +73,26 @@
     </header>
 
     <main class="container mx-auto p-4 flex-grow flex items-center justify-center">
-        <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl text-center">
-            <h2 class="text-3xl font-black mb-10 uppercase italic">Agendar Visita</h2>
+        <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl text-center border-white/5">
+            <h2 class="text-3xl font-black mb-10 uppercase italic text-white">Agendar Visita</h2>
             <form id="form-agendamento" class="space-y-6 text-left">
                 <div class="grid grid-cols-2 gap-2" id="day-selector">
-                    <button type="button" data-date="2026-02-12" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">12/02</button>
-                    <button type="button" data-date="2026-02-13" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">13/02</button>
-                    <button type="button" data-date="2026-02-14" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">14/02</button>
-                    <button type="button" data-date="2026-02-16" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">16/02</button>
+                    <button type="button" data-date="2026-02-12" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">12/02<br>Qui</button>
+                    <button type="button" data-date="2026-02-13" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">13/02<br>Sex</button>
+                    <button type="button" data-date="2026-02-14" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">14/02<br>Sáb</button>
+                    <button type="button" data-date="2026-02-16" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">16/02<br>Seg</button>
                 </div>
                 <input type="hidden" id="data-selecionada" required>
                 <div class="space-y-4">
-                    <input type="text" id="nome" required placeholder="Nome do Formando" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none">
-                    <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none">
-                    <input type="text" id="cidade" required placeholder="Cidade" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none">
-                    <select id="horario" required class="w-full bg-slate-800 border border-slate-700 p-4 rounded-2xl text-white outline-none"><option value="">Selecione a Data</option></select>
-                    <textarea id="endereco" required placeholder="Endereço" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none" rows="2"></textarea>
+                    <input type="text" id="nome" required placeholder="Nome do Formando" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none focus:border-blue-500">
+                    <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none focus:border-blue-500">
+                    <input type="text" id="cidade" required placeholder="Cidade" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none focus:border-blue-500">
+                    <select id="horario" required class="w-full bg-slate-800 border border-slate-700 p-4 rounded-2xl text-white outline-none">
+                        <option value="">Selecione a Data</option>
+                    </select>
+                    <textarea id="endereco" required placeholder="Endereço de Visita" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none" rows="2"></textarea>
                 </div>
-                <button type="submit" class="btn-primary w-full text-white font-black py-5 rounded-2xl uppercase">Finalizar Agendamento</button>
+                <button type="submit" class="btn-primary w-full text-white font-black py-5 rounded-2xl shadow-2xl uppercase">Finalizar Agendamento</button>
             </form>
         </div>
     </main>
@@ -96,126 +101,266 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getDatabase, ref, get, set, remove, update, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        const firebaseConfig = { apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU", authDomain: "agenda-album-de-formatura.firebaseapp.com", databaseURL: "https://agenda-album-de-formatura-default-rtdb.firebaseio.com", projectId: "agenda-album-de-formatura", appId: "1:29604114447:web:bac79aba4c4aa945c8737a" };
+        const firebaseConfig = {
+            apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU", 
+            authDomain: "agenda-album-de-formatura.firebaseapp.com",
+            databaseURL: "https://agenda-album-de-formatura-default-rtdb.firebaseio.com", 
+            projectId: "agenda-album-de-formatura",
+            appId: "1:29604114447:web:bac79aba4c4aa945c8737a"
+        };
+        
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const COLLECTION_PATH = 'agendamentos', AVULSO_PATH = 'avulsos', MEU_WHATSAPP = "5516992590916";
+        const COLLECTION_PATH = 'agendamentos';
+        const AVULSO_PATH = 'avulsos';
+        const MEU_WHATSAPP = "5516992590916";
 
         window.dadosCompletos = [];
         window.resumoAtual = {};
         const formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
         const paraDataBR = (str) => { if(!str || !str.includes('-')) return "---"; const [y,m,d] = str.split("-"); return `${d}/${m}/${y}`; };
 
+        (function filtrarBotoesDeData() {
+            const agora = new Date();
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                const dataBtn = btn.getAttribute("data-date");
+                const dateObj = new Date(dataBtn + 'T00:00:00');
+                const isWeekend = (dateObj.getDay() === 0 || dateObj.getDay() === 6);
+                const horaLimite = isWeekend ? "15:00:00" : "17:30:00"; 
+                const deadline = new Date(`${dataBtn}T${horaLimite}`);
+                if (agora > deadline) btn.style.display = "none";
+            });
+        })();
+
         async function gerarHorariosDisponiveis(dataEscolhida, selectElement) {
             selectElement.innerHTML = '<option>Consultando...</option>';
             const snap = await get(ref(db, `${COLLECTION_PATH}/${dataEscolhida}`));
             const ocupados = snap.exists() ? Object.keys(snap.val()).map(k => k.replace("-", ":")) : [];
+            const dateObj = new Date(dataEscolhida + 'T00:00:00');
+            const isWeekend = (dateObj.getDay() === 0 || dateObj.getDay() === 6);
+            const horaLimiteStr = isWeekend ? "15:00" : "20:30";
+            const agora = new Date();
+            const hojeStr = agora.toISOString().split('T')[0];
             selectElement.innerHTML = '<option value="">Escolha um Horário</option>';
-            let cursor = new Date(`${dataEscolhida}T09:00:00`), final = new Date(`${dataEscolhida}T20:30:00`);
+            let cursor = new Date(`${dataEscolhida}T09:00:00`);
+            let final = new Date(`${dataEscolhida}T${horaLimiteStr}:00`);
             while(cursor <= final) {
                 let hF = cursor.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-                if(!ocupados.includes(hF)) { let opt = document.createElement('option'); opt.value = hF; opt.textContent = hF; selectElement.appendChild(opt); }
+                let disponivelPeloTempo = true;
+                if(dataEscolhida === hojeStr) {
+                    let minPermitido = new Date(agora.getTime() + (3 * 60 * 60 * 1000));
+                    if(cursor < minPermitido) disponivelPeloTempo = false;
+                }
+                if(!ocupados.includes(hF) && disponivelPeloTempo) {
+                    let opt = document.createElement('option'); opt.value = hF; opt.textContent = hF;
+                    selectElement.appendChild(opt);
+                }
                 cursor.setMinutes(cursor.getMinutes() + 30);
             }
         }
 
+        document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const d = document.getElementById('data-selecionada').value, h = document.getElementById('horario').value, n = document.getElementById('nome').value, tel = document.getElementById('telefone').value, cid = document.getElementById('cidade').value, end = document.getElementById('endereco').value;
+            await set(ref(db, `${COLLECTION_PATH}/${d}/${h.replace(':','-')}`), { data: d, horario: h, nome_formando: n, telefone: tel, cidade: cid, endereco: end, resultado: "Pendente" });
+            const msg = `*NOVA VISITA AGENDADA*\n\n*Nome:* ${n}\n*Data:* ${paraDataBR(d)}\n*Horário:* ${h}\n*Cidade:* ${cid}\n*Endereço:* ${end}`;
+            window.open(`https://wa.me/${MEU_WHATSAPP}?text=${encodeURIComponent(msg)}`);
+            location.reload();
+        });
+
         window.gerenciarItem = async (tipo, data, id) => {
-            const acao = prompt("1-RESULTADO | 2-EXCLUIR | 3-ALTERAR");
+            const acao = prompt("1-RESULTADO | 2-EXCLUIR | 3-ALTERAR DATA | 4-ALTERAR HORÁRIO | 5-ALTERAR DATA E HORÁRIO");
             const dbRef = tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`;
-            if (acao === "2") { if (confirm("Apagar?")) { await remove(ref(db, dbRef)); carregarRelatorio(); } }
-            else if (acao === "1") {
-                const r = prompt("STATUS:\n1-Venda\n2-NQ\n5-Brinde\n6-Outro Vendedor");
-                if (r === "1") {
-                    const vT = parseFloat(prompt("VALOR TOTAL?")?.replace(",", ".") || 0);
-                    let restante = vT, pgs = [];
-                    const formas = {"1":"Dinheiro","2":"Pix","3":"Cartão Débito","4":"Cartão Crédito","5":"Boleto"};
-                    while(restante > 0.01){
-                        const esc = prompt(`R$ ${restante.toFixed(2)} - 1-Din | 2-Pix | 3-Déb | 4-Créd | 5-Bol`);
-                        if(!formas[esc]) break;
-                        let val = parseFloat(prompt(`Valor em ${formas[esc]}?`)?.replace(",",".") || 0);
-                        let pgObj = {tipo: formas[esc], valor: val};
-                        if(esc === "5"){
-                            pgObj.entrada = parseFloat(prompt("ENTRADA?")?.replace(",",".") || 0);
-                            const fE = prompt("FORMA ENTRADA: 1-Din | 2-Pix | 3-Déb");
-                            pgObj.forma_entrada = {"1":"Dinheiro","2":"Pix","3":"Cartão Débito"}[fE];
-                            pgObj.restricao = prompt("SPC? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
-                        }
-                        pgs.push(pgObj); restante -= val;
+            if (acao === "2") { if (confirm("APAGAR?")) { await remove(ref(db, dbRef)); carregarRelatorio(); } }
+            else if (acao === "3") {
+                const nD = prompt("NOVA DATA (AAAA-MM-DD):");
+                if (nD && nD.length === 10) {
+                    const snap = await get(ref(db, dbRef));
+                    if (snap.exists()) {
+                        let o = snap.val(); o.data = nD;
+                        if (tipo === 'agenda') { await remove(ref(db, dbRef)); await set(ref(db, `${COLLECTION_PATH}/${nD}/${id}`), o); }
+                        else { await update(ref(db, dbRef), { data: nD }); }
+                        carregarRelatorio();
                     }
-                    await update(ref(db, dbRef), { resultado: "Venda", valor: vT, pagamentos: pgs });
-                } else if (r === "5") await update(ref(db, dbRef), { resultado: "Brinde", valor: 0 });
-                else if (r === "6") await update(ref(db, dbRef), { resultado: "Vendido por Outro Vendedor", valor: 0 });
-                else await update(ref(db, dbRef), { resultado: "NQ", valor: 0 });
+                }
+            }
+            else if (acao === "4" || acao === "5") {
+                const snap = await get(ref(db, dbRef));
+                if (!snap.exists()) return;
+                let o = snap.val();
+                abrirModalHorario(data, o.horario, async (nD, nH) => {
+                    const nID = nH.replace(":", "-");
+                    if (tipo === 'agenda') { await remove(ref(db, dbRef)); o.data = nD; o.horario = nH; await set(ref(db, `${COLLECTION_PATH}/${nD}/${nID}`), o); }
+                    else { await update(ref(db, dbRef), { data: nD, horario: nH }); }
+                    carregarRelatorio();
+                });
+            }
+            else if (acao === "1") {
+                const r = prompt("STATUS:\n1 - Venda\n2 - NQ\n3 - Não Atendeu\n4 - Reagendar\n5 - Brinde\n6 - Vendido por Outro Vendedor");
+                if (r === "1") {
+                    const valorTotal = parseFloat(prompt("VALOR TOTAL DA VENDA?")?.replace(",", ".") || 0);
+                    if (!valorTotal || valorTotal <= 0) return alert("Valor inválido.");
+                    let restante = valorTotal;
+                    let pagamentos = [];
+                    const formas = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito", "4": "Cartão Crédito", "5": "Boleto" };
+                    while (restante > 0.01) {
+                        let msgFormas = "FORMA DE PAGAMENTO:\n";
+                        Object.entries(formas).forEach(([k,v]) => msgFormas += `${k} - ${v}\n`);
+                        msgFormas += `\nRESTAM: R$ ${restante.toFixed(2)}`;
+                        const escolha = prompt(msgFormas);
+                        if (!formas[escolha]) return alert("Forma inválida.");
+                        let valorPago = parseFloat(prompt(`VALOR PAGO EM ${formas[escolha]}?`)?.replace(",", ".") || 0);
+                        if (!valorPago || valorPago <= 0) return alert("Valor inválido.");
+                        if (valorPago > (restante + 0.01)) { alert("Valor maior que o restante."); continue; }
+                        let pagamentoObj = { tipo: formas[escolha], valor: valorPago };
+                        if (formas[escolha] === "Boleto") {
+                            let entrada = 0; let formaEntrada = "";
+                            const teveEntrada = prompt("TEVE ENTRADA?\n1 - Sim\n2 - Não");
+                            if (teveEntrada === "1") {
+                                entrada = parseFloat(prompt("VALOR DA ENTRADA?")?.replace(",", ".") || 0);
+                                const formaEntradaOp = prompt("FORMA DA ENTRADA:\n1 - Dinheiro\n2 - Pix\n3 - Cartão Débito");
+                                const formaEntradaMap = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito" };
+                                formaEntrada = formaEntradaMap[formaEntradaOp];
+                            }
+                            const restricao = prompt("SPC? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
+                            pagamentoObj.entrada = entrada; pagamentoObj.forma_entrada = formaEntrada; pagamentoObj.restricao = restricao;
+                        }
+                        pagamentos.push(pagamentoObj);
+                        restante -= valorPago;
+                        if (restante > 0.01) alert(`FALTAM R$ ${restante.toFixed(2)} PARA FINALIZAR`);
+                    }
+                    await update(ref(db, dbRef), { resultado: "Venda", valor: valorTotal, pagamentos: pagamentos });
+                } 
+                else if (r === "5") { await update(ref(db, dbRef), { resultado: "Brinde", valor: 0 }); }
+                else if (r === "6") { await update(ref(db, dbRef), { resultado: "Vendido por Outro Vendedor", valor: 0 }); }
+                else if ({"2":1,"3":1,"4":1}[r]) { await update(ref(db, dbRef), { resultado: {"2":"NQ","3":"Não Atendeu","4":"Reagendar"}[r], valor:0 }); }
                 carregarRelatorio();
             }
         };
 
         function renderizarLista(lista) {
-            let t = { vReal: 0, brindes: 0, outros: 0, totalVendas: 0, vale: 0, totalComissao: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, nq: 0 };
-            lista.sort((a,b) => obterPesoCronologico(a) - obterPesoCronologico(b));
-            let htmlTable = '', htmlComissao = '';
+            // Contadores ajustados para o WhatsApp e Dashboard
+            let t = { vendidos: 0, brindes: 0, outros: 0, totalVendas: 0, vale: 0, totalComissao: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boletoRest: 0, boletoSemRest: 0, nq: 0 };
+            lista.sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b));
+            let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
+            let htmlComissao = '<table class="w-full text-[10px] text-white"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
 
             lista.forEach(item => {
                 const vT = parseFloat(item.valor || 0);
                 if (item.resultado === "Venda") {
-                    t.vReal++; t.totalVendas += vT; let comItem = 0;
-                    if (item.pagamentos) {
+                    t.vendidos++; t.totalVendas += vT; let com = 0;
+                    if (item.pagamentos && Array.isArray(item.pagamentos)) {
                         item.pagamentos.forEach(p => {
-                            const val = parseFloat(p.valor || 0);
-                            if (["Dinheiro","Pix","Cartão Débito","Cartão Crédito"].includes(p.tipo)) {
-                                comItem += val * 0.12;
-                                if(p.tipo === "Dinheiro" || p.tipo === "Pix") { t.vale += val; if(p.tipo === "Dinheiro") t.dinheiro += val; else t.pix += val; }
-                                if(p.tipo === "Cartão Débito") t.debito += val; if(p.tipo === "Cartão Crédito") t.credito += val;
+                            if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(p.tipo)) {
+                                com += p.valor * 0.12;
+                                if (p.tipo === "Dinheiro") { t.dinheiro += p.valor; t.vale += p.valor; }
+                                if (p.tipo === "Pix") { t.pix += p.valor; t.vale += p.valor; }
+                                if (p.tipo === "Cartão Débito") t.debito += p.valor;
+                                if (p.tipo === "Cartão Crédito") t.credito += p.valor;
                             } else if (p.tipo === "Boleto") {
-                                const ent = parseFloat(p.entrada || 0); const res = val - ent;
-                                comItem += (ent * 0.12) + (res * (p.restricao === "Sim" ? 0.05 : 0.08));
-                                if(p.forma_entrada === "Dinheiro" || p.forma_entrada === "Pix") { t.vale += ent; if(p.forma_entrada === "Dinheiro") t.dinheiro += ent; else t.pix += ent; }
-                                if(p.forma_entrada === "Cartão Débito") t.debito += ent;
+                                let entrada = parseFloat(p.entrada || 0); let restanteBoleto = p.valor - entrada;
+                                if (p.restricao === "Sim") t.boletoRest += restanteBoleto; else t.boletoSemRest += restanteBoleto;
+                                com += (entrada * 0.12) + (restanteBoleto * (p.restricao === "Sim" ? 0.05 : 0.08));
+                                if (p.forma_entrada === "Dinheiro") { t.dinheiro += entrada; t.vale += entrada; }
+                                if (p.forma_entrada === "Pix") { t.pix += entrada; t.vale += entrada; }
+                                if (p.forma_entrada === "Cartão Débito") { t.debito += entrada; }
                             }
                         });
                     }
-                    t.totalComissao += comItem;
-                    htmlComissao += `<div class="flex justify-between py-2 border-b border-white/5"><span class="uppercase font-bold">${item.nome_formando}</span><span class="text-emerald-400 font-black">${formatBRL(comItem)}</span></div>`;
-                } else if (item.resultado === "Brinde") t.brindes++;
-                else if (item.resultado === "Vendido por Outro Vendedor") t.outros++;
+                    t.totalComissao += com;
+                    htmlComissao += `<tr><td class="py-3 uppercase font-bold">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${formatBRL(com)}</td></tr>`;
+                } else if (item.resultado === "Brinde") { t.brindes++; }
+                else if (item.resultado === "Vendido por Outro Vendedor") { t.outros++; }
                 else if (item.resultado === "NQ") t.nq++;
 
-                htmlTable += `<tr class="border-b border-white/5"><td class="p-4">${paraDataBR(item.data)}</td><td class="p-4 font-bold uppercase">${item.nome_formando}</td><td class="p-4 text-center">${item.resultado || 'Pendente'}</td><td class="p-4"><button onclick="gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600 px-3 py-1 rounded text-[10px]">Mudar</button></td></tr>`;
+                const colors = { 'Venda': 'bg-emerald-500/10 text-emerald-500', 'Brinde': 'bg-purple-500/20 text-purple-400 border-purple-400', 'Vendido por Outro Vendedor': 'bg-cyan-500/20 text-cyan-400 border-cyan-400', 'NQ': 'bg-rose-500/10 text-rose-500', 'Não Atendeu': 'bg-amber-500/10 text-amber-500', 'Reagendar': 'bg-blue-500/10 text-blue-500', 'Pendente': 'bg-slate-500/10 text-slate-400' };
+                htmlTable += `<tr class="hover:bg-slate-800/40 transition"><td class="p-4 font-bold text-white">${paraDataBR(item.data)}<br><span class="text-slate-500 text-[10px]">${item.horario || item.id}</span></td><td class="p-4 uppercase font-black text-white">${item.nome_formando}<br><span class="text-blue-400 font-black lowercase text-[11px] block mt-1">${item.endereco || 'Direto'}</span></td><td class="p-4 text-center"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${colors[item.resultado] || 'border-slate-500/20'}">${item.resultado || 'Pendente'}</span></td><td class="p-4 text-center"><button onclick="gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-[9px] w-full font-black uppercase transition border border-blue-400/30">Gerenciar</button></td></tr>`;
             });
 
             window.resumoAtual = t;
-            document.getElementById('admin-content').innerHTML = `<table class="w-full text-[11px]"><thead><tr class="bg-slate-700/50"><th class="p-4">DATA</th><th class="p-4">CLIENTE</th><th class="p-4">STATUS</th><th class="p-4">AÇÃO</th></tr></thead><tbody>${htmlTable}</tbody></table>`;
-            document.getElementById('comissao-content').innerHTML = htmlComissao || '<p class="text-center text-slate-500 py-4 text-[10px]">Nenhuma comissão hoje</p>';
+            document.getElementById('admin-content').innerHTML = htmlTable + '</tbody></table>';
+            document.getElementById('comissao-content').innerHTML = htmlComissao + '</tbody></table>';
             
-            const efeti = t.vReal + t.brindes + t.outros;
+            // Efetividade do Dashboard soma tudo: (Vendas + Brindes + Outros)
+            const somaSucesso = t.vendidos + t.brindes + t.outros;
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[7px] font-bold text-slate-400 uppercase">Efetividade</p><p class="text-sm font-black text-white">${efeti}/${lista.length}</p></div>
-                <div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500 text-emerald-400 shadow-xl"><p class="text-[7px] font-bold uppercase">VALOR VENDAS</p><p class="text-[9px] font-black">${formatBRL(t.totalVendas)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[7px] font-bold text-slate-400 uppercase">Efetividade</p><p class="text-sm font-black text-white">${somaSucesso}/${lista.length}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500 text-emerald-400 shadow-xl"><p class="text-[7px] font-bold uppercase">CASH</p><p class="text-[9px] font-black">${formatBRL(t.dinheiro+t.pix)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-400 text-blue-300 shadow-xl"><p class="text-[7px] font-bold uppercase">DÉBITO</p><p class="text-[9px] font-black">${formatBRL(t.debito)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-indigo-400 text-indigo-300 shadow-xl"><p class="text-[7px] font-bold uppercase">CRÉDITO</p><p class="text-[9px] font-black">${formatBRL(t.credito)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-orange-500 text-orange-400 shadow-xl"><p class="text-[7px] font-bold uppercase">BOL S/ RESTR</p><p class="text-[9px] font-black">${formatBRL(t.boletoSemRest)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-red-500 text-red-400 shadow-xl"><p class="text-[7px] font-bold uppercase text-white">BOL C/ RESTR</p><p class="text-[9px] font-black">${formatBRL(t.boletoRest)}</p></div>
+                <div class="bg-blue-600 p-2 rounded-xl text-center shadow-2xl text-white"><p class="text-[7px] font-bold uppercase text-white">VENDAS</p><p class="text-[10px] font-black text-white">${formatBRL(t.totalVendas)}</p></div>
                 <div class="bg-amber-500 p-2 rounded-xl text-center shadow-2xl text-amber-950"><p class="text-[7px] font-bold uppercase">VALES</p><p class="text-[10px] font-black">${formatBRL(t.vale)}</p></div>
             `;
             const saldo = t.totalComissao - t.vale;
-            document.getElementById('fechamento-final').innerHTML = `<div class="mt-4 p-4 rounded-2xl border-2 ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'} text-right"><p class="text-[8px] font-black text-white uppercase">Saldo: ${formatBRL(saldo)}</p></div>`;
+            document.getElementById('fechamento-final').innerHTML = `<div class="mt-4 p-4 rounded-2xl border-2 shadow-2xl text-right ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}"><p class="text-[8px] font-black uppercase text-white">Saldo Comissões: ${formatBRL(t.totalComissao)}</p><p class="text-[8px] font-black uppercase text-white mb-2">Total Vale: ${formatBRL(t.vale)}</p><p class="text-3xl font-black italic text-white">${formatBRL(Math.abs(saldo))}</p></div>`;
         }
 
         async function carregarRelatorio() {
             const [sAg, sAv] = await Promise.all([get(ref(db, COLLECTION_PATH)), get(ref(db, AVULSO_PATH))]);
-            const ag = sAg.val() || {}, av = sAv.val() || {}; window.dadosCompletos = [];
+            const ag = sAg.val() || {}, av = sAv.val() || {};
+            window.dadosCompletos = [];
             for(let d in ag) for(let h in ag[d]) window.dadosCompletos.push({...ag[d][h], id: h, data: d, tipo: 'agenda'});
-            for(let id in av) window.dadosCompletos.push({...av[id], id: id, tipo: 'avulso'});
+            for(let id in av) { let i = av[id]; if(!i.data || i.data.includes('undef')) i.data = "2026-02-01"; window.dadosCompletos.push({...i, id: id, tipo: 'avulso'}); }
             renderizarLista(window.dadosCompletos);
         }
 
-        window.copiarRelatorio = async () => {
-            const cid = prompt("Cidade:"); if(!cid) return;
-            const t = window.resumoAtual; const f = (v) => formatBRL(v);
-            const msg = `*${cid} ${new Date().toLocaleDateString('pt-BR')}*\nVendidos = ${t.vReal}\nBrindes/Outros = ${t.brindes + t.outros}\nNQ = ${t.nq}\nDinheiro = ${f(t.dinheiro)}\nPix = ${f(t.pix)}\nDébito = ${f(t.debito)}\nTotal = ${f(t.totalVendas)}\nVale = ${f(t.vale)}`;
-            await navigator.clipboard.writeText(msg); alert("COPIADO!");
+        function obterPesoCronologico(item) {
+            const data = item.data || "0000-00-00"; let h = item.horario || item.id || "00:00";
+            if (typeof h === "string" && h.includes("-")) h = h.replace("-", ":");
+            const [y, m, d] = data.split("-").map(Number); const [hh, mm] = (h.includes(':') ? h.split(":") : [0,0]).map(Number);
+            return new Date(y, m - 1, d, hh, mm).getTime();
+        }
+
+        window.fecharModalHorario = () => document.getElementById("modalHorario").style.display = "none";
+        window.abrirModalHorario = async (dataAtual, horarioAtual, callbackConfirmar) => {
+            const modal = document.getElementById("modalHorario"); const selectHora = document.getElementById("novoHorarioModal"); const inputData = document.getElementById("novaDataModal");
+            modal.style.display = "flex"; inputData.value = dataAtual; inputData.onchange = (e) => gerarHorariosDisponiveis(e.target.value, selectHora);
+            await gerarHorariosDisponiveis(dataAtual, selectHora);
+            document.getElementById("confirmarHorarioBtn").onclick = () => { if(!selectHora.value) return alert("Escolha um horário!"); fecharModalHorario(); callbackConfirmar(inputData.value, selectHora.value); };
         };
 
-        function obterPesoCronologico(item) { const data = item.data || "0000-00-00"; return new Date(data.split("-")[0], data.split("-")[1]-1, data.split("-")[2]).getTime(); }
+        document.querySelectorAll('.day-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+                const dVal = btn.getAttribute('data-date'); document.getElementById('data-selecionada').value = dVal;
+                await gerarHorariosDisponiveis(dVal, document.getElementById('horario'));
+            });
+        });
+
+        window.lancarVendaDireta = async () => {
+            const n = prompt("Nome:"); if(!n) return;
+            const d = prompt("Data (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
+            const h = prompt("Hora (HH:MM):", "08:00");
+            await push(ref(db, AVULSO_PATH), { nome_formando: n, data: d, horario: h, resultado: "Pendente" });
+            carregarRelatorio();
+        };
+
         window.acessoAdmin = () => { if(prompt("Key:")==="2025") { document.getElementById('admin-modal').style.display = 'block'; carregarRelatorio(); } };
         window.fecharAdmin = () => document.getElementById('admin-modal').style.display = 'none';
-        document.querySelectorAll('.day-btn').forEach(b => b.onclick = () => { document.querySelectorAll('.day-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); document.getElementById('data-selecionada').value=b.dataset.date; gerarHorariosDisponiveis(b.dataset.date, document.getElementById('horario')); });
+        window.abrirDashboardExcel = () => { document.getElementById('excel-modal').style.display = 'flex'; };
+        
+        window.copiarRelatorio = async () => {
+            const cidade = prompt("Digite a Cidade:"); if(!cidade) return;
+            const t = window.resumoAtual; const f = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+            const msg = `*${cidade} ${new Date().toLocaleDateString('pt-BR')}*\n` +
+                        `Vendas Reais = ${t.vendidos}\n` +
+                        `Brindes = ${t.brindes}\n` +
+                        `Vend. p/ Outro = ${t.outros}\n` +
+                        `NQ = ${t.nq}\n` +
+                        `Dinheiro = ${f(t.dinheiro)}\n` +
+                        `Pix = ${f(t.pix)}\n` +
+                        `Cartão Débito = ${f(t.debito)}\n` +
+                        `Boleto s/ Restrição = ${f(t.boletoSemRest)}\n` +
+                        `Boleto c/ Restrição = ${f(t.boletoRest)}\n` +
+                        `Cartão Crédito = ${f(t.credito)}\n` +
+                        `Total Vendas = ${f(t.totalVendas)}\n` +
+                        `Vale = ${f(t.vale)}`;
+            try { await navigator.clipboard.writeText(msg); alert("RELATÓRIO COPIADO!"); } catch (e) { alert("Erro ao copiar."); }
+        };
+
+        window.filtrarLista = () => renderizarLista(window.dadosCompletos.filter(i => i.nome_formando?.toLowerCase().includes(document.getElementById('busca-admin').value.toLowerCase())));
     </script>
 </body>
 </html>
