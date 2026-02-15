@@ -122,7 +122,7 @@
         const formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
         const paraDataBR = (str) => { if(!str || !str.includes('-')) return "---"; const [y,m,d] = str.split("-"); return `${d}/${m}/${y}`; };
 
-        // FILTRAGEM DE DATAS E HORÁRIOS
+        // FILTRO DE DATAS E HORÁRIOS ORIGINAIS
         (function filtrarBotoesDeData() {
             const agora = new Date();
             document.querySelectorAll('.day-btn').forEach(btn => {
@@ -164,45 +164,29 @@
             }
         }
 
-        // CADASTRO DE AGENDAMENTO
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const d = document.getElementById('data-selecionada').value;
-            const h = document.getElementById('horario').value;
-            const n = document.getElementById('nome').value;
-            const tel = document.getElementById('telefone').value;
-            const cid = document.getElementById('cidade').value;
-            const end = document.getElementById('endereco').value;
-            
-            await set(ref(db, `${COLLECTION_PATH}/${d}/${h.replace(':','-')}`), { 
-                data: d, horario: h, nome_formando: n, telefone: tel, cidade: cid, endereco: end, resultado: "Pendente" 
-            });
-            
+            const d = document.getElementById('data-selecionada').value, h = document.getElementById('horario').value, n = document.getElementById('nome').value, tel = document.getElementById('telefone').value, cid = document.getElementById('cidade').value, end = document.getElementById('endereco').value;
+            await set(ref(db, `${COLLECTION_PATH}/${d}/${h.replace(':','-')}`), { data: d, horario: h, nome_formando: n, telefone: tel, cidade: cid, endereco: end, resultado: "Pendente" });
             const msg = `*NOVA VISITA AGENDADA*\n\n*Nome:* ${n}\n*Data:* ${paraDataBR(d)}\n*Horário:* ${h}\n*Cidade:* ${cid}\n*Endereço:* ${end}`;
             window.open(`https://wa.me/${MEU_WHATSAPP}?text=${encodeURIComponent(msg)}`);
             location.reload();
         });
 
-        // GESTÃO DE ITENS (RESULTADOS, EXCLUSÃO, ALTERAÇÃO)
+        // FUNÇÃO DE GESTÃO - ATUALIZADA COM MÚLTIPLOS PAGAMENTOS E NOVOS STATUS
         window.gerenciarItem = async (tipo, data, id) => {
             const acao = prompt("1-RESULTADO | 2-EXCLUIR | 3-ALTERAR DATA | 4-ALTERAR HORÁRIO | 5-ALTERAR DATA E HORÁRIO");
             const dbRef = tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`;
             
-            if (acao === "2") { 
-                if (confirm("APAGAR?")) { await remove(ref(db, dbRef)); carregarRelatorio(); } 
-            }
+            if (acao === "2") { if (confirm("APAGAR?")) { await remove(ref(db, dbRef)); carregarRelatorio(); } }
             else if (acao === "3") {
                 const nD = prompt("NOVA DATA (AAAA-MM-DD):");
                 if (nD && nD.length === 10) {
                     const snap = await get(ref(db, dbRef));
                     if (snap.exists()) {
                         let o = snap.val(); o.data = nD;
-                        if (tipo === 'agenda') { 
-                            await remove(ref(db, dbRef)); 
-                            await set(ref(db, `${COLLECTION_PATH}/${nD}/${id}`), o); 
-                        } else { 
-                            await update(ref(db, dbRef), { data: nD }); 
-                        }
+                        if (tipo === 'agenda') { await remove(ref(db, dbRef)); await set(ref(db, `${COLLECTION_PATH}/${nD}/${id}`), o); }
+                        else { await update(ref(db, dbRef), { data: nD }); }
                         carregarRelatorio();
                     }
                 }
@@ -213,17 +197,13 @@
                 let o = snap.val();
                 abrirModalHorario(data, o.horario, async (nD, nH) => {
                     const nID = nH.replace(":", "-");
-                    if (tipo === 'agenda') { 
-                        await remove(ref(db, dbRef)); o.data = nD; o.horario = nH; 
-                        await set(ref(db, `${COLLECTION_PATH}/${nD}/${nID}`), o); 
-                    } else { 
-                        await update(ref(db, dbRef), { data: nD, horario: nH }); 
-                    }
+                    if (tipo === 'agenda') { await remove(ref(db, dbRef)); o.data = nD; o.horario = nH; await set(ref(db, `${COLLECTION_PATH}/${nD}/${nID}`), o); }
+                    else { await update(ref(db, dbRef), { data: nD, horario: nH }); }
                     carregarRelatorio();
                 });
             }
             else if (acao === "1") {
-                const r = prompt("STATUS:\n1 - Venda\n2 - NQ\n3 - Não Atendeu\n4 - Reagendar\n5 - Brinde\n6 - Vendido por Outro Vendedor");
+                const r = prompt("STATUS:\n1-Venda\n2-NQ\n3-Não Atendeu\n4-Reagendar\n5-Brinde\n6-Vendido por Outro Vendedor");
                 
                 if (r === "1") {
                     const valorTotal = parseFloat(prompt("VALOR TOTAL DA VENDA?")?.replace(",", ".") || 0);
@@ -234,34 +214,26 @@
                     const formas = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito", "4": "Cartão Crédito", "5": "Boleto" };
 
                     while (restante > 0.01) {
-                        let msgFormas = "FORMA DE PAGAMENTO:\n";
-                        Object.entries(formas).forEach(([k,v]) => msgFormas += `${k} - ${v}\n`);
-                        msgFormas += `\nRESTAM: R$ ${restante.toFixed(2)}`;
-
+                        let msgFormas = `FORMA DE PAGAMENTO:\n1-Din | 2-Pix | 3-Déb | 4-Créd | 5-Bol\n\nRESTAM: R$ ${restante.toFixed(2)}`;
                         const escolha = prompt(msgFormas);
-                        if (!formas[escolha]) return alert("Forma inválida.");
+                        if (!formas[escolha]) break;
 
-                        let valorPago = parseFloat(prompt(`VALOR PAGO EM ${formas[escolha]}?`)?.replace(",", ".") || 0);
-                        if (!valorPago || valorPago <= 0) return alert("Valor inválido.");
+                        let valorPago = parseFloat(prompt(`VALOR EM ${formas[escolha]}?`)?.replace(",", ".") || 0);
                         if (valorPago > (restante + 0.01)) { alert("Valor maior que o restante."); continue; }
 
-                        let pagamentoObj = { tipo: formas[escolha], valor: valorPago };
+                        let pgObj = { tipo: formas[escolha], valor: valorPago };
 
                         if (formas[escolha] === "Boleto") {
-                            let entrada = 0; let formaEntrada = "";
                             const teveEntrada = prompt("TEVE ENTRADA?\n1 - Sim\n2 - Não");
                             if (teveEntrada === "1") {
-                                entrada = parseFloat(prompt("VALOR DA ENTRADA?")?.replace(",", ".") || 0);
-                                const formaEntradaOp = prompt("FORMA DA ENTRADA:\n1 - Dinheiro\n2 - Pix\n3 - Cartão Débito");
-                                const formaEntradaMap = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito" };
-                                formaEntrada = formaEntradaMap[formaEntradaOp];
+                                pgObj.entrada = parseFloat(prompt("VALOR DA ENTRADA?")?.replace(",", ".") || 0);
+                                const fEOp = prompt("FORMA DA ENTRADA:\n1-Din | 2-Pix | 3-Déb");
+                                const fEMap = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito" };
+                                pgObj.forma_entrada = fEMap[fEOp];
                             }
-                            const restricao = prompt("SPC? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
-                            pagamentoObj.entrada = entrada;
-                            pagamentoObj.forma_entrada = formaEntrada;
-                            pagamentoObj.restricao = restricao;
+                            pgObj.restricao = prompt("SPC? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
                         }
-                        pagamentos.push(pagamentoObj);
+                        pagamentos.push(pgObj);
                         restante -= valorPago;
                     }
                     await update(ref(db, dbRef), { resultado: "Venda", valor: valorTotal, pagamentos: pagamentos });
@@ -275,9 +247,9 @@
             }
         };
 
-        // RENDERIZAÇÃO DO DASHBOARD E CÁLCULOS
+        // FUNÇÃO DE RENDERIZAÇÃO E CÁLCULOS - ATUALIZADA
         function renderizarLista(lista) {
-            let t = { vendidos: 0, totalVendas: 0, vale: 0, totalComissao: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boletoRest: 0, boletoSemRest: 0, nq: 0 };
+            let t = { vendidos: 0, brindes: 0, outros: 0, totalVendas: 0, vale: 0, totalComissao: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boletoRest: 0, boletoSemRest: 0, nq: 0 };
             lista.sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b));
             
             let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
@@ -286,49 +258,41 @@
             lista.forEach(item => {
                 const vT = parseFloat(item.valor || 0);
                 
-                if (item.resultado === "Venda" || item.resultado === "Brinde" || item.resultado === "Vendido por Outro Vendedor") t.vendidos++;
+                // LÓGICA DE EFETIVIDADE (Dashboard)
+                if (item.resultado === "Venda" || item.resultado === "Brinde" || item.resultado === "Vendido por Outro Vendedor") {
+                    // Mas para o financeiro e contagem real de vendas separaremos:
+                }
 
                 if (item.resultado === "Venda") {
+                    t.vendidos++;
                     t.totalVendas += vT;
-                    let com = 0;
+                    let comItem = 0;
 
                     if (item.pagamentos && Array.isArray(item.pagamentos)) {
                         item.pagamentos.forEach(p => {
+                            const val = parseFloat(p.valor || 0);
                             if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(p.tipo)) {
-                                com += p.valor * 0.12;
-                                if (p.tipo === "Dinheiro") { t.dinheiro += p.valor; t.vale += p.valor; }
-                                if (p.tipo === "Pix") { t.pix += p.valor; t.vale += p.valor; }
-                                if (p.tipo === "Cartão Débito") t.debito += p.valor;
-                                if (p.tipo === "Cartão Crédito") t.credito += p.valor;
+                                comItem += val * 0.12;
+                                if (p.tipo === "Dinheiro") { t.dinheiro += val; t.vale += val; }
+                                if (p.tipo === "Pix") { t.pix += val; t.vale += val; }
+                                if (p.tipo === "Cartão Débito") t.debito += val;
+                                if (p.tipo === "Cartão Crédito") t.credito += val;
                             } else if (p.tipo === "Boleto") {
-                                let entrada = parseFloat(p.entrada || 0);
-                                let restanteBoleto = p.valor - entrada;
-                                if (p.restricao === "Sim") t.boletoRest += restanteBoleto;
-                                else t.boletoSemRest += restanteBoleto;
-                                com += (entrada * 0.12) + (restanteBoleto * (p.restricao === "Sim" ? 0.05 : 0.08));
-                                if (p.forma_entrada === "Dinheiro") { t.dinheiro += entrada; t.vale += entrada; }
-                                if (p.forma_entrada === "Pix") { t.pix += entrada; t.vale += entrada; }
-                                if (p.forma_entrada === "Cartão Débito") { t.debito += entrada; }
+                                const ent = parseFloat(p.entrada || 0);
+                                const res = val - ent;
+                                if (p.restricao === "Sim") t.boletoRest += res; else t.boletoSemRest += res;
+                                comItem += (ent * 0.12) + (res * (p.restricao === "Sim" ? 0.05 : 0.08));
+                                if (p.forma_entrada === "Dinheiro") { t.dinheiro += ent; t.vale += ent; }
+                                if (p.forma_entrada === "Pix") { t.pix += ent; t.vale += ent; }
+                                if (p.forma_entrada === "Cartão Débito") { t.debito += ent; }
                             }
                         });
-                    } else if (item.pagamento) { 
-                        const vE = parseFloat(item.entrada || 0);
-                        if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(item.pagamento)) {
-                            com = vT * 0.12;
-                            if(item.pagamento === "Dinheiro") { t.dinheiro += vT; t.vale += vT; }
-                            if(item.pagamento === "Pix") { t.pix += vT; t.vale += vT; }
-                            if(item.pagamento === "Cartão Débito") t.debito += vT;
-                            if(item.pagamento === "Cartão Crédito") t.credito += vT;
-                        } else if (item.pagamento === "Boleto") {
-                            if(item.restricao === "Sim") t.boletoRest += (vT - vE); else t.boletoSemRest += (vT - vE);
-                            com = (vE * 0.12) + ((vT - vE) * (item.restricao === "Sim" ? 0.05 : 0.08));
-                            if(item.forma_entrada === "Dinheiro") { t.dinheiro += vE; t.vale += vE; }
-                            if(item.forma_entrada === "Pix") { t.pix += vE; t.vale += vE; }
-                        }
                     }
-                    t.totalComissao += com;
-                    htmlComissao += `<tr><td class="py-3 uppercase font-bold">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${formatBRL(com)}</td></tr>`;
-                } else if(item.resultado === "NQ") t.nq++;
+                    t.totalComissao += comItem;
+                    htmlComissao += `<tr><td class="py-3 uppercase font-bold">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${formatBRL(comItem)}</td></tr>`;
+                } else if (item.resultado === "Brinde") { t.brindes++; }
+                else if (item.resultado === "Vendido por Outro Vendedor") { t.outros++; }
+                else if (item.resultado === "NQ") t.nq++;
 
                 const colors = { 
                     'Venda': 'bg-emerald-500/10 text-emerald-500', 
@@ -352,14 +316,15 @@
             document.getElementById('admin-content').innerHTML = htmlTable + '</tbody></table>';
             document.getElementById('comissao-content').innerHTML = htmlComissao + '</tbody></table>';
             
+            const somaEfetividade = t.vendidos + t.brindes + t.outros;
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[7px] font-bold text-slate-400 uppercase">Efetividade</p><p class="text-sm font-black text-white">${t.vendidos}/${lista.length}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[7px] font-bold text-slate-400 uppercase">Efetividade</p><p class="text-sm font-black text-white">${somaEfetividade}/${lista.length}</p></div>
                 <div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500 text-emerald-400 shadow-xl"><p class="text-[7px] font-bold uppercase">CASH</p><p class="text-[9px] font-black">${formatBRL(t.dinheiro+t.pix)}</p></div>
                 <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-400 text-blue-300 shadow-xl"><p class="text-[7px] font-bold uppercase">DÉBITO</p><p class="text-[9px] font-black">${formatBRL(t.debito)}</p></div>
                 <div class="glass p-2 rounded-xl text-center border-t-2 border-indigo-400 text-indigo-300 shadow-xl"><p class="text-[7px] font-bold uppercase">CRÉDITO</p><p class="text-[9px] font-black">${formatBRL(t.credito)}</p></div>
                 <div class="glass p-2 rounded-xl text-center border-t-2 border-orange-500 text-orange-400 shadow-xl"><p class="text-[7px] font-bold uppercase">BOL S/ RESTR</p><p class="text-[9px] font-black">${formatBRL(t.boletoSemRest)}</p></div>
                 <div class="glass p-2 rounded-xl text-center border-t-2 border-red-500 text-red-400 shadow-xl"><p class="text-[7px] font-bold uppercase text-white">BOL C/ RESTR</p><p class="text-[9px] font-black">${formatBRL(t.boletoRest)}</p></div>
-                <div class="bg-blue-600 p-2 rounded-xl text-center shadow-2xl text-white"><p class="text-[7px] font-bold uppercase text-white">VENDAS</p><p class="text-[10px] font-black text-white">${formatBRL(t.totalVendas)}</p></div>
+                <div class="bg-blue-600 p-2 rounded-xl text-center shadow-2xl text-white"><p class="text-[7px] font-bold uppercase text-white">VENDAS REAIS</p><p class="text-[10px] font-black text-white">${formatBRL(t.totalVendas)}</p></div>
                 <div class="bg-amber-500 p-2 rounded-xl text-center shadow-2xl text-amber-950"><p class="text-[7px] font-bold uppercase">VALES</p><p class="text-[10px] font-black">${formatBRL(t.vale)}</p></div>
             `;
             
@@ -424,12 +389,18 @@
             const cidade = prompt("Digite a Cidade:"); if(!cidade) return;
             const t = window.resumoAtual; 
             const f = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-            const msg = `*${cidade} ${new Date().toLocaleDateString('pt-BR')}*\nVendidos = ${t.vendidos}\nNQ = ${t.nq}\nDinheiro = ${f(t.dinheiro)}\nPix = ${f(t.pix)}\nCartão Débito = ${f(t.debito)}\nBoleto s/ Restrição = ${f(t.boletoSemRest)}\nBoleto c/ Restrição = ${f(t.boletoRest)}\nCartão Crédito = ${f(t.credito)}\nTotal = ${f(t.totalVendas)}\nVale = ${f(t.vale)}`;
+            const msg = `*${cidade} ${new Date().toLocaleDateString('pt-BR')}*\n` +
+                        `Vendidos = ${t.vendidos}\n` +
+                        `NQ = ${t.nq}\n` +
+                        `Dinheiro = ${f(t.dinheiro)}\n` +
+                        `Pix = ${f(t.pix)}\n` +
+                        `Cartão Débito = ${f(t.debito)}\n` +
+                        `Total Vendas = ${f(t.totalVendas)}\n` +
+                        `Vale = ${f(t.vale)}`;
             try { await navigator.clipboard.writeText(msg); alert("RELATÓRIO COPIADO!"); } catch (e) { alert("Erro ao copiar."); }
         };
 
         window.filtrarLista = () => renderizarLista(window.dadosCompletos.filter(i => i.nome_formando?.toLowerCase().includes(document.getElementById('busca-admin').value.toLowerCase())));
-        window.copiarTabelaExcel = async () => { try { await navigator.clipboard.writeText(document.getElementById('excel-preview-content').innerText); alert("DADOS COPIADOS!"); } catch (e) {} };
     </script>
 </body>
 </html>
