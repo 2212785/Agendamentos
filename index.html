@@ -219,18 +219,30 @@
 
                         let pagamentoObj = { tipo: formas[escolha], valor: valorPago };
 
+                        // NOVO FLUXO DO BOLETO: PERGUNTA SE TEVE ENTRADA PRIMEIRO
                         if (formas[escolha] === "Boleto") {
-                            const entrada = parseFloat(prompt("VALOR DA ENTRADA?")?.replace(",", ".") || 0);
-                            const formaEntradaOp = prompt("FORMA DA ENTRADA:\n1 - Dinheiro\n2 - Pix\n3 - Cartão Débito");
-                            const formaEntradaMap = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito" };
-                            const formaEntrada = formaEntradaMap[formaEntradaOp];
-                            if (!formaEntrada) return alert("Forma inválida.");
+                            let entrada = 0;
+                            let formaEntrada = "";
+                            const teveEntrada = prompt("TEVE ENTRADA?\n1 - Sim\n2 - Não");
+
+                            if (teveEntrada === "1") {
+                                entrada = parseFloat(prompt("VALOR DA ENTRADA?")?.replace(",", ".") || 0);
+                                if (!entrada || entrada <= 0) { alert("Valor de entrada inválido."); return; }
+
+                                const formaEntradaOp = prompt("FORMA DA ENTRADA:\n1 - Dinheiro\n2 - Pix\n3 - Cartão Débito");
+                                const formaEntradaMap = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito" };
+                                formaEntrada = formaEntradaMap[formaEntradaOp];
+                                if (!formaEntrada) { alert("Forma inválida."); return; }
+                            } else if (teveEntrada !== "2") {
+                                alert("Opção inválida."); return;
+                            }
 
                             const restricao = prompt("SPC? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
                             pagamentoObj.entrada = entrada;
                             pagamentoObj.forma_entrada = formaEntrada;
                             pagamentoObj.restricao = restricao;
                         }
+
                         pagamentos.push(pagamentoObj);
                         restante -= valorPago;
                         if (restante > 0.01) alert(`FALTAM R$ ${restante.toFixed(2)} PARA FINALIZAR`);
@@ -252,7 +264,6 @@
                 if (item.resultado === "Venda") {
                     t.vendidos++; t.totalVendas += vT;
                     let com = 0;
-
                     if (item.pagamentos && Array.isArray(item.pagamentos)) {
                         item.pagamentos.forEach(p => {
                             if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(p.tipo)) {
@@ -267,7 +278,6 @@
                                 if (p.restricao === "Sim") t.boletoRest += restanteBoleto;
                                 else t.boletoSemRest += restanteBoleto;
                                 com += (entrada * 0.12) + (restanteBoleto * (p.restricao === "Sim" ? 0.05 : 0.08));
-
                                 if (p.forma_entrada === "Dinheiro") { t.dinheiro += entrada; t.vale += entrada; }
                                 if (p.forma_entrada === "Pix") { t.pix += entrada; t.vale += entrada; }
                                 if (p.forma_entrada === "Cartão Débito") { t.debito += entrada; }
@@ -385,6 +395,7 @@
         };
 
         window.filtrarLista = () => renderizarLista(window.dadosCompletos.filter(i => i.nome_formando?.toLowerCase().includes(document.getElementById('busca-admin').value.toLowerCase())));
+        window.copiarTabelaExcel = async () => { try { await navigator.clipboard.writeText(document.getElementById('excel-preview-content').innerText); alert("DADOS COPIADOS!"); } catch (e) {} };
     </script>
 </body>
 </html>
