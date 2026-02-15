@@ -286,7 +286,7 @@
             lista.forEach(item => {
                 const vT = parseFloat(item.valor || 0);
                 
-                if (item.resultado === "Venda" || item.resultado === "Brinde" || item.resultado === "Vendido por Outro Vendedor") t.vendidos++;
+                if (item.resultado === "Venda") t.vendidos++;
 
                 if (item.resultado === "Venda") {
                     t.totalVendas += vT;
@@ -433,3 +433,4 @@
     </script>
 </body>
 </html>
+
