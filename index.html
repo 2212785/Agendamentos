@@ -122,7 +122,7 @@
         const formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
         const paraDataBR = (str) => { if(!str || !str.includes('-')) return "---"; const [y,m,d] = str.split("-"); return `${d}/${m}/${y}`; };
 
-        // FILTRAGEM DE DATAS E HORÁRIOS
+        // LOGICA DE CALENDÁRIO
         (function filtrarBotoesDeData() {
             const agora = new Date();
             document.querySelectorAll('.day-btn').forEach(btn => {
@@ -144,11 +144,9 @@
             const horaLimiteStr = isWeekend ? "15:00" : "20:30";
             const agora = new Date();
             const hojeStr = agora.toISOString().split('T')[0];
-            
             selectElement.innerHTML = '<option value="">Escolha um Horário</option>';
             let cursor = new Date(`${dataEscolhida}T09:00:00`);
             let final = new Date(`${dataEscolhida}T${horaLimiteStr}:00`);
-            
             while(cursor <= final) {
                 let hF = cursor.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
                 let disponivelPeloTempo = true;
@@ -164,45 +162,28 @@
             }
         }
 
-        // CADASTRO DE AGENDAMENTO
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const d = document.getElementById('data-selecionada').value;
-            const h = document.getElementById('horario').value;
-            const n = document.getElementById('nome').value;
-            const tel = document.getElementById('telefone').value;
-            const cid = document.getElementById('cidade').value;
-            const end = document.getElementById('endereco').value;
-            
-            await set(ref(db, `${COLLECTION_PATH}/${d}/${h.replace(':','-')}`), { 
-                data: d, horario: h, nome_formando: n, telefone: tel, cidade: cid, endereco: end, resultado: "Pendente" 
-            });
-            
+            const d = document.getElementById('data-selecionada').value, h = document.getElementById('horario').value, n = document.getElementById('nome').value, tel = document.getElementById('telefone').value, cid = document.getElementById('cidade').value, end = document.getElementById('endereco').value;
+            await set(ref(db, `${COLLECTION_PATH}/${d}/${h.replace(':','-')}`), { data: d, horario: h, nome_formando: n, telefone: tel, cidade: cid, endereco: end, resultado: "Pendente" });
             const msg = `*NOVA VISITA AGENDADA*\n\n*Nome:* ${n}\n*Data:* ${paraDataBR(d)}\n*Horário:* ${h}\n*Cidade:* ${cid}\n*Endereço:* ${end}`;
             window.open(`https://wa.me/${MEU_WHATSAPP}?text=${encodeURIComponent(msg)}`);
             location.reload();
         });
 
-        // GESTÃO DE ITENS (RESULTADOS, EXCLUSÃO, ALTERAÇÃO)
+        // GESTÃO ADMINISTRATIVA
         window.gerenciarItem = async (tipo, data, id) => {
             const acao = prompt("1-RESULTADO | 2-EXCLUIR | 3-ALTERAR DATA | 4-ALTERAR HORÁRIO | 5-ALTERAR DATA E HORÁRIO");
             const dbRef = tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`;
-            
-            if (acao === "2") { 
-                if (confirm("APAGAR?")) { await remove(ref(db, dbRef)); carregarRelatorio(); } 
-            }
+            if (acao === "2") { if (confirm("APAGAR?")) { await remove(ref(db, dbRef)); carregarRelatorio(); } }
             else if (acao === "3") {
                 const nD = prompt("NOVA DATA (AAAA-MM-DD):");
                 if (nD && nD.length === 10) {
                     const snap = await get(ref(db, dbRef));
                     if (snap.exists()) {
                         let o = snap.val(); o.data = nD;
-                        if (tipo === 'agenda') { 
-                            await remove(ref(db, dbRef)); 
-                            await set(ref(db, `${COLLECTION_PATH}/${nD}/${id}`), o); 
-                        } else { 
-                            await update(ref(db, dbRef), { data: nD }); 
-                        }
+                        if (tipo === 'agenda') { await remove(ref(db, dbRef)); await set(ref(db, `${COLLECTION_PATH}/${nD}/${id}`), o); }
+                        else { await update(ref(db, dbRef), { data: nD }); }
                         carregarRelatorio();
                     }
                 }
@@ -213,18 +194,13 @@
                 let o = snap.val();
                 abrirModalHorario(data, o.horario, async (nD, nH) => {
                     const nID = nH.replace(":", "-");
-                    if (tipo === 'agenda') { 
-                        await remove(ref(db, dbRef)); o.data = nD; o.horario = nH; 
-                        await set(ref(db, `${COLLECTION_PATH}/${nD}/${nID}`), o); 
-                    } else { 
-                        await update(ref(db, dbRef), { data: nD, horario: nH }); 
-                    }
+                    if (tipo === 'agenda') { await remove(ref(db, dbRef)); o.data = nD; o.horario = nH; await set(ref(db, `${COLLECTION_PATH}/${nD}/${nID}`), o); }
+                    else { await update(ref(db, dbRef), { data: nD, horario: nH }); }
                     carregarRelatorio();
                 });
             }
             else if (acao === "1") {
                 const r = prompt("STATUS:\n1 - Venda\n2 - NQ\n3 - Não Atendeu\n4 - Reagendar\n5 - Brinde\n6 - Vendido por Outro Vendedor");
-                
                 if (r === "1") {
                     const valorTotal = parseFloat(prompt("VALOR TOTAL DA VENDA?")?.replace(",", ".") || 0);
                     if (!valorTotal || valorTotal <= 0) return alert("Valor inválido.");
@@ -237,7 +213,6 @@
                         let msgFormas = "FORMA DE PAGAMENTO:\n";
                         Object.entries(formas).forEach(([k,v]) => msgFormas += `${k} - ${v}\n`);
                         msgFormas += `\nRESTAM: R$ ${restante.toFixed(2)}`;
-
                         const escolha = prompt(msgFormas);
                         if (!formas[escolha]) return alert("Forma inválida.");
 
@@ -255,14 +230,14 @@
                                 const formaEntradaOp = prompt("FORMA DA ENTRADA:\n1 - Dinheiro\n2 - Pix\n3 - Cartão Débito");
                                 const formaEntradaMap = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito" };
                                 formaEntrada = formaEntradaMap[formaEntradaOp];
+                                if (!formaEntrada) { alert("Forma inválida."); return; }
                             }
                             const restricao = prompt("SPC? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
-                            pagamentoObj.entrada = entrada;
-                            pagamentoObj.forma_entrada = formaEntrada;
-                            pagamentoObj.restricao = restricao;
+                            pagamentoObj.entrada = entrada; pagamentoObj.forma_entrada = formaEntrada; pagamentoObj.restricao = restricao;
                         }
                         pagamentos.push(pagamentoObj);
                         restante -= valorPago;
+                        if (restante > 0.01) alert(`FALTAM R$ ${restante.toFixed(2)} PARA FINALIZAR`);
                     }
                     await update(ref(db, dbRef), { resultado: "Venda", valor: valorTotal, pagamentos: pagamentos });
                 } 
@@ -275,18 +250,20 @@
             }
         };
 
-        // RENDERIZAÇÃO DO DASHBOARD E CÁLCULOS
+        // RENDERIZAÇÃO E LÓGICA DE EFETIVIDADE
         function renderizarLista(lista) {
             let t = { vendidos: 0, totalVendas: 0, vale: 0, totalComissao: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boletoRest: 0, boletoSemRest: 0, nq: 0 };
             lista.sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b));
-            
             let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
             let htmlComissao = '<table class="w-full text-[10px] text-white"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
 
             lista.forEach(item => {
                 const vT = parseFloat(item.valor || 0);
                 
-                if (item.resultado === "Venda" || item.resultado === "Brinde" || item.resultado === "Vendido por Outro Vendedor") t.vendidos++;
+                // AJUSTE GPT: Efetividade Positiva para Venda, Brinde e Vendido por Outro
+                if (item.resultado === "Venda" || item.resultado === "Brinde" || item.resultado === "Vendido por Outro Vendedor") {
+                    t.vendidos++;
+                }
 
                 if (item.resultado === "Venda") {
                     t.totalVendas += vT;
