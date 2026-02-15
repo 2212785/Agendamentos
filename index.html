@@ -200,19 +200,25 @@
                 if (r === "1") {
                     const valorTotal = parseFloat(prompt("VALOR TOTAL DA VENDA?")?.replace(",", ".") || 0);
                     if (!valorTotal || valorTotal <= 0) return alert("Valor inválido.");
+
                     let restante = valorTotal;
                     let pagamentos = [];
                     const formas = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito", "4": "Cartão Crédito", "5": "Boleto" };
+
                     while (restante > 0.01) {
                         let msgFormas = "FORMA DE PAGAMENTO:\n";
                         Object.entries(formas).forEach(([k,v]) => msgFormas += `${k} - ${v}\n`);
                         msgFormas += `\nRESTAM: R$ ${restante.toFixed(2)}`;
+
                         const escolha = prompt(msgFormas);
                         if (!formas[escolha]) return alert("Forma inválida.");
+
                         let valorPago = parseFloat(prompt(`VALOR PAGO EM ${formas[escolha]}?`)?.replace(",", ".") || 0);
                         if (!valorPago || valorPago <= 0) return alert("Valor inválido.");
                         if (valorPago > (restante + 0.01)) { alert("Valor maior que o restante."); continue; }
+
                         let pagamentoObj = { tipo: formas[escolha], valor: valorPago };
+
                         if (formas[escolha] === "Boleto") {
                             let entrada = 0; let formaEntrada = "";
                             const teveEntrada = prompt("TEVE ENTRADA?\n1 - Sim\n2 - Não");
@@ -221,7 +227,8 @@
                                 const formaEntradaOp = prompt("FORMA DA ENTRADA:\n1 - Dinheiro\n2 - Pix\n3 - Cartão Débito");
                                 const formaEntradaMap = { "1": "Dinheiro", "2": "Pix", "3": "Cartão Débito" };
                                 formaEntrada = formaEntradaMap[formaEntradaOp];
-                            }
+                                if (!formaEntrada) { alert("Forma inválida."); return; }
+                            } else if (teveEntrada !== "2") { alert("Opção inválida."); return; }
                             const restricao = prompt("SPC? 1-Sim | 2-Não") === "1" ? "Sim" : "Não";
                             pagamentoObj.entrada = entrada; pagamentoObj.forma_entrada = formaEntrada; pagamentoObj.restricao = restricao;
                         }
@@ -239,16 +246,24 @@
         };
 
         function renderizarLista(lista) {
-            // Contadores ajustados para o WhatsApp e Dashboard
-            let t = { vendidos: 0, brindes: 0, outros: 0, totalVendas: 0, vale: 0, totalComissao: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boletoRest: 0, boletoSemRest: 0, nq: 0 };
+            let t = { vendidos: 0, totalVendas: 0, vale: 0, totalComissao: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boletoRest: 0, boletoSemRest: 0, nq: 0 };
             lista.sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b));
+            
             let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
             let htmlComissao = '<table class="w-full text-[10px] text-white"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
 
             lista.forEach(item => {
                 const vT = parseFloat(item.valor || 0);
+                
+                // EFETIVIDADE: Agora Brinde e Vendido por Outro contam como sucesso
+                if (item.resultado === "Venda" || item.resultado === "Brinde" || item.resultado === "Vendido por Outro Vendedor") {
+                    t.vendidos++;
+                }
+
                 if (item.resultado === "Venda") {
-                    t.vendidos++; t.totalVendas += vT; let com = 0;
+                    t.totalVendas += vT;
+                    let com = 0;
+
                     if (item.pagamentos && Array.isArray(item.pagamentos)) {
                         item.pagamentos.forEach(p => {
                             if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(p.tipo)) {
@@ -258,33 +273,61 @@
                                 if (p.tipo === "Cartão Débito") t.debito += p.valor;
                                 if (p.tipo === "Cartão Crédito") t.credito += p.valor;
                             } else if (p.tipo === "Boleto") {
-                                let entrada = parseFloat(p.entrada || 0); let restanteBoleto = p.valor - entrada;
-                                if (p.restricao === "Sim") t.boletoRest += restanteBoleto; else t.boletoSemRest += restanteBoleto;
+                                let entrada = parseFloat(p.entrada || 0);
+                                let restanteBoleto = p.valor - entrada;
+                                if (p.restricao === "Sim") t.boletoRest += restanteBoleto;
+                                else t.boletoSemRest += restanteBoleto;
                                 com += (entrada * 0.12) + (restanteBoleto * (p.restricao === "Sim" ? 0.05 : 0.08));
+
+                                // LÓGICA DE VALE: Débito na entrada não gera vale
                                 if (p.forma_entrada === "Dinheiro") { t.dinheiro += entrada; t.vale += entrada; }
                                 if (p.forma_entrada === "Pix") { t.pix += entrada; t.vale += entrada; }
                                 if (p.forma_entrada === "Cartão Débito") { t.debito += entrada; }
                             }
                         });
+                    } else if (item.pagamento) { 
+                        const vE = parseFloat(item.entrada || 0);
+                        if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(item.pagamento)) {
+                            com = vT * 0.12;
+                            if(item.pagamento === "Dinheiro") { t.dinheiro += vT; t.vale += vT; }
+                            if(item.pagamento === "Pix") { t.pix += vT; t.vale += vT; }
+                            if(item.pagamento === "Cartão Débito") t.debito += vT;
+                            if(item.pagamento === "Cartão Crédito") t.credito += vT;
+                        } else if (item.pagamento === "Boleto") {
+                            if(item.restricao === "Sim") t.boletoRest += (vT - vE); else t.boletoSemRest += (vT - vE);
+                            com = (vE * 0.12) + ((vT - vE) * (item.restricao === "Sim" ? 0.05 : 0.08));
+                            if(item.forma_entrada === "Dinheiro") { t.dinheiro += vE; t.vale += vE; }
+                            if(item.forma_entrada === "Pix") { t.pix += vE; t.vale += vE; }
+                        }
                     }
                     t.totalComissao += com;
                     htmlComissao += `<tr><td class="py-3 uppercase font-bold">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${formatBRL(com)}</td></tr>`;
-                } else if (item.resultado === "Brinde") { t.brindes++; }
-                else if (item.resultado === "Vendido por Outro Vendedor") { t.outros++; }
-                else if (item.resultado === "NQ") t.nq++;
+                } else if(item.resultado === "NQ") t.nq++;
 
-                const colors = { 'Venda': 'bg-emerald-500/10 text-emerald-500', 'Brinde': 'bg-purple-500/20 text-purple-400 border-purple-400', 'Vendido por Outro Vendedor': 'bg-cyan-500/20 text-cyan-400 border-cyan-400', 'NQ': 'bg-rose-500/10 text-rose-500', 'Não Atendeu': 'bg-amber-500/10 text-amber-500', 'Reagendar': 'bg-blue-500/10 text-blue-500', 'Pendente': 'bg-slate-500/10 text-slate-400' };
-                htmlTable += `<tr class="hover:bg-slate-800/40 transition"><td class="p-4 font-bold text-white">${paraDataBR(item.data)}<br><span class="text-slate-500 text-[10px]">${item.horario || item.id}</span></td><td class="p-4 uppercase font-black text-white">${item.nome_formando}<br><span class="text-blue-400 font-black lowercase text-[11px] block mt-1">${item.endereco || 'Direto'}</span></td><td class="p-4 text-center"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${colors[item.resultado] || 'border-slate-500/20'}">${item.resultado || 'Pendente'}</span></td><td class="p-4 text-center"><button onclick="gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-[9px] w-full font-black uppercase transition border border-blue-400/30">Gerenciar</button></td></tr>`;
+                const colors = { 
+                    'Venda': 'bg-emerald-500/10 text-emerald-500', 
+                    'Brinde': 'bg-purple-500/20 text-purple-400 border-purple-400',
+                    'Vendido por Outro Vendedor': 'bg-cyan-500/20 text-cyan-400 border-cyan-400',
+                    'NQ': 'bg-rose-500/10 text-rose-500', 
+                    'Não Atendeu': 'bg-amber-500/10 text-amber-500', 
+                    'Reagendar': 'bg-blue-500/10 text-blue-500', 
+                    'Pendente': 'bg-slate-500/10 text-slate-400' 
+                };
+                
+                htmlTable += `<tr class="hover:bg-slate-800/40 transition">
+                    <td class="p-4 font-bold text-white">${paraDataBR(item.data)}<br><span class="text-slate-500 text-[10px]">${item.horario || item.id}</span></td>
+                    <td class="p-4 uppercase font-black text-white">${item.nome_formando}<br><span class="text-blue-400 font-black lowercase text-[11px] block mt-1">${item.endereco || 'Direto'}</span></td>
+                    <td class="p-4 text-center"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${colors[item.resultado] || 'border-slate-500/20'}">${item.resultado || 'Pendente'}</span></td>
+                    <td class="p-4 text-center"><button onclick="gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-[9px] w-full font-black uppercase transition border border-blue-400/30">Gerenciar</button></td>
+                </tr>`;
             });
 
             window.resumoAtual = t;
             document.getElementById('admin-content').innerHTML = htmlTable + '</tbody></table>';
             document.getElementById('comissao-content').innerHTML = htmlComissao + '</tbody></table>';
             
-            // Efetividade do Dashboard soma tudo: (Vendas + Brindes + Outros)
-            const somaSucesso = t.vendidos + t.brindes + t.outros;
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[7px] font-bold text-slate-400 uppercase">Efetividade</p><p class="text-sm font-black text-white">${somaSucesso}/${lista.length}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500 shadow-xl"><p class="text-[7px] font-bold text-slate-400 uppercase">Efetividade</p><p class="text-sm font-black text-white">${t.vendidos}/${lista.length}</p></div>
                 <div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500 text-emerald-400 shadow-xl"><p class="text-[7px] font-bold uppercase">CASH</p><p class="text-[9px] font-black">${formatBRL(t.dinheiro+t.pix)}</p></div>
                 <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-400 text-blue-300 shadow-xl"><p class="text-[7px] font-bold uppercase">DÉBITO</p><p class="text-[9px] font-black">${formatBRL(t.debito)}</p></div>
                 <div class="glass p-2 rounded-xl text-center border-t-2 border-indigo-400 text-indigo-300 shadow-xl"><p class="text-[7px] font-bold uppercase">CRÉDITO</p><p class="text-[9px] font-black">${formatBRL(t.credito)}</p></div>
@@ -293,6 +336,7 @@
                 <div class="bg-blue-600 p-2 rounded-xl text-center shadow-2xl text-white"><p class="text-[7px] font-bold uppercase text-white">VENDAS</p><p class="text-[10px] font-black text-white">${formatBRL(t.totalVendas)}</p></div>
                 <div class="bg-amber-500 p-2 rounded-xl text-center shadow-2xl text-amber-950"><p class="text-[7px] font-bold uppercase">VALES</p><p class="text-[10px] font-black">${formatBRL(t.vale)}</p></div>
             `;
+            
             const saldo = t.totalComissao - t.vale;
             document.getElementById('fechamento-final').innerHTML = `<div class="mt-4 p-4 rounded-2xl border-2 shadow-2xl text-right ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}"><p class="text-[8px] font-black uppercase text-white">Saldo Comissões: ${formatBRL(t.totalComissao)}</p><p class="text-[8px] font-black uppercase text-white mb-2">Total Vale: ${formatBRL(t.vale)}</p><p class="text-3xl font-black italic text-white">${formatBRL(Math.abs(saldo))}</p></div>`;
         }
@@ -344,23 +388,12 @@
         window.copiarRelatorio = async () => {
             const cidade = prompt("Digite a Cidade:"); if(!cidade) return;
             const t = window.resumoAtual; const f = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-            const msg = `*${cidade} ${new Date().toLocaleDateString('pt-BR')}*\n` +
-                        `Vendas Reais = ${t.vendidos}\n` +
-                        `Brindes = ${t.brindes}\n` +
-                        `Vend. p/ Outro = ${t.outros}\n` +
-                        `NQ = ${t.nq}\n` +
-                        `Dinheiro = ${f(t.dinheiro)}\n` +
-                        `Pix = ${f(t.pix)}\n` +
-                        `Cartão Débito = ${f(t.debito)}\n` +
-                        `Boleto s/ Restrição = ${f(t.boletoSemRest)}\n` +
-                        `Boleto c/ Restrição = ${f(t.boletoRest)}\n` +
-                        `Cartão Crédito = ${f(t.credito)}\n` +
-                        `Total Vendas = ${f(t.totalVendas)}\n` +
-                        `Vale = ${f(t.vale)}`;
+            const msg = `*${cidade} ${new Date().toLocaleDateString('pt-BR')}*\nVendidos = ${t.vendidos}\nNQ = ${t.nq}\nDinheiro = ${f(t.dinheiro)}\nPix = ${f(t.pix)}\nCartão Débito = ${f(t.debito)}\nBoleto s/ Restrição = ${f(t.boletoSemRest)}\nBoleto c/ Restrição = ${f(t.boletoRest)}\nCartão Crédito = ${f(t.credito)}\nTotal = ${f(t.totalVendas)}\nVale = ${f(t.vale)}`;
             try { await navigator.clipboard.writeText(msg); alert("RELATÓRIO COPIADO!"); } catch (e) { alert("Erro ao copiar."); }
         };
 
         window.filtrarLista = () => renderizarLista(window.dadosCompletos.filter(i => i.nome_formando?.toLowerCase().includes(document.getElementById('busca-admin').value.toLowerCase())));
+        window.copiarTabelaExcel = async () => { try { await navigator.clipboard.writeText(document.getElementById('excel-preview-content').innerText); alert("DADOS COPIADOS!"); } catch (e) {} };
     </script>
 </body>
 </html>
