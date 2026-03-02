@@ -132,6 +132,7 @@
         const db = getDatabase(app);
         const PATH = 'agendamentos';
         const AVULSO = 'avulsos';
+        const MEU_WHATSAPP = "5516993291674";
 
         window.formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
         const paraDataBR = (str) => { if(!str || !str.includes('-')) return "---"; const [y,m,d] = str.split("-"); return `${d}/${m}/${y}`; };
@@ -306,9 +307,31 @@
 
         window.filtrarLista = () => renderizarLista(window.dadosCompletos.filter(i => i.nome_formando?.toLowerCase().includes(document.getElementById('busca-admin').value.toLowerCase())));
         
+        // --- INICIALIZAÇÃO E AVISO WHATSAPP ---
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
-            e.preventDefault(); const d = document.getElementById('data-selecionada').value; const h = document.getElementById('horario').value;
-            await set(ref(db, `${PATH}/${d}/${h.replace(':','-')}`), { data: d, horario: h, nome_formando: document.getElementById('nome').value, telefone: document.getElementById('telefone').value, city: document.getElementById('cidade').value, endereco: document.getElementById('endereco').value, resultado: "Pendente" });
+            e.preventDefault(); 
+            const d = document.getElementById('data-selecionada').value; 
+            const h = document.getElementById('horario').value;
+            const n = document.getElementById('nome').value;
+            const tel = document.getElementById('telefone').value;
+            const cid = document.getElementById('cidade').value;
+            const end = document.getElementById('endereco').value;
+
+            // Salva no Firebase
+            await set(ref(db, `${PATH}/${d}/${h.replace(':','-')}`), { 
+                data: d, 
+                horario: h, 
+                nome_formando: n, 
+                telefone: tel, 
+                city: cid, 
+                endereco: end, 
+                resultado: "Pendente" 
+            });
+
+            // REATIVADO: Envio de mensagem automática
+            const msgAgendamento = `*NOVA VISITA AGENDADA*\n\n*Nome:* ${n}\n*Data:* ${paraDataBR(d)}\n*Horário:* ${h}\n*Cidade:* ${cid}\n*Endereço:* ${end}`;
+            window.open(`https://wa.me/${MEU_WHATSAPP}?text=${encodeURIComponent(msgAgendamento)}`);
+            
             location.reload();
         });
 
@@ -319,6 +342,15 @@
                 await gerarHorariosDisponiveis(btn.getAttribute('data-date'), document.getElementById('horario'));
             });
         });
+
+        (function autoCheck() {
+            const agora = new Date();
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                const dataBtn = btn.getAttribute("data-date"); const dateObj = new Date(dataBtn + 'T00:00:00');
+                const isW = (dateObj.getDay() === 0 || dateObj.getDay() === 6); const hL = isW ? "15:00:00" : "17:30:00";
+                if (agora > new Date(`${dataBtn}T${hL}`)) btn.style.display = "none";
+            });
+        })();
 
         window.carregarRelatorio = carregarRelatorio;
     </script>
