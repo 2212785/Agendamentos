@@ -79,10 +79,10 @@
             <h2 class="text-3xl font-black mb-10 uppercase italic text-white">Agendar Visita</h2>
             <form id="form-agendamento" class="space-y-6 text-left">
                 <div class="grid grid-cols-2 gap-2" id="day-selector">
-                    <button type="button" data-date="2026-02-18" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">18/02<br>Qua</button>
-                    <button type="button" data-date="2026-02-19" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">19/02<br>Qui</button>
-                    <button type="button" data-date="2026-02-20" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">20/02<br>Sex</button>
-                    <button type="button" data-date="2026-02-21" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">21/02<br>Sab</button>
+                    <button type="button" data-date="2026-03-04" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">04/03<br>Qua</button>
+                    <button type="button" data-date="2026-03-05" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">05/03<br>Qui</button>
+                    <button type="button" data-date="2026-03-06" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">06/03<br>Sex</button>
+                    <button type="button" data-date="2026-03-07" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">07/03<br>Sab</button>
                 </div>
                 <input type="hidden" id="data-selecionada" required>
                 <div class="space-y-4">
@@ -299,7 +299,10 @@
                                 let restanteBoleto = p.valor - entrada;
                                 if (p.restricao === "Sim") t.boletoRest += restanteBoleto;
                                 else t.boletoSemRest += restanteBoleto;
-                                com += (entrada * 0.12) + (restanteBoleto * (p.restricao === "Sim" ? 0.05 : 0.08));
+                                
+                                // MODIFICAÇÃO: Ambos agora calculam 8% (0.08) sobre o saldo restante
+                                com += (entrada * 0.12) + (restanteBoleto * 0.08);
+
                                 if (p.forma_entrada === "Dinheiro") { t.dinheiro += entrada; t.vale += entrada; }
                                 if (p.forma_entrada === "Pix") { t.pix += entrada; t.vale += entrada; }
                                 if (p.forma_entrada === "Cartão Débito") { t.debito += entrada; }
@@ -315,7 +318,10 @@
                             if(item.pagamento === "Cartão Crédito") t.credito += vT;
                         } else if (item.pagamento === "Boleto") {
                             if(item.restricao === "Sim") t.boletoRest += (vT - vE); else t.boletoSemRest += (vT - vE);
-                            com = (vE * 0.12) + ((vT - vE) * (item.restricao === "Sim" ? 0.05 : 0.08));
+                            
+                            // MODIFICAÇÃO: Ambos agora calculam 8% (0.08) sobre o saldo restante
+                            com = (vE * 0.12) + ((vT - vE) * 0.08);
+
                             if(item.forma_entrada === "Dinheiro") { t.dinheiro += vE; t.vale += vE; }
                             if(item.forma_entrada === "Pix") { t.pix += vE; t.vale += vE; }
                         }
