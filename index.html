@@ -15,9 +15,6 @@
         #modalHorario, #modalGestao { background: rgba(2, 6, 23, 0.95); align-items: center; justify-content: center; }
         .day-btn { transition: all 0.2s; border-color: rgba(255,255,255,0.1); color: #94a3b8; background: rgba(255,255,255,0.03); cursor: pointer; }
         .day-btn.active { background: #3b82f6; color: white; border-color: #60a5fa; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-white">
@@ -25,10 +22,9 @@
     <div id="modalGestao">
         <div class="glass w-full max-w-2xl rounded-[2.5rem] p-8 border border-white/10 shadow-2xl">
             <div class="flex justify-between items-center mb-6">
-                <h2 id="gestao-titulo" class="text-2xl font-black uppercase italic text-blue-400 font-italic">Gerenciar</h2>
+                <h2 id="gestao-titulo" class="text-2xl font-black uppercase italic text-blue-400">Gerenciar</h2>
                 <button onclick="fecharModalGestao()" class="text-slate-400 hover:text-white text-2xl font-bold">✕</button>
             </div>
-            
             <div id="gestao-menu" class="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <button onclick="fluxoResultado()" class="bg-emerald-600/20 border border-emerald-500/50 p-4 rounded-2xl hover:bg-emerald-600 transition group text-center">
                     <span class="block text-emerald-400 group-hover:text-white font-black text-[10px] uppercase">Resultado</span>
@@ -43,7 +39,6 @@
                     <span class="block text-rose-400 group-hover:text-white font-black text-[10px] uppercase">Excluir</span>
                 </button>
             </div>
-
             <div id="gestao-form" class="mt-8 hidden space-y-4"></div>
         </div>
     </div>
@@ -123,38 +118,15 @@
         </div>
     </main>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, get, set, remove, update, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU", 
-            authDomain: "agenda-album-de-formatura.firebaseapp.com",
-            databaseURL: "https://agenda-album-de-formatura-default-rtdb.firebaseio.com", 
-            projectId: "agenda-album-de-formatura",
-            appId: "1:29604114447:web:bac79aba4c4aa945c8737a"
-        };
-        
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const COLLECTION_PATH = 'agendamentos';
-        const AVULSO_PATH = 'avulsos';
-        const MEU_WHATSAPP = "5516992590916";
-
-        window.dadosCompletos = [];
-        window.resumoAtual = {};
-        window.itemSendoGerenciado = null;
-        window.tempPagamentos = [];
-
-        const formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
-        const paraDataBR = (str) => { if(!str || !str.includes('-')) return "---"; const [y,m,d] = str.split("-"); return `${d}/${m}/${y}`; };
-
-        // --- GESTÃO CORRIGIDA ---
+    <script>
+        // --- FUNÇÕES GLOBAIS (ACESSEIS PELO HTML) ---
         window.fecharModalGestao = () => {
             document.getElementById('modalGestao').style.display = 'none';
             document.getElementById('gestao-menu').classList.remove('hidden');
             document.getElementById('gestao-form').classList.add('hidden');
         };
+
+        window.fecharModalHorario = () => document.getElementById("modalHorario").style.display = "none";
 
         window.gerenciarItem = (tipo, data, id) => {
             window.itemSendoGerenciado = { tipo, data, id };
@@ -220,26 +192,9 @@
             document.getElementById('lista-temp-pg').innerHTML = window.tempPagamentos.map((p, i) => `
                 <div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]">
                     <span>${p.tipo} ${p.restricao ? '(SPC)' : ''}</span>
-                    <span class="font-bold text-emerald-400">${formatBRL(p.valor)} <button onclick="window.tempPagamentos.splice(${i},1);renderTemp();" class="text-rose-500 ml-2 font-bold">✕</button></span>
+                    <span class="font-bold text-emerald-400">${window.formatBRL(p.valor)} <button onclick="window.tempPagamentos.splice(${i},1);renderTemp();" class="text-rose-500 ml-2 font-bold">✕</button></span>
                 </div>
             `).join('');
-        };
-
-        window.finalizarVendaReal = async () => {
-            const total = parseFloat(document.getElementById('vendaTotalInput').value);
-            const soma = window.tempPagamentos.reduce((acc, c) => acc + c.valor, 0);
-            if(!total || Math.abs(total - soma) > 0.1) return alert("Valores não batem!");
-            const { tipo, data, id } = window.itemSendoGerenciado;
-            const dbRef = tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`;
-            await update(ref(db, dbRef), { resultado: "Venda", valor: total, pagamentos: window.tempPagamentos });
-            fecharModalGestao(); carregarRelatorio();
-        };
-
-        window.salvarStatusRapido = async (status) => {
-            const { tipo, data, id } = window.itemSendoGerenciado;
-            const dbRef = tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`;
-            await update(ref(db, dbRef), { resultado: status, valor: 0 });
-            fecharModalGestao(); carregarRelatorio();
         };
 
         window.fluxoAlterarData = () => {
@@ -250,6 +205,46 @@
                 <input type="date" id="novaDataInput" class="w-full bg-slate-800 p-4 rounded-xl text-white outline-none mb-4">
                 <button onclick="salvarDataNova()" class="w-full p-4 bg-blue-600 rounded-xl font-bold uppercase">Confirmar Nova Data</button>
             `;
+        };
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, get, set, remove, update, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU", 
+            authDomain: "agenda-album-de-formatura.firebaseapp.com",
+            databaseURL: "https://agenda-album-de-formatura-default-rtdb.firebaseio.com", 
+            projectId: "agenda-album-de-formatura",
+            appId: "1:29604114447:web:bac79aba4c4aa945c8737a"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const COLLECTION_PATH = 'agendamentos';
+        const AVULSO_PATH = 'avulsos';
+        const MEU_WHATSAPP = "5516992590916";
+
+        window.formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+        const paraDataBR = (str) => { if(!str || !str.includes('-')) return "---"; const [y,m,d] = str.split("-"); return `${d}/${m}/${y}`; };
+
+        // Integração das funções do Firebase com os modais globais
+        window.salvarStatusRapido = async (status) => {
+            const { tipo, data, id } = window.itemSendoGerenciado;
+            const dbRef = tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`;
+            await update(ref(db, dbRef), { resultado: status, valor: 0 });
+            fecharModalGestao(); carregarRelatorio();
+        };
+
+        window.finalizarVendaReal = async () => {
+            const total = parseFloat(document.getElementById('vendaTotalInput').value);
+            const soma = window.tempPagamentos.reduce((acc, c) => acc + c.valor, 0);
+            if(!total || Math.abs(total - soma) > 0.1) return alert("Valores não batem!");
+            const { tipo, data, id } = window.itemSendoGerenciado;
+            const dbRef = tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`;
+            await update(ref(db, dbRef), { resultado: "Venda", valor: total, pagamentos: window.tempPagamentos });
+            fecharModalGestao(); carregarRelatorio();
         };
 
         window.salvarDataNova = async () => {
@@ -266,13 +261,13 @@
         };
 
         window.fluxoAlterarHorario = async () => {
-            const { data, id } = window.itemSendoGerenciado; fecharModalGestao();
-            const snap = await get(ref(db, (window.itemSendoGerenciado.tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)));
+            const { data, id, tipo } = window.itemSendoGerenciado; fecharModalGestao();
+            const snap = await get(ref(db, (tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)));
             if(!snap.exists()) return;
             const o = snap.val();
             abrirModalHorario(data, o.horario, async (nD, nH) => {
                 const nID = nH.replace(":","-");
-                if(window.itemSendoGerenciado.tipo === 'agenda') {
+                if(tipo === 'agenda') {
                     await remove(ref(db, `${COLLECTION_PATH}/${data}/${id}`)); o.data = nD; o.horario = nH;
                     await set(ref(db, `${COLLECTION_PATH}/${nD}/${nID}`), o);
                 } else { await update(ref(db, `${AVULSO_PATH}/${id}`), { data: nD, horario: nH }); }
@@ -289,17 +284,86 @@
         };
 
         // --- SISTEMA BASE ---
-        (function filtrarBotoesDeData() {
-            const agora = new Date();
-            document.querySelectorAll('.day-btn').forEach(btn => {
-                const dataBtn = btn.getAttribute("data-date");
-                const dateObj = new Date(dataBtn + 'T00:00:00');
-                const isWeekend = (dateObj.getDay() === 0 || dateObj.getDay() === 6);
-                const horaLimite = isWeekend ? "15:00:00" : "17:30:00"; 
-                const deadline = new Date(`${dataBtn}T${horaLimite}`);
-                if (agora > deadline) btn.style.display = "none";
+        async function carregarRelatorio() {
+            const [sAg, sAv] = await Promise.all([get(ref(db, COLLECTION_PATH)), get(ref(db, AVULSO_PATH))]);
+            const ag = sAg.val() || {}, av = sAv.val() || {}; window.dadosCompletos = [];
+            for(let d in ag) for(let h in ag[d]) window.dadosCompletos.push({...ag[d][h], id: h, data: d, tipo: 'agenda'});
+            for(let id in av) { let i = av[id]; window.dadosCompletos.push({...i, id: id, tipo: 'avulso'}); }
+            renderizarLista(window.dadosCompletos);
+        }
+
+        window.lancarVendaDireta = async () => {
+            const n = prompt("Nome:"); if(!n) return;
+            const d = prompt("Data (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
+            await push(ref(db, AVULSO_PATH), { nome_formando: n, data: d, horario: "08:00", resultado: "Pendente" });
+            carregarRelatorio();
+        };
+
+        window.acessoAdmin = () => { if(prompt("Key:")==="2025") { document.getElementById('admin-modal').style.display = 'block'; carregarRelatorio(); } };
+        
+        // Re-exporta funções necessárias para o carregamento inicial
+        window.carregarRelatorio = carregarRelatorio;
+        window.db = db;
+        window.COLLECTION_PATH = COLLECTION_PATH;
+        window.AVULSO_PATH = AVULSO_PATH;
+
+        // --- RESTANTE DO CÓDIGO (RENDERIZAÇÃO E CALENDÁRIO) ---
+        function renderizarLista(lista) {
+            let t = { vendidos: 0, totalVendas: 0, vale: 0, totalComissao: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boletoRest: 0, boletoSemRest: 0, nq: 0 };
+            lista.sort((a, b) => {
+                const d1 = a.data || ""; const d2 = b.data || "";
+                return d1.localeCompare(d2);
             });
-        })();
+            
+            let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
+            let htmlComissao = '<table class="w-full text-[10px] text-white"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
+
+            lista.forEach(item => {
+                const vT = parseFloat(item.valor || 0);
+                if (item.resultado === "Venda") {
+                    t.vendidos++; t.totalVendas += vT; let com = 0;
+                    if (item.pagamentos && Array.isArray(item.pagamentos)) {
+                        item.pagamentos.forEach(p => {
+                            if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(p.tipo)) {
+                                com += p.valor * 0.12;
+                                if (p.tipo === "Dinheiro" || p.tipo === "Pix") { t[p.tipo.toLowerCase()] += p.valor; t.vale += p.valor; }
+                                if (p.tipo.includes("Cartão")) t[p.tipo.includes("Débito") ? "debito" : "credito"] += p.valor;
+                            } else if (p.tipo === "Boleto") {
+                                let ent = parseFloat(p.entrada || 0); let res = p.valor - ent;
+                                if (p.restricao === "Sim") t.boletoRest += res; else t.boletoSemRest += res;
+                                com += (ent * 0.12) + (res * 0.08); 
+                                if (p.forma_entrada === "Dinheiro" || p.forma_entrada === "Pix") { t[p.forma_entrada.toLowerCase()] += ent; t.vale += ent; }
+                            }
+                        });
+                    }
+                    t.totalComissao += com;
+                    htmlComissao += `<tr><td class="py-3 uppercase font-bold">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${window.formatBRL(com)}</td></tr>`;
+                } else if(item.resultado === "NQ") t.nq++;
+
+                const colors = { 'Venda': 'bg-emerald-500/10 text-emerald-500', 'NQ': 'bg-rose-500/10 text-rose-500', 'Pendente': 'bg-slate-500/10 text-slate-400' };
+                htmlTable += `<tr class="hover:bg-slate-800/40 transition">
+                    <td class="p-4 font-bold">${paraDataBR(item.data)}<br><span class="text-slate-500 text-[10px]">${item.horario || 'Direto'}</span></td>
+                    <td class="p-4 uppercase font-black">${item.nome_formando}<br><span class="text-blue-400 lowercase text-[11px] block mt-1">${item.endereco || 'Direto'}</span></td>
+                    <td class="p-4 text-center"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${colors[item.resultado] || 'border-slate-500/20'}">${item.resultado || 'Pendente'}</span></td>
+                    <td class="p-4 text-center"><button onclick="gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 px-3 py-2 rounded-xl text-[9px] w-full font-black uppercase border border-blue-400/30">Gerenciar</button></td>
+                </tr>`;
+            });
+            window.resumoAtual = t;
+            document.getElementById('admin-content').innerHTML = htmlTable + '</tbody></table>';
+            document.getElementById('comissao-content').innerHTML = htmlComissao + '</tbody></table>';
+            document.getElementById('resumo-financeiro').innerHTML = `
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500"><p class="text-[7px] font-bold text-slate-400 uppercase">Eficiência</p><p class="text-sm font-black">${t.vendidos}/${lista.length}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500 text-emerald-400"><p class="text-[7px] font-bold uppercase">CASH</p><p class="text-[9px] font-black">${window.formatBRL(t.dinheiro+t.pix)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-400 text-blue-300"><p class="text-[7px] font-bold uppercase">DÉBITO</p><p class="text-[9px] font-black">${window.formatBRL(t.debito)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-indigo-400 text-indigo-300"><p class="text-[7px] font-bold uppercase">CRÉDITO</p><p class="text-[9px] font-black">${window.formatBRL(t.credito)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-orange-500 text-orange-400"><p class="text-[7px] font-bold uppercase">BOL S/ RESTR</p><p class="text-[9px] font-black">${window.formatBRL(t.boletoSemRest)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-red-500 text-red-400"><p class="text-[7px] font-bold uppercase text-white">BOL C/ RESTR</p><p class="text-[9px] font-black">${window.formatBRL(t.boletoRest)}</p></div>
+                <div class="bg-blue-600 p-2 rounded-xl text-center text-white"><p class="text-[7px] font-bold uppercase">VENDAS</p><p class="text-[10px] font-black">${window.formatBRL(t.totalVendas)}</p></div>
+                <div class="bg-amber-500 p-2 rounded-xl text-center text-amber-950"><p class="text-[7px] font-bold uppercase">VALES</p><p class="text-[10px] font-black">${window.formatBRL(t.vale)}</p></div>
+            `;
+            const saldo = t.totalComissao - t.vale;
+            document.getElementById('fechamento-final').innerHTML = `<div class="mt-4 p-4 rounded-2xl border-2 text-right ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}"><p class="text-[8px] font-black uppercase">Comissões: ${window.formatBRL(t.totalComissao)}</p><p class="text-[8px] font-black uppercase mb-2">Vale: ${window.formatBRL(t.vale)}</p><p class="text-3xl font-black italic">${window.formatBRL(Math.abs(saldo))}</p></div>`;
+        }
 
         async function gerarHorariosDisponiveis(dataEscolhida, selectElement) {
             selectElement.innerHTML = '<option>Consultando...</option>';
@@ -326,6 +390,13 @@
             }
         }
 
+        window.abrirModalHorario = async (dataAtual, horarioAtual, callbackConfirmar) => {
+            const m = document.getElementById("modalHorario"); const sH = document.getElementById("novoHorarioModal"); const iD = document.getElementById("novaDataModal");
+            m.style.display = "flex"; iD.value = dataAtual; iD.onchange = (e) => gerarHorariosDisponiveis(e.target.value, sH);
+            await gerarHorariosDisponiveis(dataAtual, sH);
+            document.getElementById("confirmarHorarioBtn").onclick = () => { if(!sH.value) return; fecharModalHorario(); callbackConfirmar(iD.value, sH.value); };
+        };
+
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
             e.preventDefault();
             const d = document.getElementById('data-selecionada').value;
@@ -339,83 +410,6 @@
             location.reload();
         });
 
-        function renderizarLista(lista) {
-            let t = { vendidos: 0, totalVendas: 0, vale: 0, totalComissao: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boletoRest: 0, boletoSemRest: 0, nq: 0 };
-            lista.sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b));
-            
-            let htmlTable = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
-            let htmlComissao = '<table class="w-full text-[10px] text-white"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase"><th class="pb-2">Cliente</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
-
-            lista.forEach(item => {
-                const vT = parseFloat(item.valor || 0);
-                if (item.resultado === "Venda") {
-                    t.vendidos++; t.totalVendas += vT; let com = 0;
-                    if (item.pagamentos && Array.isArray(item.pagamentos)) {
-                        item.pagamentos.forEach(p => {
-                            if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(p.tipo)) {
-                                com += p.valor * 0.12;
-                                if (p.tipo === "Dinheiro" || p.tipo === "Pix") { t[p.tipo.toLowerCase()] += p.valor; t.vale += p.valor; }
-                                if (p.tipo.includes("Cartão")) t[p.tipo.includes("Débito") ? "debito" : "credito"] += p.valor;
-                            } else if (p.tipo === "Boleto") {
-                                let ent = parseFloat(p.entrada || 0); let res = p.valor - ent;
-                                if (p.restricao === "Sim") t.boletoRest += res; else t.boletoSemRest += res;
-                                com += (ent * 0.12) + (res * 0.08); 
-                                if (p.forma_entrada === "Dinheiro" || p.forma_entrada === "Pix") { t[p.forma_entrada.toLowerCase()] += ent; t.vale += ent; }
-                            }
-                        });
-                    }
-                    t.totalComissao += com;
-                    htmlComissao += `<tr><td class="py-3 uppercase font-bold">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${formatBRL(com)}</td></tr>`;
-                } else if(item.resultado === "NQ") t.nq++;
-
-                const colors = { 'Venda': 'bg-emerald-500/10 text-emerald-500', 'NQ': 'bg-rose-500/10 text-rose-500', 'Pendente': 'bg-slate-500/10 text-slate-400' };
-                htmlTable += `<tr class="hover:bg-slate-800/40 transition">
-                    <td class="p-4 font-bold">${paraDataBR(item.data)}<br><span class="text-slate-500 text-[10px]">${item.horario || 'Direto'}</span></td>
-                    <td class="p-4 uppercase font-black">${item.nome_formando}<br><span class="text-blue-400 lowercase text-[11px] block mt-1">${item.endereco || 'Direto'}</span></td>
-                    <td class="p-4 text-center"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${colors[item.resultado] || 'border-slate-500/20'}">${item.resultado || 'Pendente'}</span></td>
-                    <td class="p-4 text-center"><button onclick="gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 px-3 py-2 rounded-xl text-[9px] w-full font-black uppercase border border-blue-400/30">Gerenciar</button></td>
-                </tr>`;
-            });
-
-            window.resumoAtual = t;
-            document.getElementById('admin-content').innerHTML = htmlTable + '</tbody></table>';
-            document.getElementById('comissao-content').innerHTML = htmlComissao + '</tbody></table>';
-            document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500"><p class="text-[7px] font-bold text-slate-400 uppercase">Eficiência</p><p class="text-sm font-black">${t.vendidos}/${lista.length}</p></div>
-                <div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500 text-emerald-400"><p class="text-[7px] font-bold uppercase">CASH</p><p class="text-[9px] font-black">${formatBRL(t.dinheiro+t.pix)}</p></div>
-                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-400 text-blue-300"><p class="text-[7px] font-bold uppercase">DÉBITO</p><p class="text-[9px] font-black">${formatBRL(t.debito)}</p></div>
-                <div class="glass p-2 rounded-xl text-center border-t-2 border-indigo-400 text-indigo-300"><p class="text-[7px] font-bold uppercase">CRÉDITO</p><p class="text-[9px] font-black">${formatBRL(t.credito)}</p></div>
-                <div class="glass p-2 rounded-xl text-center border-t-2 border-orange-500 text-orange-400"><p class="text-[7px] font-bold uppercase">BOL S/ RESTR</p><p class="text-[9px] font-black">${formatBRL(t.boletoSemRest)}</p></div>
-                <div class="glass p-2 rounded-xl text-center border-t-2 border-red-500 text-red-400"><p class="text-[7px] font-bold uppercase text-white">BOL C/ RESTR</p><p class="text-[9px] font-black">${formatBRL(t.boletoRest)}</p></div>
-                <div class="bg-blue-600 p-2 rounded-xl text-center text-white"><p class="text-[7px] font-bold uppercase">VENDAS</p><p class="text-[10px] font-black">${formatBRL(t.totalVendas)}</p></div>
-                <div class="bg-amber-500 p-2 rounded-xl text-center text-amber-950"><p class="text-[7px] font-bold uppercase">VALES</p><p class="text-[10px] font-black">${formatBRL(t.vale)}</p></div>
-            `;
-            const saldo = t.totalComissao - t.vale;
-            document.getElementById('fechamento-final').innerHTML = `<div class="mt-4 p-4 rounded-2xl border-2 text-right ${saldo >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}"><p class="text-[8px] font-black uppercase">Comissões: ${formatBRL(t.totalComissao)}</p><p class="text-[8px] font-black uppercase mb-2">Vale: ${formatBRL(t.vale)}</p><p class="text-3xl font-black italic">${formatBRL(Math.abs(saldo))}</p></div>`;
-        }
-
-        async function carregarRelatorio() {
-            const [sAg, sAv] = await Promise.all([get(ref(db, COLLECTION_PATH)), get(ref(db, AVULSO_PATH))]);
-            const ag = sAg.val() || {}, av = sAv.val() || {}; window.dadosCompletos = [];
-            for(let d in ag) for(let h in ag[d]) window.dadosCompletos.push({...ag[d][h], id: h, data: d, tipo: 'agenda'});
-            for(let id in av) { let i = av[id]; window.dadosCompletos.push({...i, id: id, tipo: 'avulso'}); }
-            renderizarLista(window.dadosCompletos);
-        }
-
-        function obterPesoCronologico(item) {
-            const d = item.data || "0000-00-00"; let h = (item.horario || "00:00").replace("-",":");
-            const [y, m, day] = d.split("-").map(Number); const [hh, mm] = h.split(":").map(Number);
-            return new Date(y, m - 1, day, hh, mm).getTime();
-        }
-
-        window.fecharModalHorario = () => document.getElementById("modalHorario").style.display = "none";
-        window.abrirModalHorario = async (dataAtual, horarioAtual, callbackConfirmar) => {
-            const m = document.getElementById("modalHorario"); const sH = document.getElementById("novoHorarioModal"); const iD = document.getElementById("novaDataModal");
-            m.style.display = "flex"; iD.value = dataAtual; iD.onchange = (e) => gerarHorariosDisponiveis(e.target.value, sH);
-            await gerarHorariosDisponiveis(dataAtual, sH);
-            document.getElementById("confirmarHorarioBtn").onclick = () => { if(!sH.value) return; fecharModalHorario(); callbackConfirmar(iD.value, sH.value); };
-        };
-
         document.querySelectorAll('.day-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
@@ -424,18 +418,9 @@
             });
         });
 
-        window.lancarVendaDireta = async () => {
-            const n = prompt("Nome:"); if(!n) return;
-            const d = prompt("Data (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
-            await push(ref(db, AVULSO_PATH), { nome_formando: n, data: d, horario: "08:00", resultado: "Pendente" });
-            carregarRelatorio();
-        };
-
-        window.acessoAdmin = () => { if(prompt("Key:")==="2025") { document.getElementById('admin-modal').style.display = 'block'; carregarRelatorio(); } };
-        window.fecharAdmin = () => document.getElementById('admin-modal').style.display = 'none';
-        window.abrirDashboardExcel = () => { document.getElementById('excel-modal').style.display = 'flex'; };
+        window.abrirDashboardExcel = () => { alert("Recurso em atualização"); };
         window.copiarRelatorio = async () => {
-            const cid = prompt("Cidade:"); if(!cid) return; const t = window.resumoAtual; const f = (v) => formatBRL(v);
+            const cid = prompt("Cidade:"); if(!cid) return; const t = window.resumoAtual; const f = (v) => window.formatBRL(v);
             const msg = `*${cid} ${new Date().toLocaleDateString('pt-BR')}*\nVendidos = ${t.vendidos}\nNQ = ${t.nq}\nDinheiro = ${f(t.dinheiro)}\nPix = ${f(t.pix)}\nDébito = ${f(t.debito)}\nBoleto s/R = ${f(t.boletoSemRest)}\nBoleto c/R = ${f(t.boletoRest)}\nCrédito = ${f(t.credito)}\nTotal = ${f(t.totalVendas)}\nVale = ${f(t.vale)}`;
             await navigator.clipboard.writeText(msg); alert("COPIADO!");
         };
