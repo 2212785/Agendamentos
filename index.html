@@ -10,9 +10,9 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; color: #f1f5f9; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); transition: all 0.3s ease; }
-        #admin-modal, #excel-modal, #modalHorario, #modalGestao { display: none; position: fixed; inset: 0; z-index: 9999; padding: 20px; overflow-y: auto; }
+        #admin-modal, #modalHorario, #modalGestao { display: none; position: fixed; inset: 0; z-index: 9999; padding: 20px; overflow-y: auto; }
         #admin-modal { background: rgba(2, 6, 23, 0.98); }
-        #excel-modal, #modalHorario, #modalGestao { background: rgba(2, 6, 23, 0.95); align-items: center; justify-content: center; }
+        #modalHorario, #modalGestao { background: rgba(2, 6, 23, 0.95); align-items: center; justify-content: center; }
         .day-btn { transition: all 0.2s; border-color: rgba(255,255,255,0.1); color: #94a3b8; background: rgba(255,255,255,0.03); cursor: pointer; }
         .day-btn.active { background: #3b82f6; color: white; border-color: #60a5fa; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
         ::-webkit-scrollbar { width: 8px; }
@@ -22,11 +22,11 @@
 </head>
 <body class="min-h-screen flex flex-col text-white">
 
-    <div id="modalGestao" class="flex">
-        <div class="glass w-full max-w-2xl rounded-[2.5rem] p-8 border border-white/10 shadow-2xl overflow-y-auto max-h-[90vh]">
+    <div id="modalGestao">
+        <div class="glass w-full max-w-2xl rounded-[2.5rem] p-8 border border-white/10 shadow-2xl">
             <div class="flex justify-between items-center mb-6">
-                <h2 id="gestao-titulo" class="text-2xl font-black uppercase italic text-blue-400">Gerenciar Visita</h2>
-                <button onclick="fecharModalGestao()" class="text-slate-400 hover:text-white text-2xl">✕</button>
+                <h2 id="gestao-titulo" class="text-2xl font-black uppercase italic text-blue-400 font-italic">Gerenciar</h2>
+                <button onclick="fecharModalGestao()" class="text-slate-400 hover:text-white text-2xl font-bold">✕</button>
             </div>
             
             <div id="gestao-menu" class="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -48,7 +48,7 @@
         </div>
     </div>
 
-    <div id="modalHorario" class="flex">
+    <div id="modalHorario">
         <div class="bg-white w-full max-w-md rounded-[2rem] shadow-2xl p-8 text-slate-900">
             <h2 class="text-2xl font-black mb-6 uppercase text-blue-600 italic">Alterar Visita</h2>
             <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">Nova Data</label>
@@ -149,13 +149,11 @@
         const formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
         const paraDataBR = (str) => { if(!str || !str.includes('-')) return "---"; const [y,m,d] = str.split("-"); return `${d}/${m}/${y}`; };
 
-        // --- GESTÃO MODERNA (LOGICA DOS MODAIS) ---
-
+        // --- GESTÃO CORRIGIDA ---
         window.fecharModalGestao = () => {
             document.getElementById('modalGestao').style.display = 'none';
             document.getElementById('gestao-menu').classList.remove('hidden');
             document.getElementById('gestao-form').classList.add('hidden');
-            document.getElementById('gestao-form').innerHTML = '';
         };
 
         window.gerenciarItem = (tipo, data, id) => {
@@ -181,14 +179,6 @@
                 </div>
                 <button onclick="fecharModalGestao()" class="w-full p-3 text-slate-500 font-bold uppercase text-[9px]">Voltar</button>
             `;
-        };
-
-        window.salvarStatusRapido = async (status) => {
-            const { tipo, data, id } = window.itemSendoGerenciado;
-            const dbRef = tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`;
-            await update(ref(db, dbRef), { resultado: status, valor: 0 });
-            fecharModalGestao();
-            carregarRelatorio();
         };
 
         window.prepararVenda = () => {
@@ -230,7 +220,7 @@
             document.getElementById('lista-temp-pg').innerHTML = window.tempPagamentos.map((p, i) => `
                 <div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]">
                     <span>${p.tipo} ${p.restricao ? '(SPC)' : ''}</span>
-                    <span class="font-bold text-emerald-400">${formatBRL(p.valor)} <button onclick="window.tempPagamentos.splice(${i},1);renderTemp();" class="text-rose-500 ml-2">✕</button></span>
+                    <span class="font-bold text-emerald-400">${formatBRL(p.valor)} <button onclick="window.tempPagamentos.splice(${i},1);renderTemp();" class="text-rose-500 ml-2 font-bold">✕</button></span>
                 </div>
             `).join('');
         };
@@ -242,6 +232,13 @@
             const { tipo, data, id } = window.itemSendoGerenciado;
             const dbRef = tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`;
             await update(ref(db, dbRef), { resultado: "Venda", valor: total, pagamentos: window.tempPagamentos });
+            fecharModalGestao(); carregarRelatorio();
+        };
+
+        window.salvarStatusRapido = async (status) => {
+            const { tipo, data, id } = window.itemSendoGerenciado;
+            const dbRef = tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`;
+            await update(ref(db, dbRef), { resultado: status, valor: 0 });
             fecharModalGestao(); carregarRelatorio();
         };
 
@@ -270,7 +267,7 @@
 
         window.fluxoAlterarHorario = async () => {
             const { data, id } = window.itemSendoGerenciado; fecharModalGestao();
-            const snap = await get(ref(db, `${COLLECTION_PATH}/${data}/${id}`));
+            const snap = await get(ref(db, (window.itemSendoGerenciado.tipo === 'agenda' ? `${COLLECTION_PATH}/${data}/${id}` : `${AVULSO_PATH}/${id}`)));
             if(!snap.exists()) return;
             const o = snap.val();
             abrirModalHorario(data, o.horario, async (nD, nH) => {
@@ -291,8 +288,7 @@
             }
         };
 
-        // --- SISTEMA BASE (CALCULOS E FIREBASE) ---
-
+        // --- SISTEMA BASE ---
         (function filtrarBotoesDeData() {
             const agora = new Date();
             document.querySelectorAll('.day-btn').forEach(btn => {
@@ -363,7 +359,7 @@
                             } else if (p.tipo === "Boleto") {
                                 let ent = parseFloat(p.entrada || 0); let res = p.valor - ent;
                                 if (p.restricao === "Sim") t.boletoRest += res; else t.boletoSemRest += res;
-                                com += (ent * 0.12) + (res * 0.08); // REGRA 8% UNIFICADA
+                                com += (ent * 0.12) + (res * 0.08); 
                                 if (p.forma_entrada === "Dinheiro" || p.forma_entrada === "Pix") { t[p.forma_entrada.toLowerCase()] += ent; t.vale += ent; }
                             }
                         });
