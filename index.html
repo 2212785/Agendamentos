@@ -10,11 +10,8 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; color: #f1f5f9; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); transition: all 0.3s ease; }
-        
-        /* Ajuste de camadas para o Modal aparecer sempre na frente */
         #admin-modal { display: none; position: fixed; inset: 0; z-index: 50; padding: 20px; overflow-y: auto; background: rgba(2, 6, 23, 0.98); }
         #modalGestao, #modalHorario { display: none; position: fixed; inset: 0; z-index: 100; padding: 20px; overflow-y: auto; background: rgba(2, 6, 23, 0.95); align-items: center; justify-content: center; }
-        
         .day-btn { transition: all 0.2s; border-color: rgba(255,255,255,0.1); color: #94a3b8; background: rgba(255,255,255,0.03); cursor: pointer; }
         .day-btn.active { background: #3b82f6; color: white; border-color: #60a5fa; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
     </style>
@@ -24,10 +21,9 @@
     <div id="modalGestao" class="flex">
         <div class="glass w-full max-w-xl rounded-[2.5rem] p-8 border border-white/20 shadow-2xl">
             <div class="flex justify-between items-center mb-8">
-                <h2 id="gestao-titulo" class="text-2xl font-black uppercase italic text-blue-400 font-italic">Gerenciar Visita</h2>
+                <h2 id="gestao-titulo" class="text-2xl font-black uppercase italic text-blue-400">Gerenciar Visita</h2>
                 <button onclick="fecharModalGestao()" class="bg-slate-800 text-white w-10 h-10 rounded-full font-bold">✕</button>
             </div>
-            
             <div id="gestao-menu" class="grid grid-cols-2 gap-4">
                 <button onclick="fluxoResultado()" class="bg-emerald-600/20 border border-emerald-500/50 p-6 rounded-2xl hover:bg-emerald-600 transition group text-center">
                     <span class="block text-emerald-400 group-hover:text-white font-black text-xs uppercase">1. Resultado</span>
@@ -42,7 +38,6 @@
                     <span class="block text-rose-400 group-hover:text-white font-black text-xs uppercase">4. Excluir</span>
                 </button>
             </div>
-
             <div id="gestao-form" class="mt-8 hidden space-y-4"></div>
         </div>
     </div>
@@ -141,15 +136,9 @@
         window.formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
         const paraDataBR = (str) => { if(!str || !str.includes('-')) return "---"; const [y,m,d] = str.split("-"); return `${d}/${m}/${y}`; };
 
-        // --- GESTÃO CORRIGIDA E ROBUSTA ---
-        window.fecharModalGestao = () => {
-            document.getElementById('modalGestao').style.display = 'none';
-            document.getElementById('gestao-menu').classList.remove('hidden');
-            document.getElementById('gestao-form').classList.add('hidden');
-        };
-
+        window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
         window.fecharModalHorario = () => document.getElementById("modalHorario").style.display = "none";
-
+        
         window.gerenciarItem = (tipo, data, id) => {
             window.itemSendoGerenciado = { tipo, data, id };
             const item = window.dadosCompletos.find(i => i.id === id && i.data === data);
@@ -158,101 +147,55 @@
         };
 
         window.fluxoResultado = () => {
-            const menu = document.getElementById('gestao-menu');
-            const form = document.getElementById('gestao-form');
-            menu.classList.add('hidden');
-            form.classList.remove('hidden');
-            form.innerHTML = `
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="prepararVenda()" class="p-4 bg-emerald-600 rounded-xl font-black uppercase text-[10px]">Lançar Venda</button>
-                    <button onclick="salvarStatusRapido('NQ')" class="p-4 bg-rose-600 rounded-xl font-black uppercase text-[10px]">NQ</button>
-                    <button onclick="salvarStatusRapido('Não Atendeu')" class="p-4 bg-amber-600 rounded-xl font-black uppercase text-[10px]">Não Atendeu</button>
-                    <button onclick="salvarStatusRapido('Reagendar')" class="p-4 bg-blue-600 rounded-xl font-black uppercase text-[10px]">Reagendar</button>
-                    <button onclick="salvarStatusRapido('Brinde')" class="p-4 bg-purple-600 rounded-xl font-black uppercase text-[10px]">Brinde</button>
-                    <button onclick="salvarStatusRapido('Vendido por Outro')" class="p-4 bg-cyan-600 rounded-xl font-black uppercase text-[10px]">Vendido Outro</button>
-                </div>
-                <button onclick="fecharModalGestao()" class="w-full p-4 text-slate-400 font-bold uppercase text-[10px]">Voltar</button>
-            `;
+            const menu = document.getElementById('gestao-menu'); const form = document.getElementById('gestao-form');
+            menu.classList.add('hidden'); form.classList.remove('hidden');
+            form.innerHTML = `<div class="grid grid-cols-2 gap-2"><button onclick="window.prepararVenda()" class="p-4 bg-emerald-600 rounded-xl font-black uppercase text-[10px]">Lançar Venda</button><button onclick="window.salvarStatusRapido('NQ')" class="p-4 bg-rose-600 rounded-xl font-black uppercase text-[10px]">NQ</button><button onclick="window.salvarStatusRapido('Não Atendeu')" class="p-4 bg-amber-600 rounded-xl font-black uppercase text-[10px]">Não Atendeu</button><button onclick="window.salvarStatusRapido('Reagendar')" class="p-4 bg-blue-600 rounded-xl font-black uppercase text-[10px]">Reagendar</button><button onclick="window.salvarStatusRapido('Brinde')" class="p-4 bg-purple-600 rounded-xl font-black uppercase text-[10px]">Brinde</button><button onclick="window.salvarStatusRapido('Vendido por Outro')" class="p-4 bg-cyan-600 rounded-xl font-black uppercase text-[10px]">Vendido Outro</button></div>`;
         };
 
         window.prepararVenda = () => {
             window.tempPagamentos = [];
             const form = document.getElementById('gestao-form');
-            form.innerHTML = `
-                <div class="space-y-4">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase text-center">Valor Total da Venda</label>
-                    <input type="number" id="vTotal" placeholder="0,00" step="0.01" class="w-full bg-slate-800 p-4 rounded-xl text-white font-black text-center outline-none border border-white/10">
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="addPg('Dinheiro')" class="p-2 bg-slate-700 rounded-lg text-[9px] font-bold uppercase">+ Dinheiro</button>
-                        <button onclick="addPg('Pix')" class="p-2 bg-slate-700 rounded-lg text-[9px] font-bold uppercase">+ Pix</button>
-                        <button onclick="addPg('Cartão Débito')" class="p-2 bg-slate-700 rounded-lg text-[9px] font-bold uppercase">+ Débito</button>
-                        <button onclick="addPg('Cartão Crédito')" class="p-2 bg-slate-700 rounded-lg text-[9px] font-bold uppercase">+ Crédito</button>
-                        <button onclick="addPg('Boleto')" class="p-2 bg-blue-900 rounded-lg text-[9px] font-bold uppercase col-span-2">+ Boleto</button>
-                    </div>
-                    <div id="lista-p" class="space-y-1"></div>
-                    <button onclick="finalizarVendaReal()" class="w-full p-4 bg-emerald-600 rounded-xl font-black uppercase text-xs">Confirmar Venda</button>
-                </div>
-            `;
+            form.innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" step="0.01" class="w-full bg-slate-800 p-4 rounded-xl text-white font-black text-center mb-4 outline-none border border-white/10"><div class="grid grid-cols-2 gap-2 mb-4"><button onclick="window.addPg('Dinheiro')" class="p-2 bg-slate-700 rounded-lg text-[9px] font-bold uppercase">+ Dinheiro</button><button onclick="window.addPg('Pix')" class="p-2 bg-slate-700 rounded-lg text-[9px] font-bold uppercase">+ Pix</button><button onclick="window.addPg('Cartão Débito')" class="p-2 bg-slate-700 rounded-lg text-[9px] font-bold uppercase">+ Débito</button><button onclick="window.addPg('Cartão Crédito')" class="p-2 bg-slate-700 rounded-lg text-[9px] font-bold uppercase">+ Crédito</button><button onclick="window.addPg('Boleto')" class="p-2 bg-blue-900 rounded-lg text-[9px] font-bold uppercase col-span-2">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4"></div><button onclick="window.finalizarVendaReal()" class="w-full p-4 bg-emerald-600 rounded-xl font-black uppercase text-xs">Confirmar Venda</button>`;
         };
 
         window.addPg = (tipo) => {
-            const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0);
-            if(v <= 0) return;
+            const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0); if(v <= 0) return;
             let pg = { tipo, valor: v };
-            
             if(tipo === 'Boleto') {
-                // CORREÇÃO: Pergunta clara do SPC
                 const rOp = prompt("POSSUI RESTRIÇÃO (SPC)?\n1 - Sim\n2 - Não");
                 pg.restricao = (rOp === "1") ? "Sim" : "Não";
-                
-                // CORREÇÃO: Pergunta clara da entrada
                 const temEntrada = prompt("TEVE ENTRADA?\n1 - Sim\n2 - Não");
                 if(temEntrada === "1") {
                     pg.entrada = parseFloat(prompt("Valor da Entrada:")?.replace(',','.') || 0);
                     const fE = prompt("Forma da Entrada:\n1-Dinheiro\n2-Pix\n3-Cartão Débito");
                     pg.forma_entrada = fE === "1" ? "Dinheiro" : fE === "2" ? "Pix" : "Cartão Débito";
-                } else {
-                    pg.entrada = 0;
-                    pg.forma_entrada = "";
-                }
+                } else { pg.entrada = 0; pg.forma_entrada = ""; }
             }
             window.tempPagamentos.push(pg); window.renderTemp();
         };
 
-        window.renderTemp = () => {
-            document.getElementById('lista-p').innerHTML = window.tempPagamentos.map((p, i) => `
-                <div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]">
-                    <span>${p.tipo} ${p.restricao ? '(SPC: '+p.restricao+')' : ''}</span>
-                    <span class="font-black text-emerald-400">${window.formatBRL(p.valor)} <button onclick="window.tempPagamentos.splice(${i},1);window.renderTemp();" class="text-rose-500 ml-2 font-bold">✕</button></span>
-                </div>
-            `).join('');
-        };
+        window.renderTemp = () => { document.getElementById('lista-p').innerHTML = window.tempPagamentos.map((p, i) => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]"><span>${p.tipo} ${p.restricao ? '(SPC: '+p.restricao+')' : ''}</span><span class="font-black text-emerald-400">${window.formatBRL(p.valor)} <button onclick="window.tempPagamentos.splice(${i},1);window.renderTemp();" class="text-rose-500 ml-2 font-bold">✕</button></span></div>`).join(''); };
 
         window.salvarStatusRapido = async (status) => {
             const { tipo, data, id } = window.itemSendoGerenciado;
             const dbRef = tipo === 'agenda' ? `${PATH}/${data}/${id}` : `${AVULSO}/${id}`;
             await update(ref(db, dbRef), { resultado: status, valor: 0 });
-            fecharModalGestao(); carregarRelatorio();
+            window.fecharModalGestao(); carregarRelatorio();
         };
 
         window.finalizarVendaReal = async () => {
             const total = parseFloat(document.getElementById('vTotal').value);
             const soma = window.tempPagamentos.reduce((acc, c) => acc + c.valor, 0);
-            if(!total || Math.abs(total - soma) > 0.1) return alert("A soma dos pagamentos não bate com o valor total!");
+            if(!total || Math.abs(total - soma) > 0.1) return alert("Total não confere!");
             const { tipo, data, id } = window.itemSendoGerenciado;
             const dbRef = tipo === 'agenda' ? `${PATH}/${data}/${id}` : `${AVULSO}/${id}`;
             await update(ref(db, dbRef), { resultado: "Venda", valor: total, pagamentos: window.tempPagamentos });
-            fecharModalGestao(); carregarRelatorio();
+            window.fecharModalGestao(); carregarRelatorio();
         };
 
         window.fluxoAlterarData = () => {
-            const form = document.getElementById('gestao-form');
-            document.getElementById('gestao-menu').classList.add('hidden');
-            form.classList.remove('hidden');
-            form.innerHTML = `
-                <input type="date" id="nD" class="w-full bg-slate-800 p-4 rounded-xl text-white mb-4 outline-none border border-white/10">
-                <button onclick="salvarDataNova()" class="w-full p-4 bg-blue-600 rounded-xl font-bold uppercase text-xs">Confirmar Nova Data</button>
-            `;
+            const form = document.getElementById('gestao-form'); document.getElementById('gestao-menu').classList.add('hidden'); form.classList.remove('hidden');
+            form.innerHTML = `<input type="date" id="nD" class="w-full bg-slate-800 p-4 rounded-xl text-white mb-4 outline-none border border-white/10"><button onclick="window.salvarDataNova()" class="w-full p-4 bg-blue-600 rounded-xl font-bold uppercase text-xs">Confirmar Nova Data</button>`;
         };
 
         window.salvarDataNova = async () => {
@@ -264,12 +207,12 @@
                 let o = snap.val(); o.data = dn;
                 if(tipo === 'agenda') { await remove(ref(db, dbRef)); await set(ref(db, `${PATH}/${dn}/${id}`), o); }
                 else { await update(ref(db, dbRef), { data: dn }); }
-                fecharModalGestao(); carregarRelatorio();
+                window.fecharModalGestao(); carregarRelatorio();
             }
         };
 
         window.fluxoAlterarHorario = async () => {
-            const { data, id, tipo } = window.itemSendoGerenciado; fecharModalGestao();
+            const { data, id, tipo } = window.itemSendoGerenciado; window.fecharModalGestao();
             const snap = await get(ref(db, (tipo === 'agenda' ? `${PATH}/${data}/${id}` : `${AVULSO}/${id}`)));
             if(!snap.exists()) return; let o = snap.val();
             window.abrirModalHorario(data, o.horario, async (nD, nH) => {
@@ -280,9 +223,8 @@
             });
         };
 
-        window.confirmarExclusao = async () => { if(confirm("Apagar registro permanentemente?")) { const { tipo, data, id } = window.itemSendoGerenciado; await remove(ref(db, tipo === 'agenda' ? `${PATH}/${data}/${id}` : `${AVULSO}/${id}`)); fecharModalGestao(); carregarRelatorio(); } };
+        window.confirmarExclusao = async () => { if(confirm("Apagar?")) { const { tipo, data, id } = window.itemSendoGerenciado; await remove(ref(db, tipo === 'agenda' ? `${PATH}/${data}/${id}` : `${AVULSO}/${id}`)); window.fecharModalGestao(); carregarRelatorio(); } };
 
-        // --- SISTEMA BASE (ESTÁVEL) ---
         async function carregarRelatorio() {
             const [sAg, sAv] = await Promise.all([get(ref(db, PATH)), get(ref(db, AVULSO))]);
             const ag = sAg.val() || {}, av = sAv.val() || {}; window.dadosCompletos = [];
@@ -358,13 +300,12 @@
         
         window.copiarRelatorio = async () => {
             const cid = prompt("Cidade:"); if(!cid) return; const t = window.resumoAtual; const f = (v) => window.formatBRL(v);
-            const msg = `*${cid} ${new Date().toLocaleDateString('pt-BR')}*\nVendidos = ${t.vendidos}\nNQ = ${t.nq}\nDinheiro = ${f(t.dinheiro)}\nPix = ${f(t.pix)}\nDébito = ${f(t.debito)}\nBoleto s/R = ${f(t.boletoSemRest)}\nBoleto c/R = ${f(t.boletoRest)}\nCrédito = ${f(t.credito)}\nTotal = ${f(t.totalVendas)}\nVale = ${f(t.vale)}`;
-            await navigator.clipboard.writeText(msg); alert("COPIADO!");
+            const msg = `*${cid} ${new Date().toLocaleDateString('pt-BR')}*\n\nVendidos = ${t.vendidos}\nNQ = ${t.nq}\n\nDinheiro = ${f(t.dinheiro)}\nPix = ${f(t.pix)}\nCrédito = ${f(t.credito)}\nDébito = ${f(t.debito)}\nBoleto Sem Restrição = ${f(t.boletoSemRest)}\nBoleto Com Restrição = ${f(t.boletoRest)}\n\nTotal = ${f(t.totalVendas)}\nVale = ${f(t.vale)}`;
+            await navigator.clipboard.writeText(msg); alert("RELATÓRIO COPIADO!");
         };
 
         window.filtrarLista = () => renderizarLista(window.dadosCompletos.filter(i => i.nome_formando?.toLowerCase().includes(document.getElementById('busca-admin').value.toLowerCase())));
         
-        // --- INICIALIZAÇÃO ---
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
             e.preventDefault(); const d = document.getElementById('data-selecionada').value; const h = document.getElementById('horario').value;
             await set(ref(db, `${PATH}/${d}/${h.replace(':','-')}`), { data: d, horario: h, nome_formando: document.getElementById('nome').value, telefone: document.getElementById('telefone').value, city: document.getElementById('cidade').value, endereco: document.getElementById('endereco').value, resultado: "Pendente" });
@@ -378,15 +319,6 @@
                 await gerarHorariosDisponiveis(btn.getAttribute('data-date'), document.getElementById('horario'));
             });
         });
-
-        (function autoCheck() {
-            const agora = new Date();
-            document.querySelectorAll('.day-btn').forEach(btn => {
-                const dataBtn = btn.getAttribute("data-date"); const dateObj = new Date(dataBtn + 'T00:00:00');
-                const isW = (dateObj.getDay() === 0 || dateObj.getDay() === 6); const hL = isW ? "15:00:00" : "17:30:00";
-                if (agora > new Date(`${dataBtn}T${hL}`)) btn.style.display = "none";
-            });
-        })();
 
         window.carregarRelatorio = carregarRelatorio;
     </script>
