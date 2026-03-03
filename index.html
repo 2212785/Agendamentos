@@ -217,7 +217,8 @@
             const snap = await get(ref(db, (tipo === 'agenda' ? `${PATH}/${data}/${id}` : `${AVULSO}/${id}`)));
             if(!snap.exists()) return; let o = snap.val();
             window.abrirModalHorario(data, o.horario, async (nD, nH) => {
-                const nID = nH.replace(":","-");
+                // Ao alterar, gera um novo ID baseado no timestamp para permitir duplicatas no mesmo horário se necessário no admin
+                const nID = `${nH.replace(":","-")}-${Date.now()}`;
                 if(tipo === 'agenda') { await remove(ref(db, `${PATH}/${data}/${id}`)); o.data = nD; o.horario = nH; await set(ref(db, `${PATH}/${nD}/${nID}`), o); }
                 else { await update(ref(db, `${AVULSO}/${id}`), { data: nD, horario: nH }); }
                 carregarRelatorio();
@@ -271,15 +272,45 @@
         }
 
         async function gerarHorariosDisponiveis(dataEscolhida, selectElement) {
-            selectElement.innerHTML = '<option>Consultando...</option>'; const snap = await get(ref(db, `${PATH}/${dataEscolhida}`));
-            const ocupados = snap.exists() ? Object.keys(snap.val()).map(k => k.replace("-", ":")) : [];
+            selectElement.innerHTML = '<option>Consultando...</option>'; 
+            const snap = await get(ref(db, `${PATH}/${dataEscolhida}`));
+            
+            // Pega todos os horários que já possuem agendamento
+            const ocupadosRaw = snap.exists() ? snap.val() : {};
+            
+            // Cria um mapa para contar quantos agendamentos existem em cada horário
+            const contagemHorarios = {};
+            for (let id in ocupadosRaw) {
+                // Extrai o horário do ID (ex: "09-00-12345" vira "09:00")
+                const horarioLimpo = id.split('-').slice(0, 2).join(':');
+                contagemHorarios[horarioLimpo] = (contagemHorarios[horarioLimpo] || 0) + 1;
+            }
+
             const isWeekend = (new Date(dataEscolhida + 'T00:00:00').getDay() % 6 === 0);
-            const hLimite = isWeekend ? "15:00" : "20:30"; const agora = new Date(); const hojeStr = agora.toISOString().split('T')[0];
-            selectElement.innerHTML = '<option value="">Escolha um Horário</option>'; let cursor = new Date(`${dataEscolhida}T09:00:00`); let final = new Date(`${dataEscolhida}T${hLimite}:00`);
+            const hLimite = isWeekend ? "15:00" : "20:30"; 
+            const agora = new Date(); 
+            const hojeStr = agora.toISOString().split('T')[0];
+            
+            selectElement.innerHTML = '<option value="">Escolha um Horário</option>'; 
+            let cursor = new Date(`${dataEscolhida}T09:00:00`); 
+            let final = new Date(`${dataEscolhida}T${hLimite}:00`);
+            
             while(cursor <= final) {
                 let hF = cursor.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-                let disp = true; if(dataEscolhida === hojeStr && cursor < new Date(agora.getTime() + (3*60*60*1000))) disp = false;
-                if(!ocupados.includes(hF) && disp) { let opt = document.createElement('option'); opt.value = hF; opt.textContent = hF; selectElement.appendChild(opt); }
+                let disp = true; 
+                
+                // Regra de 3 horas de antecedência para o dia de hoje
+                if(dataEscolhida === hojeStr && cursor < new Date(agora.getTime() + (3*60*60*1000))) disp = false;
+                
+                // VERIFICAÇÃO DE VENDEDORES: Se houver menos de 2 agendamentos, o horário aparece
+                const agendamentosNesteHorario = contagemHorarios[hF] || 0;
+                
+                if(agendamentosNesteHorario < 2 && disp) { 
+                    let opt = document.createElement('option'); 
+                    opt.value = hF; 
+                    opt.textContent = `${hF} (${2 - agendamentosNesteHorario} vaga${2 - agendamentosNesteHorario > 1 ? 's' : ''})`; 
+                    selectElement.appendChild(opt); 
+                }
                 cursor.setMinutes(cursor.getMinutes() + 30);
             }
         }
@@ -307,7 +338,6 @@
 
         window.filtrarLista = () => renderizarLista(window.dadosCompletos.filter(i => i.nome_formando?.toLowerCase().includes(document.getElementById('busca-admin').value.toLowerCase())));
         
-        // --- INICIALIZAÇÃO E AVISO WHATSAPP ---
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
             e.preventDefault(); 
             const d = document.getElementById('data-selecionada').value; 
@@ -317,8 +347,10 @@
             const cid = document.getElementById('cidade').value;
             const end = document.getElementById('endereco').value;
 
-            // Salva no Firebase
-            await set(ref(db, `${PATH}/${d}/${h.replace(':','-')}`), { 
+            // Gera um ID único usando o horário + timestamp para evitar que um agendamento apague o outro no Firebase
+            const uniqueID = `${h.replace(':','-')}-${Date.now()}`;
+
+            await set(ref(db, `${PATH}/${d}/${uniqueID}`), { 
                 data: d, 
                 horario: h, 
                 nome_formando: n, 
@@ -328,7 +360,6 @@
                 resultado: "Pendente" 
             });
 
-            // REATIVADO: Envio de mensagem automática
             const msgAgendamento = `*NOVA VISITA AGENDADA*\n\n*Nome:* ${n}\n*Data:* ${paraDataBR(d)}\n*Horário:* ${h}\n*Cidade:* ${cid}\n*Endereço:* ${end}`;
             window.open(`https://wa.me/${MEU_WHATSAPP}?text=${encodeURIComponent(msgAgendamento)}`);
             
