@@ -1,11 +1,11 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, get, set, remove, update, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
-    apiKey: "SUA_KEY", 
+    apiKey: "SUA_KEY",
     authDomain: "agenda-album-de-formatura.firebaseapp.com",
-    databaseURL: "https://agenda-album-de-formatura-default-rtdb.firebaseio.com", 
+    databaseURL: "https://agenda-album-de-formatura-default-rtdb.firebaseio.com",
     projectId: "agenda-album-de-formatura",
     appId: "1:29604114447:web:bac79aba4c4aa945c8737a"
 };
@@ -15,30 +15,47 @@ const db = getDatabase(app);
 
 const PATH = 'agendamentos';
 const AVULSO = 'avulsos';
-const MEU_WHATSAPP = "5516993291674";
 
-window.formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
-const paraDataBR = (str) => { if(!str || !str.includes('-')) return "---"; const [y,m,d] = str.split("-"); return `${d}/${m}/${y}`; };
+window.formatBRL = (v) =>
+    new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    }).format(Number(v) || 0);
+
+const paraDataBR = (str) => {
+    if(!str || !str.includes('-')) return "---";
+    const [y,m,d] = str.split("-");
+    return `${d}/${m}/${y}`;
+};
 
 window.tempPagamentos = [];
 
+/* =========================
+   PAGAMENTOS TEMPORÁRIOS
+========================= */
+
 window.addPg = (tipo) => {
+
     const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0);
     if(v <= 0) return;
 
     let pg = { tipo, valor: v };
 
     if(tipo === 'Boleto') {
+
         const temEntrada = prompt("TEVE ENTRADA?\n1 - Sim\n2 - Não");
 
         if(temEntrada === "1") {
+
             pg.entrada = parseFloat(prompt("Valor da Entrada:")?.replace(',','.') || 0);
 
             const fE = prompt("Forma da Entrada:\n1-Dinheiro\n2-Pix\n3-Cartão Débito");
+
             pg.forma_entrada =
                 fE === "1" ? "Dinheiro" :
                 fE === "2" ? "Pix" :
-                "Cartão Débito";
+                fE === "3" ? "Cartão Débito" :
+                "";
         } else {
             pg.entrada = 0;
             pg.forma_entrada = "";
@@ -50,8 +67,11 @@ window.addPg = (tipo) => {
 };
 
 window.renderTemp = () => {
-    document.getElementById('lista-p').innerHTML =
-        window.tempPagamentos.map((p, i) => `
+
+    const el = document.getElementById('lista-p');
+    if(!el) return;
+
+    el.innerHTML = window.tempPagamentos.map((p, i) => `
         <div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]">
             <span>${p.tipo}</span>
             <span class="font-black text-emerald-400">
@@ -59,34 +79,71 @@ window.renderTemp = () => {
                 <button onclick="window.tempPagamentos.splice(${i},1);window.renderTemp();"
                     class="text-rose-500 ml-2 font-bold">✕</button>
             </span>
-        </div>`).join('');
+        </div>
+    `).join('');
 };
 
+/* =========================
+   CARREGAR RELATÓRIO
+========================= */
+
 async function carregarRelatorio() {
-    const [sAg, sAv] = await Promise.all([get(ref(db, PATH)), get(ref(db, AVULSO))]);
-    const ag = sAg.val() || {}, av = sAv.val() || {};
-    window.dadosCompletos = [];
 
-    for(let d in ag)
-        for(let h in ag[d])
-            window.dadosCompletos.push({...ag[d][h], id: h, data: d, tipo: 'agenda'});
+    try {
 
-    for(let id in av)
-        window.dadosCompletos.push({...av[id], id: id, tipo: 'avulso'});
+        const [sAg, sAv] = await Promise.all([
+            get(ref(db, PATH)),
+            get(ref(db, AVULSO))
+        ]);
 
-    renderizarLista(window.dadosCompletos);
+        const ag = sAg.val() || {};
+        const av = sAv.val() || {};
+
+        window.dadosCompletos = [];
+
+        for(let d in ag) {
+            for(let h in ag[d]) {
+                window.dadosCompletos.push({
+                    ...ag[d][h],
+                    id: h,
+                    data: d,
+                    tipo: 'agenda'
+                });
+            }
+        }
+
+        for(let id in av) {
+            window.dadosCompletos.push({
+                ...av[id],
+                id: id,
+                tipo: 'avulso'
+            });
+        }
+
+        renderizarLista(window.dadosCompletos);
+
+    } catch (erro) {
+        console.error("Erro ao carregar relatório:", erro);
+        alert("Erro ao carregar dados do Firebase.");
+    }
 }
 
+/* =========================
+   PROCESSAMENTO
+========================= */
+
 function renderizarLista(lista) {
+
+    if(!Array.isArray(lista)) return;
 
     let t = {
         vendidos: 0,
         totalVendas: 0,
-        totalComissao: 0,
         pix: 0,
         dinheiro: 0,
         debito: 0,
         credito: 0,
+        boleto: 0,
         vale: 0,
         nq: 0
     };
@@ -97,43 +154,40 @@ function renderizarLista(lista) {
 
         if(item.resultado === "Venda") {
 
-            const vT = parseFloat(item.valor || 0);
+            const vT = Number(item.valor) || 0;
+
             t.vendidos++;
             t.totalVendas += vT;
 
-            let com = 0;
-
-            if(item.pagamentos && Array.isArray(item.pagamentos)) {
+            if(Array.isArray(item.pagamentos)) {
 
                 item.pagamentos.forEach(p => {
 
+                    const valor = Number(p.valor) || 0;
+
                     if(p.tipo === "Dinheiro") {
-                        t.dinheiro += p.valor;
-                        t.vale += p.valor;
-                        com += p.valor * 0.12;
+                        t.dinheiro += valor;
+                        t.vale += valor;
                     }
 
                     else if(p.tipo === "Pix") {
-                        t.pix += p.valor;
-                        t.vale += p.valor;
-                        com += p.valor * 0.12;
+                        t.pix += valor;
+                        t.vale += valor;
                     }
 
                     else if(p.tipo === "Cartão Débito") {
-                        t.debito += p.valor;
-                        com += p.valor * 0.12;
+                        t.debito += valor;
                     }
 
                     else if(p.tipo === "Cartão Crédito") {
-                        t.credito += p.valor;
-                        com += p.valor * 0.12;
+                        t.credito += valor;
                     }
 
                     else if(p.tipo === "Boleto") {
-                        let ent = parseFloat(p.entrada || 0);
-                        let restante = p.valor - ent;
 
-                        com += (ent * 0.12) + (restante * 0.08);
+                        t.boleto += valor;
+
+                        const ent = Number(p.entrada) || 0;
 
                         if(p.forma_entrada === "Dinheiro") {
                             t.dinheiro += ent;
@@ -148,8 +202,6 @@ function renderizarLista(lista) {
 
                 });
             }
-
-            t.totalComissao += com;
         }
 
         else if(item.resultado === "NQ") {
@@ -159,7 +211,10 @@ function renderizarLista(lista) {
 
     window.resumoAtual = t;
 
-    document.getElementById('resumo-financeiro').innerHTML = `
+    const resumo = document.getElementById('resumo-financeiro');
+    if(!resumo) return;
+
+    resumo.innerHTML = `
     <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500">
         <p class="text-[7px] font-bold text-slate-400 uppercase">Eficiência</p>
         <p class="text-sm font-black">${t.vendidos}/${lista.length}</p>
@@ -192,13 +247,19 @@ function renderizarLista(lista) {
     `;
 }
 
+/* =========================
+   RELATÓRIO WHATSAPP
+========================= */
+
 window.copiarRelatorio = async () => {
+
+    if(!window.resumoAtual) return;
 
     const cid = prompt("Cidade:");
     if(!cid) return;
 
     const t = window.resumoAtual;
-    const f = (v) => window.formatBRL(v);
+    const f = window.formatBRL;
 
     const msg = `*${cid} ${new Date().toLocaleDateString('pt-BR')}*
 
@@ -209,6 +270,7 @@ Dinheiro = ${f(t.dinheiro)}
 Pix = ${f(t.pix)}
 Crédito = ${f(t.credito)}
 Débito = ${f(t.debito)}
+Boleto = ${f(t.boleto)}
 
 Total = ${f(t.totalVendas)}
 Vale = ${f(t.vale)}`;
@@ -218,4 +280,5 @@ Vale = ${f(t.vale)}`;
 };
 
 window.carregarRelatorio = carregarRelatorio;
+
 </script>
