@@ -2,8 +2,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
+// CHAVE RESTAURADA: Substituí "SUA_KEY" pela sua chave real
 const firebaseConfig = {
-    apiKey: "SUA_KEY",
+    apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU", 
     authDomain: "agenda-album-de-formatura.firebaseapp.com",
     databaseURL: "https://agenda-album-de-formatura-default-rtdb.firebaseio.com",
     projectId: "agenda-album-de-formatura",
@@ -31,26 +32,20 @@ const paraDataBR = (str) => {
 window.tempPagamentos = [];
 
 /* =========================
-   PAGAMENTOS TEMPORÁRIOS
+    PAGAMENTOS TEMPORÁRIOS
 ========================= */
 
 window.addPg = (tipo) => {
-
     const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0);
     if(v <= 0) return;
 
     let pg = { tipo, valor: v };
 
     if(tipo === 'Boleto') {
-
         const temEntrada = prompt("TEVE ENTRADA?\n1 - Sim\n2 - Não");
-
         if(temEntrada === "1") {
-
             pg.entrada = parseFloat(prompt("Valor da Entrada:")?.replace(',','.') || 0);
-
             const fE = prompt("Forma da Entrada:\n1-Dinheiro\n2-Pix\n3-Cartão Débito");
-
             pg.forma_entrada =
                 fE === "1" ? "Dinheiro" :
                 fE === "2" ? "Pix" :
@@ -67,7 +62,6 @@ window.addPg = (tipo) => {
 };
 
 window.renderTemp = () => {
-
     const el = document.getElementById('lista-p');
     if(!el) return;
 
@@ -84,13 +78,11 @@ window.renderTemp = () => {
 };
 
 /* =========================
-   CARREGAR RELATÓRIO
+    CARREGAR RELATÓRIO
 ========================= */
 
 async function carregarRelatorio() {
-
     try {
-
         const [sAg, sAv] = await Promise.all([
             get(ref(db, PATH)),
             get(ref(db, AVULSO))
@@ -124,16 +116,14 @@ async function carregarRelatorio() {
 
     } catch (erro) {
         console.error("Erro ao carregar relatório:", erro);
-        alert("Erro ao carregar dados do Firebase.");
     }
 }
 
 /* =========================
-   PROCESSAMENTO
+    PROCESSAMENTO
 ========================= */
 
 function renderizarLista(lista) {
-
     if(!Array.isArray(lista)) return;
 
     let t = {
@@ -151,59 +141,43 @@ function renderizarLista(lista) {
     lista.sort((a,b) => (a.data || "").localeCompare(b.data || ""));
 
     lista.forEach(item => {
-
         if(item.resultado === "Venda") {
-
             const vT = Number(item.valor) || 0;
-
             t.vendidos++;
             t.totalVendas += vT;
 
             if(Array.isArray(item.pagamentos)) {
-
                 item.pagamentos.forEach(p => {
-
                     const valor = Number(p.valor) || 0;
-
                     if(p.tipo === "Dinheiro") {
                         t.dinheiro += valor;
                         t.vale += valor;
                     }
-
                     else if(p.tipo === "Pix") {
                         t.pix += valor;
                         t.vale += valor;
                     }
-
                     else if(p.tipo === "Cartão Débito") {
                         t.debito += valor;
                     }
-
                     else if(p.tipo === "Cartão Crédito") {
                         t.credito += valor;
                     }
-
                     else if(p.tipo === "Boleto") {
-
                         t.boleto += valor;
-
                         const ent = Number(p.entrada) || 0;
-
                         if(p.forma_entrada === "Dinheiro") {
                             t.dinheiro += ent;
                             t.vale += ent;
                         }
-
                         if(p.forma_entrada === "Pix") {
                             t.pix += ent;
                             t.vale += ent;
                         }
                     }
-
                 });
             }
         }
-
         else if(item.resultado === "NQ") {
             t.nq++;
         }
@@ -219,27 +193,22 @@ function renderizarLista(lista) {
         <p class="text-[7px] font-bold text-slate-400 uppercase">Eficiência</p>
         <p class="text-sm font-black">${t.vendidos}/${lista.length}</p>
     </div>
-
     <div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500 text-emerald-400">
         <p class="text-[7px] font-bold uppercase">CASH</p>
         <p class="text-[9px] font-black">${window.formatBRL(t.dinheiro + t.pix)}</p>
     </div>
-
     <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-400 text-blue-300">
         <p class="text-[7px] font-bold uppercase">DÉBITO</p>
         <p class="text-[9px] font-black">${window.formatBRL(t.debito)}</p>
     </div>
-
     <div class="glass p-2 rounded-xl text-center border-t-2 border-indigo-400 text-indigo-300">
         <p class="text-[7px] font-bold uppercase">CRÉDITO</p>
         <p class="text-[9px] font-black">${window.formatBRL(t.credito)}</p>
     </div>
-
     <div class="bg-blue-600 p-2 rounded-xl text-center text-white shadow-xl">
         <p class="text-[7px] font-bold uppercase">VENDAS</p>
         <p class="text-[10px] font-black">${window.formatBRL(t.totalVendas)}</p>
     </div>
-
     <div class="bg-amber-500 p-2 rounded-xl text-center text-amber-950 shadow-xl">
         <p class="text-[7px] font-bold uppercase">VALES</p>
         <p class="text-[10px] font-black">${window.formatBRL(t.vale)}</p>
@@ -248,37 +217,26 @@ function renderizarLista(lista) {
 }
 
 /* =========================
-   RELATÓRIO WHATSAPP
+    RELATÓRIO WHATSAPP
 ========================= */
 
 window.copiarRelatorio = async () => {
-
     if(!window.resumoAtual) return;
-
     const cid = prompt("Cidade:");
     if(!cid) return;
-
     const t = window.resumoAtual;
     const f = window.formatBRL;
-
-    const msg = `*${cid} ${new Date().toLocaleDateString('pt-BR')}*
-
-Vendidos = ${t.vendidos}
-NQ = ${t.nq}
-
-Dinheiro = ${f(t.dinheiro)}
-Pix = ${f(t.pix)}
-Crédito = ${f(t.credito)}
-Débito = ${f(t.debito)}
-Boleto = ${f(t.boleto)}
-
-Total = ${f(t.totalVendas)}
-Vale = ${f(t.vale)}`;
-
+    const msg = `*${cid} ${new Date().toLocaleDateString('pt-BR')}*\n\nVendidos = ${t.vendidos}\nNQ = ${t.nq}\n\nDinheiro = ${f(t.dinheiro)}\nPix = ${f(t.pix)}\nCrédito = ${f(t.credito)}\nDébito = ${f(t.debito)}\nBoleto = ${f(t.boleto)}\n\nTotal = ${f(t.totalVendas)}\nVale = ${f(t.vale)}`;
     await navigator.clipboard.writeText(msg);
     alert("RELATÓRIO COPIADO!");
 };
 
+// EXPOSIÇÃO GLOBAL DA FUNÇÃO
 window.carregarRelatorio = carregarRelatorio;
+
+// INICIALIZAÇÃO AUTOMÁTICA (Garante que roda ao carregar a página)
+document.addEventListener("DOMContentLoaded", () => {
+    carregarRelatorio();
+});
 
 </script>
