@@ -1,389 +1,221 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; color: #f1f5f9; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); transition: all 0.3s ease; }
-        #admin-modal { display: none; position: fixed; inset: 0; z-index: 50; padding: 20px; overflow-y: auto; background: rgba(2, 6, 23, 0.98); }
-        #modalGestao, #modalHorario { display: none; position: fixed; inset: 0; z-index: 100; padding: 20px; overflow-y: auto; background: rgba(2, 6, 23, 0.95); align-items: center; justify-content: center; }
-        .day-btn { transition: all 0.2s; border-color: rgba(255,255,255,0.1); color: #94a3b8; background: rgba(255,255,255,0.03); cursor: pointer; }
-        .day-btn.active { background: #3b82f6; color: white; border-color: #60a5fa; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
-    </style>
-</head>
-<body class="min-h-screen flex flex-col text-white">
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, get, set, remove, update, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-    <div id="modalGestao" class="flex">
-        <div class="glass w-full max-w-xl rounded-[2.5rem] p-8 border border-white/20 shadow-2xl">
-            <div class="flex justify-between items-center mb-8">
-                <h2 id="gestao-titulo" class="text-2xl font-black uppercase italic text-blue-400">Gerenciar Visita</h2>
-                <button onclick="fecharModalGestao()" class="bg-slate-800 text-white w-10 h-10 rounded-full font-bold">✕</button>
-            </div>
-            <div id="gestao-menu" class="grid grid-cols-2 gap-4">
-                <button onclick="fluxoResultado()" class="bg-emerald-600/20 border border-emerald-500/50 p-6 rounded-2xl hover:bg-emerald-600 transition group text-center">
-                    <span class="block text-emerald-400 group-hover:text-white font-black text-xs uppercase">1. Resultado</span>
-                </button>
-                <button onclick="fluxoAlterarData()" class="bg-blue-600/20 border border-blue-500/50 p-6 rounded-2xl hover:bg-blue-600 transition group text-center">
-                    <span class="block text-blue-400 group-hover:text-white font-black text-xs uppercase">2. Mudar Data</span>
-                </button>
-                <button onclick="fluxoAlterarHorario()" class="bg-indigo-600/20 border border-indigo-500/50 p-6 rounded-2xl hover:bg-indigo-600 transition group text-center">
-                    <span class="block text-indigo-400 group-hover:text-white font-black text-xs uppercase">3. Horário</span>
-                </button>
-                <button onclick="confirmarExclusao()" class="bg-rose-600/20 border border-rose-500/50 p-6 rounded-2xl hover:bg-rose-600 transition group text-center">
-                    <span class="block text-rose-400 group-hover:text-white font-black text-xs uppercase">4. Excluir</span>
-                </button>
-            </div>
-            <div id="gestao-form" class="mt-8 hidden space-y-4"></div>
-        </div>
-    </div>
+const firebaseConfig = {
+    apiKey: "SUA_KEY", 
+    authDomain: "agenda-album-de-formatura.firebaseapp.com",
+    databaseURL: "https://agenda-album-de-formatura-default-rtdb.firebaseio.com", 
+    projectId: "agenda-album-de-formatura",
+    appId: "1:29604114447:web:bac79aba4c4aa945c8737a"
+};
 
-    <div id="modalHorario" class="flex">
-        <div class="bg-white w-full max-w-md rounded-[2rem] shadow-2xl p-8 text-slate-900">
-            <h2 class="text-2xl font-black mb-6 uppercase text-blue-600 italic">Alterar Horário</h2>
-            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">Nova Data</label>
-            <input id="novaDataModal" type="date" class="w-full border-2 border-slate-100 rounded-2xl p-4 mb-4 outline-none focus:border-blue-500">
-            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-2">Horário Disponível</label>
-            <select id="novoHorarioModal" class="w-full border-2 border-slate-100 rounded-2xl p-4 mb-6 outline-none focus:border-blue-500">
-                <option value="">Selecione a Data</option>
-            </select>
-            <div class="flex gap-3">
-                <button onclick="fecharModalHorario()" class="w-1/2 py-4 rounded-2xl bg-slate-100 text-slate-500 font-bold uppercase text-[10px]">Cancelar</button>
-                <button id="confirmarHorarioBtn" class="w-1/2 py-4 rounded-2xl btn-primary text-white font-black uppercase text-[10px]">Confirmar</button>
-            </div>
-        </div>
-    </div>
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-    <div id="admin-modal">
-        <div class="max-w-7xl mx-auto">
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
-                <h1 class="text-3xl font-extrabold italic uppercase">Master <span class="text-blue-500 font-black">Dashboard</span></h1>
-                <div class="flex flex-wrap gap-3 w-full lg:w-auto">
-                    <button onclick="lancarVendaDireta()" class="flex-1 lg:flex-none bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase shadow">Venda Direta</button>
-                    <button onclick="window.copiarRelatorio()" class="flex-1 lg:flex-none bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase shadow">Relatório WhatsApp</button>
-                    <button onclick="fecharAdmin()" class="flex-1 lg:flex-none bg-rose-600/20 text-rose-500 border border-rose-500/50 px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase font-black">Sair</button>
-                </div>
-            </div>
-            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-3 mb-8"></div>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-                        <h3 class="text-lg font-bold uppercase text-white">Roteiro de Atendimento</h3>
-                        <input type="text" id="busca-admin" onkeyup="window.filtrarLista()" placeholder="Pesquisar..." class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white outline-none w-full sm:w-64">
-                    </div>
-                    <div id="admin-content" class="glass rounded-3xl overflow-x-auto shadow-2xl border-white/5"></div>
-                </div>
-                <div class="space-y-6">
-                    <h3 class="text-lg font-bold text-white uppercase italic">Extrato Diário</h3>
-                    <div id="comissao-content" class="glass rounded-3xl p-5 shadow-inner border-white/5 overflow-x-auto"></div>
-                    <div id="fechamento-final"></div>
-                </div>
-            </div>
-        </div>
-    </div>
+const PATH = 'agendamentos';
+const AVULSO = 'avulsos';
+const MEU_WHATSAPP = "5516993291674";
 
-    <header class="p-6 flex justify-between items-center">
-        <span class="text-2xl font-black italic uppercase">Portal <span class="text-blue-500">do formando</span></span>
-        <button onclick="acessoAdmin()" class="glass px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase border-white/20">Login ADM</button>
-    </header>
+window.formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+const paraDataBR = (str) => { if(!str || !str.includes('-')) return "---"; const [y,m,d] = str.split("-"); return `${d}/${m}/${y}`; };
 
-    <main class="container mx-auto p-4 flex-grow flex items-center justify-center">
-        <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl text-center border-white/5">
-            <h2 class="text-3xl font-black mb-10 uppercase italic text-white">Agendar Visita</h2>
-            <form id="form-agendamento" class="space-y-6 text-left">
-                <div class="grid grid-cols-2 gap-2" id="day-selector">
-                    <button type="button" data-date="2026-03-04" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">04/03<br>Qua</button>
-                    <button type="button" data-date="2026-03-05" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">05/03<br>Qui</button>
-                    <button type="button" data-date="2026-03-06" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">06/03<br>Sex</button>
-                    <button type="button" data-date="2026-03-07" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">07/03<br>Sab</button>
-                </div>
-                <input type="hidden" id="data-selecionada" required>
-                <div class="space-y-4">
-                    <input type="text" id="nome" required placeholder="Nome do Formando" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none focus:border-blue-500">
-                    <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none focus:border-blue-500">
-                    <input type="text" id="cidade" required placeholder="Cidade" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none focus:border-blue-500">
-                    <select id="horario" required class="w-full bg-slate-800 border border-slate-700 p-4 rounded-2xl text-white outline-none">
-                        <option value="">Selecione a Data</option>
-                    </select>
-                    <textarea id="endereco" required placeholder="Endereço de Visita" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none" rows="2"></textarea>
-                </div>
-                <button type="submit" class="btn-primary w-full text-white font-black py-5 rounded-2xl shadow-2xl uppercase">Finalizar Agendamento</button>
-            </form>
-        </div>
-    </main>
+window.tempPagamentos = [];
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, get, set, remove, update, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+window.addPg = (tipo) => {
+    const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0);
+    if(v <= 0) return;
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU", 
-            authDomain: "agenda-album-de-formatura.firebaseapp.com",
-            databaseURL: "https://agenda-album-de-formatura-default-rtdb.firebaseio.com", 
-            projectId: "agenda-album-de-formatura",
-            appId: "1:29604114447:web:bac79aba4c4aa945c8737a"
-        };
-        
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const PATH = 'agendamentos';
-        const AVULSO = 'avulsos';
-        const MEU_WHATSAPP = "5516993291674";
+    let pg = { tipo, valor: v };
 
-        window.formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
-        const paraDataBR = (str) => { if(!str || !str.includes('-')) return "---"; const [y,m,d] = str.split("-"); return `${d}/${m}/${y}`; };
+    if(tipo === 'Boleto') {
+        const temEntrada = prompt("TEVE ENTRADA?\n1 - Sim\n2 - Não");
 
-        window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
-        window.fecharModalHorario = () => document.getElementById("modalHorario").style.display = "none";
-        
-        window.gerenciarItem = (tipo, data, id) => {
-            window.itemSendoGerenciado = { tipo, data, id };
-            const item = window.dadosCompletos.find(i => i.id === id && i.data === data);
-            document.getElementById('gestao-titulo').textContent = item ? item.nome_formando : 'Gerenciar Visita';
-            document.getElementById('modalGestao').style.display = 'flex';
-        };
+        if(temEntrada === "1") {
+            pg.entrada = parseFloat(prompt("Valor da Entrada:")?.replace(',','.') || 0);
 
-        window.fluxoResultado = () => {
-            const menu = document.getElementById('gestao-menu'); const form = document.getElementById('gestao-form');
-            menu.classList.add('hidden'); form.classList.remove('hidden');
-            form.innerHTML = `<div class="grid grid-cols-2 gap-2"><button onclick="window.prepararVenda()" class="p-4 bg-emerald-600 rounded-xl font-black uppercase text-[10px]">Lançar Venda</button><button onclick="window.salvarStatusRapido('NQ')" class="p-4 bg-rose-600 rounded-xl font-black uppercase text-[10px]">NQ</button><button onclick="window.salvarStatusRapido('Não Atendeu')" class="p-4 bg-amber-600 rounded-xl font-black uppercase text-[10px]">Não Atendeu</button><button onclick="window.salvarStatusRapido('Reagendar')" class="p-4 bg-blue-600 rounded-xl font-black uppercase text-[10px]">Reagendar</button><button onclick="window.salvarStatusRapido('Brinde')" class="p-4 bg-purple-600 rounded-xl font-black uppercase text-[10px]">Brinde</button><button onclick="window.salvarStatusRapido('Vendido por Outro')" class="p-4 bg-cyan-600 rounded-xl font-black uppercase text-[10px]">Vendido Outro</button></div>`;
-        };
-
-        window.prepararVenda = () => {
-            window.tempPagamentos = [];
-            const form = document.getElementById('gestao-form');
-            form.innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" step="0.01" class="w-full bg-slate-800 p-4 rounded-xl text-white font-black text-center mb-4 outline-none border border-white/10"><div class="grid grid-cols-2 gap-2 mb-4"><button onclick="window.addPg('Dinheiro')" class="p-2 bg-slate-700 rounded-lg text-[9px] font-bold uppercase">+ Dinheiro</button><button onclick="window.addPg('Pix')" class="p-2 bg-slate-700 rounded-lg text-[9px] font-bold uppercase">+ Pix</button><button onclick="window.addPg('Cartão Débito')" class="p-2 bg-slate-700 rounded-lg text-[9px] font-bold uppercase">+ Débito</button><button onclick="window.addPg('Cartão Crédito')" class="p-2 bg-slate-700 rounded-lg text-[9px] font-bold uppercase">+ Crédito</button><button onclick="window.addPg('Boleto')" class="p-2 bg-blue-900 rounded-lg text-[9px] font-bold uppercase col-span-2">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4"></div><button onclick="window.finalizarVendaReal()" class="w-full p-4 bg-emerald-600 rounded-xl font-black uppercase text-xs">Confirmar Venda</button>`;
-        };
-
-        window.addPg = (tipo) => {
-            const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0); if(v <= 0) return;
-            let pg = { tipo, valor: v };
-            if(tipo === 'Boleto') {
-                const rOp = prompt("POSSUI RESTRIÇÃO (SPC)?\n1 - Sim\n2 - Não");
-                pg.restricao = (rOp === "1") ? "Sim" : "Não";
-                const temEntrada = prompt("TEVE ENTRADA?\n1 - Sim\n2 - Não");
-                if(temEntrada === "1") {
-                    pg.entrada = parseFloat(prompt("Valor da Entrada:")?.replace(',','.') || 0);
-                    const fE = prompt("Forma da Entrada:\n1-Dinheiro\n2-Pix\n3-Cartão Débito");
-                    pg.forma_entrada = fE === "1" ? "Dinheiro" : fE === "2" ? "Pix" : "Cartão Débito";
-                } else { pg.entrada = 0; pg.forma_entrada = ""; }
-            }
-            window.tempPagamentos.push(pg); window.renderTemp();
-        };
-
-        window.renderTemp = () => { document.getElementById('lista-p').innerHTML = window.tempPagamentos.map((p, i) => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]"><span>${p.tipo} ${p.restricao ? '(SPC: '+p.restricao+')' : ''}</span><span class="font-black text-emerald-400">${window.formatBRL(p.valor)} <button onclick="window.tempPagamentos.splice(${i},1);window.renderTemp();" class="text-rose-500 ml-2 font-bold">✕</button></span></div>`).join(''); };
-
-        window.salvarStatusRapido = async (status) => {
-            const { tipo, data, id } = window.itemSendoGerenciado;
-            const dbRef = tipo === 'agenda' ? `${PATH}/${data}/${id}` : `${AVULSO}/${id}`;
-            await update(ref(db, dbRef), { resultado: status, valor: 0 });
-            window.fecharModalGestao(); carregarRelatorio();
-        };
-
-        window.finalizarVendaReal = async () => {
-            const total = parseFloat(document.getElementById('vTotal').value);
-            const soma = window.tempPagamentos.reduce((acc, c) => acc + c.valor, 0);
-            if(!total || Math.abs(total - soma) > 0.1) return alert("Total não confere!");
-            const { tipo, data, id } = window.itemSendoGerenciado;
-            const dbRef = tipo === 'agenda' ? `${PATH}/${data}/${id}` : `${AVULSO}/${id}`;
-            await update(ref(db, dbRef), { resultado: "Venda", valor: total, pagamentos: window.tempPagamentos });
-            window.fecharModalGestao(); carregarRelatorio();
-        };
-
-        window.fluxoAlterarData = () => {
-            const form = document.getElementById('gestao-form'); document.getElementById('gestao-menu').classList.add('hidden'); form.classList.remove('hidden');
-            form.innerHTML = `<input type="date" id="nD" class="w-full bg-slate-800 p-4 rounded-xl text-white mb-4 outline-none border border-white/10"><button onclick="window.salvarDataNova()" class="w-full p-4 bg-blue-600 rounded-xl font-bold uppercase text-xs">Confirmar Nova Data</button>`;
-        };
-
-        window.salvarDataNova = async () => {
-            const dn = document.getElementById('nD').value; if(!dn) return;
-            const { tipo, data, id } = window.itemSendoGerenciado;
-            const dbRef = tipo === 'agenda' ? `${PATH}/${data}/${id}` : `${AVULSO}/${id}`;
-            const snap = await get(ref(db, dbRef));
-            if(snap.exists()) {
-                let o = snap.val(); o.data = dn;
-                if(tipo === 'agenda') { await remove(ref(db, dbRef)); await set(ref(db, `${PATH}/${dn}/${id}`), o); }
-                else { await update(ref(db, dbRef), { data: dn }); }
-                window.fecharModalGestao(); carregarRelatorio();
-            }
-        };
-
-        window.fluxoAlterarHorario = async () => {
-            const { data, id, tipo } = window.itemSendoGerenciado; window.fecharModalGestao();
-            const snap = await get(ref(db, (tipo === 'agenda' ? `${PATH}/${data}/${id}` : `${AVULSO}/${id}`)));
-            if(!snap.exists()) return; let o = snap.val();
-            window.abrirModalHorario(data, o.horario, async (nD, nH) => {
-                // Ao alterar, gera um novo ID baseado no timestamp para permitir duplicatas no mesmo horário se necessário no admin
-                const nID = `${nH.replace(":","-")}-${Date.now()}`;
-                if(tipo === 'agenda') { await remove(ref(db, `${PATH}/${data}/${id}`)); o.data = nD; o.horario = nH; await set(ref(db, `${PATH}/${nD}/${nID}`), o); }
-                else { await update(ref(db, `${AVULSO}/${id}`), { data: nD, horario: nH }); }
-                carregarRelatorio();
-            });
-        };
-
-        window.confirmarExclusao = async () => { if(confirm("Apagar?")) { const { tipo, data, id } = window.itemSendoGerenciado; await remove(ref(db, tipo === 'agenda' ? `${PATH}/${data}/${id}` : `${AVULSO}/${id}`)); window.fecharModalGestao(); carregarRelatorio(); } };
-
-        async function carregarRelatorio() {
-            const [sAg, sAv] = await Promise.all([get(ref(db, PATH)), get(ref(db, AVULSO))]);
-            const ag = sAg.val() || {}, av = sAv.val() || {}; window.dadosCompletos = [];
-            for(let d in ag) for(let h in ag[d]) window.dadosCompletos.push({...ag[d][h], id: h, data: d, tipo: 'agenda'});
-            for(let id in av) { let i = av[id]; window.dadosCompletos.push({...i, id: id, tipo: 'avulso'}); }
-            renderizarLista(window.dadosCompletos);
+            const fE = prompt("Forma da Entrada:\n1-Dinheiro\n2-Pix\n3-Cartão Débito");
+            pg.forma_entrada =
+                fE === "1" ? "Dinheiro" :
+                fE === "2" ? "Pix" :
+                "Cartão Débito";
+        } else {
+            pg.entrada = 0;
+            pg.forma_entrada = "";
         }
+    }
 
-        function renderizarLista(lista) {
-            let t = { vendidos: 0, totalVendas: 0, vale: 0, totalComissao: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boletoRest: 0, boletoSemRest: 0, nq: 0 };
-            lista.sort((a,b) => (a.data || "").localeCompare(b.data || ""));
-            let hT = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase border-b border-slate-700"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">GESTÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
-            let hC = '<table class="w-full text-[10px] text-white"><thead><tr class="text-slate-400 border-b border-slate-700 uppercase"><th class="pb-2 text-left">Cliente</th><th class="pb-2 text-right">Comissão</th></tr></thead><tbody class="divide-y divide-slate-700/30">';
-            lista.forEach(item => {
-                const vT = parseFloat(item.valor || 0);
-                if (item.resultado === "Venda") {
-                    t.vendidos++; t.totalVendas += vT; let com = 0;
-                    if (item.pagamentos && Array.isArray(item.pagamentos)) {
-                        item.pagamentos.forEach(p => {
-                            if (["Dinheiro", "Pix", "Cartão Débito", "Cartão Crédito"].includes(p.tipo)) {
-                                com += p.valor * 0.12; if (p.tipo === "Dinheiro" || p.tipo === "Pix") { t[p.tipo.toLowerCase()] += p.valor; t.vale += p.valor; }
-                                if (p.tipo.includes("Cartão")) t[p.tipo.includes("Débito") ? "debito" : "credito"] += p.valor;
-                            } else if (p.tipo === "Boleto") {
-                                let ent = parseFloat(p.entrada || 0); let res = p.valor - ent;
-                                if (p.restricao === "Sim") t.boletoRest += res; else t.boletoSemRest += res;
-                                com += (ent * 0.12) + (res * 0.08); if (p.forma_entrada === "Dinheiro" || p.forma_entrada === "Pix") { t[p.forma_entrada.toLowerCase()] += ent; t.vale += ent; }
-                            }
-                        });
+    window.tempPagamentos.push(pg);
+    window.renderTemp();
+};
+
+window.renderTemp = () => {
+    document.getElementById('lista-p').innerHTML =
+        window.tempPagamentos.map((p, i) => `
+        <div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]">
+            <span>${p.tipo}</span>
+            <span class="font-black text-emerald-400">
+                ${window.formatBRL(p.valor)}
+                <button onclick="window.tempPagamentos.splice(${i},1);window.renderTemp();"
+                    class="text-rose-500 ml-2 font-bold">✕</button>
+            </span>
+        </div>`).join('');
+};
+
+async function carregarRelatorio() {
+    const [sAg, sAv] = await Promise.all([get(ref(db, PATH)), get(ref(db, AVULSO))]);
+    const ag = sAg.val() || {}, av = sAv.val() || {};
+    window.dadosCompletos = [];
+
+    for(let d in ag)
+        for(let h in ag[d])
+            window.dadosCompletos.push({...ag[d][h], id: h, data: d, tipo: 'agenda'});
+
+    for(let id in av)
+        window.dadosCompletos.push({...av[id], id: id, tipo: 'avulso'});
+
+    renderizarLista(window.dadosCompletos);
+}
+
+function renderizarLista(lista) {
+
+    let t = {
+        vendidos: 0,
+        totalVendas: 0,
+        totalComissao: 0,
+        pix: 0,
+        dinheiro: 0,
+        debito: 0,
+        credito: 0,
+        vale: 0,
+        nq: 0
+    };
+
+    lista.sort((a,b) => (a.data || "").localeCompare(b.data || ""));
+
+    lista.forEach(item => {
+
+        if(item.resultado === "Venda") {
+
+            const vT = parseFloat(item.valor || 0);
+            t.vendidos++;
+            t.totalVendas += vT;
+
+            let com = 0;
+
+            if(item.pagamentos && Array.isArray(item.pagamentos)) {
+
+                item.pagamentos.forEach(p => {
+
+                    if(p.tipo === "Dinheiro") {
+                        t.dinheiro += p.valor;
+                        t.vale += p.valor;
+                        com += p.valor * 0.12;
                     }
-                    t.totalComissao += com; hC += `<tr><td class="py-3 uppercase font-bold">${item.nome_formando}</td><td class="py-3 text-right text-emerald-400 font-black">${window.formatBRL(com)}</td></tr>`;
-                } else if(item.resultado === "NQ") t.nq++;
-                const colors = { 'Venda': 'bg-emerald-500/10 text-emerald-500', 'NQ': 'bg-rose-500/10 text-rose-500', 'Pendente': 'bg-slate-500/10 text-slate-400' };
-                hT += `<tr class="hover:bg-slate-800/40">
-                    <td class="p-4 font-bold uppercase">${paraDataBR(item.data)}<br><span class="text-slate-500 text-[9px] font-black">${item.horario || 'DIRETO'}</span></td>
-                    <td class="p-4 uppercase font-black text-white">${item.nome_formando}<br><span class="text-blue-400 lowercase text-[10px] block mt-1">${item.endereco || 'Direto'}</span></td>
-                    <td class="p-4 text-center"><span class="px-2 py-1 rounded-lg text-[9px] font-black border ${colors[item.resultado] || 'border-slate-500/20'}">${item.resultado || 'Pendente'}</span></td>
-                    <td class="p-4 text-center"><button onclick="window.gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 px-3 py-2 rounded-xl text-[9px] w-full font-black uppercase border border-blue-400/30">Gerenciar</button></td>
-                </tr>`;
-            });
-            window.resumoAtual = t; document.getElementById('admin-content').innerHTML = hT + '</tbody></table>'; document.getElementById('comissao-content').innerHTML = hC + '</tbody></table>';
-            document.getElementById('resumo-financeiro').innerHTML = `<div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500"><p class="text-[7px] font-bold text-slate-400 uppercase">Eficiência</p><p class="text-sm font-black">${t.vendidos}/${lista.length}</p></div><div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500 text-emerald-400"><p class="text-[7px] font-bold uppercase">CASH</p><p class="text-[9px] font-black">${window.formatBRL(t.dinheiro+t.pix)}</p></div><div class="glass p-2 rounded-xl text-center border-t-2 border-blue-400 text-blue-300"><p class="text-[7px] font-bold uppercase">DÉBITO</p><p class="text-[9px] font-black">${window.formatBRL(t.debito)}</p></div><div class="glass p-2 rounded-xl text-center border-t-2 border-indigo-400 text-indigo-300"><p class="text-[7px] font-bold uppercase">CRÉDITO</p><p class="text-[9px] font-black">${window.formatBRL(t.credito)}</p></div><div class="glass p-2 rounded-xl text-center border-t-2 border-orange-500 text-orange-400"><p class="text-[7px] font-bold uppercase">BOL S/ RESTR</p><p class="text-[9px] font-black">${window.formatBRL(t.boletoSemRest)}</p></div><div class="glass p-2 rounded-xl text-center border-t-2 border-red-500 text-red-400"><p class="text-[7px] font-bold uppercase text-white">BOL C/ RESTR</p><p class="text-[9px] font-black">${window.formatBRL(t.boletoRest)}</p></div><div class="bg-blue-600 p-2 rounded-xl text-center text-white shadow-xl"><p class="text-[7px] font-bold uppercase">VENDAS</p><p class="text-[10px] font-black">${window.formatBRL(t.totalVendas)}</p></div><div class="bg-amber-500 p-2 rounded-xl text-center text-amber-950 shadow-xl"><p class="text-[7px] font-bold uppercase">VALES</p><p class="text-[10px] font-black">${window.formatBRL(t.vale)}</p></div>`;
-            const s = t.totalComissao - t.vale; document.getElementById('fechamento-final').innerHTML = `<div class="mt-4 p-4 rounded-2xl border-2 text-right ${s >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}"><p class="text-[8px] font-black uppercase">Comissões: ${window.formatBRL(t.totalComissao)}</p><p class="text-[8px] font-black uppercase mb-2">Vale: ${window.formatBRL(t.vale)}</p><p class="text-3xl font-black italic">${window.formatBRL(Math.abs(s))}</p></div>`;
-        }
 
-        async function gerarHorariosDisponiveis(dataEscolhida, selectElement) {
-            selectElement.innerHTML = '<option>Consultando...</option>'; 
-            const snap = await get(ref(db, `${PATH}/${dataEscolhida}`));
-            
-            // Pega todos os horários que já possuem agendamento
-            const ocupadosRaw = snap.exists() ? snap.val() : {};
-            
-            // Cria um mapa para contar quantos agendamentos existem em cada horário
-            const contagemHorarios = {};
-            for (let id in ocupadosRaw) {
-                // Extrai o horário do ID (ex: "09-00-12345" vira "09:00")
-                const horarioLimpo = id.split('-').slice(0, 2).join(':');
-                contagemHorarios[horarioLimpo] = (contagemHorarios[horarioLimpo] || 0) + 1;
+                    else if(p.tipo === "Pix") {
+                        t.pix += p.valor;
+                        t.vale += p.valor;
+                        com += p.valor * 0.12;
+                    }
+
+                    else if(p.tipo === "Cartão Débito") {
+                        t.debito += p.valor;
+                        com += p.valor * 0.12;
+                    }
+
+                    else if(p.tipo === "Cartão Crédito") {
+                        t.credito += p.valor;
+                        com += p.valor * 0.12;
+                    }
+
+                    else if(p.tipo === "Boleto") {
+                        let ent = parseFloat(p.entrada || 0);
+                        let restante = p.valor - ent;
+
+                        com += (ent * 0.12) + (restante * 0.08);
+
+                        if(p.forma_entrada === "Dinheiro") {
+                            t.dinheiro += ent;
+                            t.vale += ent;
+                        }
+
+                        if(p.forma_entrada === "Pix") {
+                            t.pix += ent;
+                            t.vale += ent;
+                        }
+                    }
+
+                });
             }
 
-            const isWeekend = (new Date(dataEscolhida + 'T00:00:00').getDay() % 6 === 0);
-            const hLimite = isWeekend ? "15:00" : "20:30"; 
-            const agora = new Date(); 
-            const hojeStr = agora.toISOString().split('T')[0];
-            
-            selectElement.innerHTML = '<option value="">Escolha um Horário</option>'; 
-            let cursor = new Date(`${dataEscolhida}T09:00:00`); 
-            let final = new Date(`${dataEscolhida}T${hLimite}:00`);
-            
-            while(cursor <= final) {
-                let hF = cursor.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-                let disp = true; 
-                
-                // Regra de 3 horas de antecedência para o dia de hoje
-                if(dataEscolhida === hojeStr && cursor < new Date(agora.getTime() + (3*60*60*1000))) disp = false;
-                
-                // VERIFICAÇÃO DE VENDEDORES: Se houver menos de 2 agendamentos, o horário aparece
-                const agendamentosNesteHorario = contagemHorarios[hF] || 0;
-                
-                if(agendamentosNesteHorario < 2 && disp) { 
-                    let opt = document.createElement('option'); 
-                    opt.value = hF; 
-                    opt.textContent = `${hF} (${2 - agendamentosNesteHorario} vaga${2 - agendamentosNesteHorario > 1 ? 's' : ''})`; 
-                    selectElement.appendChild(opt); 
-                }
-                cursor.setMinutes(cursor.getMinutes() + 30);
-            }
+            t.totalComissao += com;
         }
 
-        window.abrirModalHorario = async (dataAtual, horarioAtual, callback) => {
-            const m = document.getElementById("modalHorario"); const sH = document.getElementById("novoHorarioModal"); const iD = document.getElementById("novaDataModal");
-            m.style.display = "flex"; iD.value = dataAtual; iD.onchange = (e) => gerarHorariosDisponiveis(e.target.value, sH);
-            await gerarHorariosDisponiveis(dataAtual, sH);
-            document.getElementById("confirmarHorarioBtn").onclick = () => { if(!sH.value) return; window.fecharModalHorario(); callback(iD.value, sH.value); };
-        };
+        else if(item.resultado === "NQ") {
+            t.nq++;
+        }
+    });
 
-        window.lancarVendaDireta = async () => {
-            const n = prompt("Nome:"); if(!n) return; const d = prompt("Data (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
-            await push(ref(db, AVULSO), { nome_formando: n, data: d, horario: "08:00", resultado: "Pendente" }); carregarRelatorio();
-        };
+    window.resumoAtual = t;
 
-        window.acessoAdmin = () => { if(prompt("Chave ADM:")==="2025") { document.getElementById('admin-modal').style.display = 'block'; carregarRelatorio(); } };
-        window.fecharAdmin = () => document.getElementById('admin-modal').style.display = 'none';
-        
-        window.copiarRelatorio = async () => {
-            const cid = prompt("Cidade:"); if(!cid) return; const t = window.resumoAtual; const f = (v) => window.formatBRL(v);
-            const msg = `*${cid} ${new Date().toLocaleDateString('pt-BR')}*\n\nVendidos = ${t.vendidos}\nNQ = ${t.nq}\n\nDinheiro = ${f(t.dinheiro)}\nPix = ${f(t.pix)}\nCrédito = ${f(t.credito)}\nDébito = ${f(t.debito)}\nBoleto Sem Restrição = ${f(t.boletoSemRest)}\nBoleto Com Restrição = ${f(t.boletoRest)}\n\nTotal = ${f(t.totalVendas)}\nVale = ${f(t.vale)}`;
-            await navigator.clipboard.writeText(msg); alert("RELATÓRIO COPIADO!");
-        };
+    document.getElementById('resumo-financeiro').innerHTML = `
+    <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500">
+        <p class="text-[7px] font-bold text-slate-400 uppercase">Eficiência</p>
+        <p class="text-sm font-black">${t.vendidos}/${lista.length}</p>
+    </div>
 
-        window.filtrarLista = () => renderizarLista(window.dadosCompletos.filter(i => i.nome_formando?.toLowerCase().includes(document.getElementById('busca-admin').value.toLowerCase())));
-        
-        document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
-            e.preventDefault(); 
-            const d = document.getElementById('data-selecionada').value; 
-            const h = document.getElementById('horario').value;
-            const n = document.getElementById('nome').value;
-            const tel = document.getElementById('telefone').value;
-            const cid = document.getElementById('cidade').value;
-            const end = document.getElementById('endereco').value;
+    <div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500 text-emerald-400">
+        <p class="text-[7px] font-bold uppercase">CASH</p>
+        <p class="text-[9px] font-black">${window.formatBRL(t.dinheiro + t.pix)}</p>
+    </div>
 
-            // Gera um ID único usando o horário + timestamp para evitar que um agendamento apague o outro no Firebase
-            const uniqueID = `${h.replace(':','-')}-${Date.now()}`;
+    <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-400 text-blue-300">
+        <p class="text-[7px] font-bold uppercase">DÉBITO</p>
+        <p class="text-[9px] font-black">${window.formatBRL(t.debito)}</p>
+    </div>
 
-            await set(ref(db, `${PATH}/${d}/${uniqueID}`), { 
-                data: d, 
-                horario: h, 
-                nome_formando: n, 
-                telefone: tel, 
-                city: cid, 
-                endereco: end, 
-                resultado: "Pendente" 
-            });
+    <div class="glass p-2 rounded-xl text-center border-t-2 border-indigo-400 text-indigo-300">
+        <p class="text-[7px] font-bold uppercase">CRÉDITO</p>
+        <p class="text-[9px] font-black">${window.formatBRL(t.credito)}</p>
+    </div>
 
-            const msgAgendamento = `*NOVA VISITA AGENDADA*\n\n*Nome:* ${n}\n*Data:* ${paraDataBR(d)}\n*Horário:* ${h}\n*Cidade:* ${cid}\n*Endereço:* ${end}`;
-            window.open(`https://wa.me/${MEU_WHATSAPP}?text=${encodeURIComponent(msgAgendamento)}`);
-            
-            location.reload();
-        });
+    <div class="bg-blue-600 p-2 rounded-xl text-center text-white shadow-xl">
+        <p class="text-[7px] font-bold uppercase">VENDAS</p>
+        <p class="text-[10px] font-black">${window.formatBRL(t.totalVendas)}</p>
+    </div>
 
-        document.querySelectorAll('.day-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
-                document.getElementById('data-selecionada').value = btn.getAttribute('data-date');
-                await gerarHorariosDisponiveis(btn.getAttribute('data-date'), document.getElementById('horario'));
-            });
-        });
+    <div class="bg-amber-500 p-2 rounded-xl text-center text-amber-950 shadow-xl">
+        <p class="text-[7px] font-bold uppercase">VALES</p>
+        <p class="text-[10px] font-black">${window.formatBRL(t.vale)}</p>
+    </div>
+    `;
+}
 
-        (function autoCheck() {
-            const agora = new Date();
-            document.querySelectorAll('.day-btn').forEach(btn => {
-                const dataBtn = btn.getAttribute("data-date"); const dateObj = new Date(dataBtn + 'T00:00:00');
-                const isW = (dateObj.getDay() === 0 || dateObj.getDay() === 6); const hL = isW ? "15:00:00" : "17:30:00";
-                if (agora > new Date(`${dataBtn}T${hL}`)) btn.style.display = "none";
-            });
-        })();
+window.copiarRelatorio = async () => {
 
-        window.carregarRelatorio = carregarRelatorio;
-    </script>
-</body>
-</html>
+    const cid = prompt("Cidade:");
+    if(!cid) return;
+
+    const t = window.resumoAtual;
+    const f = (v) => window.formatBRL(v);
+
+    const msg = `*${cid} ${new Date().toLocaleDateString('pt-BR')}*
+
+Vendidos = ${t.vendidos}
+NQ = ${t.nq}
+
+Dinheiro = ${f(t.dinheiro)}
+Pix = ${f(t.pix)}
+Crédito = ${f(t.credito)}
+Débito = ${f(t.debito)}
+
+Total = ${f(t.totalVendas)}
+Vale = ${f(t.vale)}`;
+
+    await navigator.clipboard.writeText(msg);
+    alert("RELATÓRIO COPIADO!");
+};
+
+window.carregarRelatorio = carregarRelatorio;
+</script>
