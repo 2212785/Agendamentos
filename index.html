@@ -62,7 +62,7 @@
                 </div>
                 <div class="space-y-6">
                     <h3 class="text-lg font-bold text-white uppercase italic text-center">Comissões</h3>
-                    <div id="comissao-content" class="glass rounded-3xl p-5 shadow-inner border-white/5"></div>
+                    <div id="comissao-content" class="glass rounded-3xl p-5 shadow-inner border-white/5 overflow-x-auto"></div>
                     <div id="fechamento-final"></div>
                 </div>
             </div>
@@ -226,13 +226,13 @@
                 if(temEntrada === "1") {
                     pg.entrada = parseFloat(prompt("Valor da Entrada:")?.replace(',','.') || 0);
                     const fE = prompt("Forma da Entrada:\n1-Dinheiro\n2-Pix\n3-Cartão Débito");
-                    pg.forma_entrada = fE === "1" ? "Dinheiro" : fE === "2" ? "Pix" : "Cartão Débito";
+                    pg.forma_entrada = fE === "1" ? "Dinheiro" : fE === "2" ? "Pix" : fE === "3" ? "Cartão Débito";
                 }
             }
             window.tempPagamentos.push(pg); window.renderTemp();
         };
 
-        window.renderTemp = () => { document.getElementById('lista-p').innerHTML = window.tempPagamentos.map((p, i) => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]"><span>${p.tipo}</span><span class="font-black text-emerald-400">${window.formatBRL(p.valor)} <button onclick="window.tempPagamentos.splice(${i},1);window.renderTemp();" class="text-rose-500 ml-2">✕</button></span></div>`).join(''); };
+        window.renderTemp = () => { document.getElementById('lista-p').innerHTML = window.tempPagamentos.map((p, i) => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]"><span>${p.tipo}</span><span class="font-black text-emerald-400">${window.formatBRL(p.valor)} <button onclick="window.tempPagamentos.splice(${i},1);window.renderTemp();" class="text-rose-500 ml-2 font-bold">✕</button></span></div>`).join(''); };
 
         window.finalizarVendaReal = async () => {
             const total = parseFloat(document.getElementById('vTotal').value);
@@ -281,7 +281,7 @@
         function renderizarLista(lista) {
             let t = { vendidos: 0, totalVendas: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boleto: 0, vale: 0, nq: 0, comissao: 0 };
             lista.sort((a,b) => (a.data || "").localeCompare(b.data || ""));
-            let hT = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">AÇÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
+            let hT = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE / ENDEREÇO / WHATSAPP</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">AÇÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
             let hC = '<table class="w-full text-[10px]"><tbody>';
             lista.forEach(item => {
                 let comItem = 0;
@@ -305,7 +305,20 @@
                     hC += `<tr><td class="py-2 uppercase font-bold">${item.nome_formando}</td><td class="py-2 text-right text-emerald-400 font-black">${window.formatBRL(comItem)}</td></tr>`;
                 } else if(item.resultado === "NQ") t.nq++;
                 const colors = { 'Venda': 'text-emerald-500', 'NQ': 'text-rose-500', 'Pendente': 'text-slate-400' };
-                hT += `<tr class="hover:bg-slate-800/40"><td class="p-4 font-bold">${paraDataBR(item.data)}<br><span class="text-[9px] text-slate-500">${item.horario || 'DIRETO'}</span></td><td class="p-4 uppercase font-black">${item.nome_formando}</td><td class="p-4 text-center font-black ${colors[item.resultado] || ''}">${item.resultado || 'Pendente'}</td><td class="p-4 text-center"><button onclick="window.gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-lg text-[9px] uppercase border border-blue-400/30">Gerenciar</button></td></tr>`;
+                
+                // AJUSTE: Exibição do Endereço e link direto do WhatsApp na tabela de admin
+                const whatsLink = item.telefone ? `https://wa.me/55${item.telefone.replace(/\D/g,'')}` : '#';
+                
+                hT += `<tr class="hover:bg-slate-800/40">
+                    <td class="p-4 font-bold">${paraDataBR(item.data)}<br><span class="text-[9px] text-slate-500">${item.horario || 'DIRETO'}</span></td>
+                    <td class="p-4">
+                        <span class="uppercase font-black text-white">${item.nome_formando}</span><br>
+                        <span class="text-blue-400 text-[10px] block">${item.endereco || 'Endereço não informado'}</span>
+                        <a href="${whatsLink}" target="_blank" class="text-emerald-400 text-[9px] font-bold underline">WhatsApp: ${item.telefone || 'N/A'}</a>
+                    </td>
+                    <td class="p-4 text-center font-black ${colors[item.resultado] || ''}">${item.resultado || 'Pendente'}</td>
+                    <td class="p-4 text-center"><button onclick="window.gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-lg text-[9px] uppercase border border-blue-400/30">Gerenciar</button></td>
+                </tr>`;
             });
             document.getElementById('resumo-financeiro').innerHTML = `
                 <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500"><p class="text-[7px] font-bold text-slate-400 uppercase">EFICIÊNCIA</p><p class="text-sm font-black">${t.vendidos}/${lista.length}</p></div>
@@ -334,3 +347,4 @@
     </script>
 </body>
 </html>
+
