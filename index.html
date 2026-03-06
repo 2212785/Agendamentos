@@ -35,20 +35,18 @@
 
     <main id="admin-modal">
         <div class="max-w-7xl mx-auto">
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4 text-white">
                 <div>
                     <h1 class="text-3xl font-extrabold italic uppercase">Master <span class="text-blue-500 font-black">Dashboard PRO</span></h1>
                     <select id="projeto-ativo" onchange="carregarRelatorio()" class="mt-2 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1 text-xs text-blue-400 font-bold outline-none cursor-pointer"></select>
                 </div>
                 <div class="flex flex-wrap gap-3">
-                    <input type="date" id="filtro-data-admin" onchange="filtrarLista()" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
-                    <button onclick="copiarRelatorio()" class="bg-emerald-600 px-4 py-2 rounded-xl font-bold text-[10px] uppercase text-white">Copiar Relatório</button>
+                    <input type="date" id="filtro-data-admin" onchange="filtrarLista()" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none">
+                    <button onclick="copiarRelatorio()" class="bg-emerald-600 px-4 py-2 rounded-xl font-bold text-[10px] uppercase text-white shadow-lg">Copiar Relatório</button>
                     <button onclick="fecharAdmin()" class="bg-rose-600/20 text-rose-500 px-4 py-2 rounded-xl font-bold text-[10px] uppercase">Sair</button>
                 </div>
             </div>
-            
             <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-11 gap-2 mb-6 text-center text-white text-[9px]"></div>
-            
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2">
                     <div id="admin-content" class="glass rounded-[2rem] overflow-x-auto p-4 border-white/5 text-white"></div>
@@ -109,11 +107,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- UTILITÁRIOS ---
         const paraDataBR = (s) => (s && s.includes('-')) ? s.split("-").reverse().join("/") : s;
         window.formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
 
-        // --- INTERFACE ADMIN ---
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
         window.fecharAdmin = () => document.getElementById('admin-modal').style.display = 'none';
         window.acessoAdmin = async () => { if(prompt("Chave ADM:") === "2025") { document.getElementById('admin-modal').style.display = 'block'; await carregarProjetos(); await carregarRelatorio(); } };
@@ -134,16 +130,12 @@
         async function carregarRelatorio() {
             const [snapDados, snapRaizAg, snapRaizAv] = await Promise.all([get(ref(db, `dados`)), get(ref(db, `agendamentos`)), get(ref(db, `avulsos`))]);
             window.dadosCompletos = [];
-            
             const rAg = snapRaizAg.val() || {}; for(let d in rAg) for(let h in rAg[d]) window.dadosCompletos.push({...rAg[d][h], id: h, data: d, path: `agendamentos/${d}/${h}`});
             const rAv = snapRaizAv.val() || {}; for(let id in rAv) window.dadosCompletos.push({...rAv[id], id: id, path: `avulsos/${id}`});
-            
             const todos = snapDados.val() || {};
             for(let pKey in todos) {
-                const ags = todos[pKey].agendamentos || {};
-                for(let d in ags) for(let h in ags[d]) window.dadosCompletos.push({...ags[d][h], id: h, data: d, path: `dados/${pKey}/agendamentos/${d}/${h}`});
-                const avs = todos[pKey].avulsos || {};
-                for(let id in avs) window.dadosCompletos.push({...avs[id], id: id, path: `dados/${pKey}/avulsos/${id}`});
+                const ags = todos[pKey].agendamentos || {}; for(let d in ags) for(let h in ags[d]) window.dadosCompletos.push({...ags[d][h], id: h, data: d, path: `dados/${pKey}/agendamentos/${d}/${h}`});
+                const avs = todos[pKey].avulsos || {}; for(let id in avs) window.dadosCompletos.push({...avs[id], id: id, path: `dados/${pKey}/avulsos/${id}`});
             }
             const uniqueMap = new Map(); window.dadosCompletos.forEach(i => uniqueMap.set(i.path, i));
             window.dadosCompletos = Array.from(uniqueMap.values());
@@ -154,7 +146,6 @@
         window.filtrarLista = () => {
             const fData = document.getElementById('filtro-data-admin').value;
             let lista = window.dadosCompletos.filter(i => (fData ? i.data === fData : true));
-            // Ordenação Cronológica
             lista.sort((a, b) => (a.data || '').localeCompare(b.data || '') || (a.horario || '99:99').localeCompare(b.horario || '99:99'));
             renderizarLista(lista, fData);
         };
@@ -162,7 +153,7 @@
         function renderizarLista(lista, dataFiltrada) {
             let t = { v:0, totV:0, pix:0, din:0, deb:0, cre:0, bol:0, vale:0, nq:0, nqDia:0, comDia:0, comTot:0 };
             const compData = dataFiltrada || new Date().toLocaleDateString('en-CA');
-            let hT = '<table class="w-full text-[11px] text-left"><thead class="bg-slate-700"><tr><th class="p-3">DATA/HORA</th><th class="p-3">CLIENTE / INFO</th><th class="p-3 text-center">STATUS</th><th class="p-3 text-center">AÇÃO</th></tr></thead><tbody class="divide-y divide-white/5">';
+            let hT = '<table class="w-full text-[11px] text-left text-white"><thead class="bg-slate-700"><tr><th class="p-3">DATA/HORA</th><th class="p-3">CLIENTE / INFO</th><th class="p-3 text-center">STATUS</th><th class="p-3 text-center">AÇÃO</th></tr></thead><tbody class="divide-y divide-white/5">';
             let hC = '';
 
             lista.forEach(item => {
@@ -172,13 +163,14 @@
                     if(Array.isArray(item.pagamentos)) {
                         item.pagamentos.forEach(p => {
                             const v = Number(p.valor) || 0; const ent = Number(p.entrada || 0);
-                            if(p.tipo === "Dinheiro" || p.tipo === "Pix") { t[p.tipo === "Pix" ? "pix" : "din"] += v; t.vale += v; }
-                            else if(p.tipo.includes("Cartão")) { if(p.tipo.includes("Débito")) t.deb += v; else t.cre += v; }
-                            else if(p.tipo === "Boleto") { t.bol += (v - ent); if(p.forma_entrada === "Dinheiro" || p.forma_entrada === "Pix") { t[p.forma_entrada === "Pix"?"pix":"din"] += ent; t.vale += ent; } }
+                            if(p.tipo === "Dinheiro" || p.tipo === "Pix") { t[p.tipo === "Pix" ? "pix" : "din"] += v; t.vale += v; comItem += v * 0.12; }
+                            else if(p.tipo.includes("Cartão")) { if(p.tipo.includes("Débito")) t.deb += v; else t.cre += v; comItem += v * 0.12; }
+                            else if(p.tipo === "Boleto") { t.bol += (v - ent); comItem += (ent * 0.12) + ((v - ent) * 0.08); if(p.forma_entrada === "Dinheiro" || p.forma_entrada === "Pix") { t[p.forma_entrada === "Pix"?"pix":"din"] += ent; t.vale += ent; } }
                         });
-                    }
-                    comItem = (Number(item.valor) || 0) * 0.12;
-                    t.comTot += comItem; if(item.data === compData) t.comDia += comItem;
+                    } else { comItem = (Number(item.valor) || 0) * 0.12; }
+                    
+                    t.comTot += comItem; 
+                    if(item.data === compData) t.comDia += comItem;
                     hC += `<tr><td class="py-1 uppercase font-bold text-slate-300">${item.nome_formando}</td><td class="py-1 text-right text-emerald-400 font-black">${window.formatBRL(comItem)}</td></tr>`;
                 } else if(item.resultado === "NQ") {
                     t.nq++; if(item.data === compData) t.nqDia++;
@@ -207,26 +199,38 @@
             const eficiencia = totalAtendidos > 0 ? ((t.v / totalAtendidos) * 100).toFixed(0) : 0;
 
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="glass p-1 rounded-xl border-t border-blue-500"><p class="text-[6px]">EFICIÊNCIA</p><p class="text-[9px] font-black text-white">${eficiencia}%</p></div>
-                <div class="glass p-1 rounded-xl border-t border-emerald-500"><p class="text-[6px]">V.DIA</p><p class="text-[9px] font-black text-white">${lista.filter(i=>i.resultado==='Venda'&&i.data===compData).length}</p></div>
+                <div class="glass p-1 rounded-xl border-t border-blue-500"><p class="text-[6px]">EFICIÊNCIA</p><p class="text-[9px] font-black">${eficiencia}%</p></div>
+                <div class="glass p-1 rounded-xl border-t border-emerald-500"><p class="text-[6px]">V.DIA</p><p class="text-[9px] font-black">${lista.filter(i=>i.resultado==='Venda'&&i.data===compData).length}</p></div>
                 <div class="glass p-1 rounded-xl border-t border-rose-500"><p class="text-[6px]">NQ DIA</p><p class="text-[9px] font-black text-rose-400">${t.nqDia}</p></div>
-                <div class="glass p-1 rounded-xl border-t border-blue-300"><p class="text-[6px]">TICKET MÉD.</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.v ? t.totV/t.v : 0)}</p></div>
-                <div class="glass p-1 rounded-xl border-t border-cyan-500"><p class="text-[6px]">PIX</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.pix)}</p></div>
-                <div class="glass p-1 rounded-xl border-t border-green-500"><p class="text-[6px]">DINHEIRO</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.din)}</p></div>
-                <div class="glass p-1 rounded-xl border-t border-yellow-500"><p class="text-[6px]">CRÉDITO</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.cre)}</p></div>
-                <div class="glass p-1 rounded-xl border-t border-orange-500"><p class="text-[6px]">DÉBITO</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.deb)}</p></div>
-                <div class="glass p-1 rounded-xl border-t border-purple-500"><p class="text-[6px]">BOLETO</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.bol)}</p></div>
-                <div class="bg-purple-600 p-1 rounded-xl shadow-lg"><p class="text-[6px]">COMIS. DIA</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.comDia)}</p></div>
-                <div class="bg-blue-600 p-1 rounded-xl shadow-lg"><p class="text-[6px]">TOTAL VENDIDO</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.totV)}</p></div>
+                <div class="glass p-1 rounded-xl border-t border-blue-300"><p class="text-[6px]">TICKET MÉD.</p><p class="text-[9px] font-black">${window.formatBRL(t.v ? t.totV/t.v : 0)}</p></div>
+                <div class="glass p-1 rounded-xl border-t border-cyan-500"><p class="text-[6px]">PIX</p><p class="text-[9px] font-black">${window.formatBRL(t.pix)}</p></div>
+                <div class="glass p-1 rounded-xl border-t border-green-500"><p class="text-[6px]">DINHEIRO</p><p class="text-[9px] font-black">${window.formatBRL(t.din)}</p></div>
+                <div class="glass p-1 rounded-xl border-t border-yellow-500"><p class="text-[6px]">CRÉDITO</p><p class="text-[9px] font-black">${window.formatBRL(t.cre)}</p></div>
+                <div class="glass p-1 rounded-xl border-t border-orange-500"><p class="text-[6px]">DÉBITO</p><p class="text-[9px] font-black">${window.formatBRL(t.deb)}</p></div>
+                <div class="glass p-1 rounded-xl border-t border-purple-500"><p class="text-[6px]">BOLETO</p><p class="text-[9px] font-black">${window.formatBRL(t.bol)}</p></div>
+                <div class="bg-purple-600 p-1 rounded-xl shadow-lg"><p class="text-[6px]">COMIS. DIA</p><p class="text-[9px] font-black">${window.formatBRL(t.comDia)}</p></div>
+                <div class="bg-blue-600 p-1 rounded-xl shadow-lg"><p class="text-[6px]">TOTAL VENDIDO</p><p class="text-[9px] font-black">${window.formatBRL(t.totV)}</p></div>
             `;
             document.getElementById('admin-content').innerHTML = hT + '</tbody></table>';
             document.getElementById('comissao-content').innerHTML = `<table class="w-full text-white"><tbody>${hC}</tbody></table>`;
-            document.getElementById('fechamento-final').innerHTML = `<p class="text-[8px] uppercase text-slate-400">Total Líquido</p><p class="text-2xl font-black italic text-emerald-400">${window.formatBRL(t.comTot - t.vale)}</p>`;
+            
+            // CORREÇÃO FINAL: SALDO A RECEBER (COMISSÃO TOTAL - VALES)
+            const saldoAReceber = t.comTot - t.vale;
+            document.getElementById('fechamento-final').innerHTML = `
+                <div class="space-y-1">
+                    <p class="text-[8px] uppercase text-slate-400">Total Comissões: ${window.formatBRL(t.comTot)}</p>
+                    <p class="text-[8px] uppercase text-rose-400">Total Vales: - ${window.formatBRL(t.vale)}</p>
+                    <div class="pt-2 border-t border-white/10 mt-2">
+                        <p class="text-[10px] font-black uppercase text-blue-400">Saldo a Receber</p>
+                        <p class="text-2xl font-black italic text-emerald-400">${window.formatBRL(saldoAReceber)}</p>
+                    </div>
+                </div>
+            `;
         }
 
         window.gerenciarItem = (p) => { window.itemPath = p; document.getElementById('modalGestao').style.display = 'flex'; };
         window.confirmarExclusao = async () => { if(confirm("Apagar?")) { await remove(ref(db, window.itemPath)); fecharModalGestao(); await carregarRelatorio(); } };
-        window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); document.getElementById('gestao-form').classList.remove('hidden'); document.getElementById('gestao-form').innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-800 p-4 rounded-xl text-center mb-4 text-white"><div class="grid grid-cols-2 gap-2 mb-4 text-white"><button onclick="addPg('Dinheiro')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Dinheiro</button><button onclick="addPg('Pix')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Pix</button><button onclick="addPg('Cartão Débito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Débito</button><button onclick="addPg('Cartão Crédito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Crédito</button><button onclick="addPg('Boleto')" class="p-2 bg-blue-900 rounded-lg text-[9px] col-span-2">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4 text-white"></div><button onclick="finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white">CONFIRMAR VENDA</button><button onclick="salvarStatusSimples('NQ')" class="w-full p-2 bg-rose-600 rounded-xl mt-4 text-[10px] text-white">SALVAR COMO NQ</button>`; window.tempPgs = []; };
+        window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); document.getElementById('gestao-form').classList.remove('hidden'); document.getElementById('gestao-form').innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-800 p-4 rounded-xl text-center mb-4 text-white outline-none"><div class="grid grid-cols-2 gap-2 mb-4 text-white"><button onclick="addPg('Dinheiro')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Dinheiro</button><button onclick="addPg('Pix')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Pix</button><button onclick="addPg('Cartão Débito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Débito</button><button onclick="addPg('Cartão Crédito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Crédito</button><button onclick="addPg('Boleto')" class="p-2 bg-blue-900 rounded-lg text-[9px] col-span-2">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4"></div><button onclick="finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black">CONFIRMAR VENDA</button><button onclick="salvarStatusSimples('NQ')" class="w-full p-2 bg-rose-600 rounded-xl mt-4 text-[10px]">SALVAR COMO NQ</button>`; window.tempPgs = []; };
         window.addPg = (tipo) => { const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0); if(v <= 0) return; let pg = { tipo, valor: v }; if(tipo === 'Boleto') { const ent = prompt("Entrada? 1-Sim 2-Não"); if(ent === "1") { pg.entrada = parseFloat(prompt("Valor Entrada:")?.replace(',','.') || 0); const fE = prompt("Forma: 1-Dinheiro 2-Pix"); pg.forma_entrada = fE === "1" ? "Dinheiro" : "Pix"; } } window.tempPgs.push(pg); renderTemp(); };
         function renderTemp() { document.getElementById('lista-p').innerHTML = window.tempPgs.map((p, i) => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]"><span>${p.tipo}</span><span class="text-emerald-400">${window.formatBRL(p.valor)}</span></div>`).join(''); }
         window.finalizarVenda = async () => { const tot = parseFloat(document.getElementById('vTotal').value); if(!tot) return alert("Informe o valor!"); await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, pagamentos: window.tempPgs }); fecharModalGestao(); await carregarRelatorio(); };
@@ -274,7 +278,6 @@
             const el = document.createElement('textarea'); el.value = msg; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); alert("RELATÓRIO COPIADO!");
         };
 
-        // --- INICIALIZAÇÃO ---
         (async () => {
             const agora = new Date();
             document.querySelectorAll('.day-btn').forEach(btn => {
@@ -294,4 +297,5 @@
     </script>
 </body>
 </html>
+
 
