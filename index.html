@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Dashboard</title>
+    <title>Elite Sales Dashboard PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -20,8 +20,8 @@
 <body class="min-h-screen flex flex-col text-white">
 
     <div id="modalGestao">
-        <div class="glass w-full max-w-xl rounded-[2.5rem] p-8 border border-white/20 shadow-2xl mx-auto mt-20">
-            <div class="flex justify-between items-center mb-8 text-left">
+        <div class="glass w-full max-w-xl rounded-[2.5rem] p-8 border border-white/20 shadow-2xl mx-auto mt-20 text-left">
+            <div class="flex justify-between items-center mb-8">
                 <h2 id="gestao-titulo" class="text-2xl font-black uppercase italic text-blue-400">Gerenciar</h2>
                 <button onclick="fecharModalGestao()" class="bg-slate-800 text-white w-10 h-10 rounded-full font-bold">✕</button>
             </div>
@@ -29,13 +29,13 @@
                 <button onclick="fluxoResultado()" class="bg-emerald-600/20 border border-emerald-500/50 p-6 rounded-2xl hover:bg-emerald-600 transition group"><span class="block text-emerald-400 group-hover:text-white font-black text-xs uppercase">1. Resultado</span></button>
                 <button onclick="confirmarExclusao()" class="bg-rose-600/20 border border-rose-500/50 p-6 rounded-2xl hover:bg-rose-600 transition group"><span class="block text-rose-400 group-hover:text-white font-black text-xs uppercase">2. Excluir</span></button>
             </div>
-            <div id="gestao-form" class="mt-8 hidden space-y-4 text-left"></div>
+            <div id="gestao-form" class="mt-8 hidden space-y-4"></div>
         </div>
     </div>
 
     <main id="admin-modal">
         <div class="max-w-7xl mx-auto">
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4 text-white">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
                 <div>
                     <h1 class="text-3xl font-extrabold italic uppercase">Master <span class="text-blue-500 font-black">Dashboard PRO</span></h1>
                     <select id="projeto-ativo" onchange="carregarRelatorio()" class="mt-2 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1 text-xs text-blue-400 font-bold outline-none cursor-pointer"></select>
@@ -52,23 +52,23 @@
         </div>
     </main>
 
-    <header class="p-6 flex justify-between items-center text-white">
+    <header class="p-6 flex justify-between items-center">
         <span class="text-2xl font-black italic uppercase">Portal <span class="text-blue-500">do formando</span></span>
         <button onclick="acessoAdmin()" class="glass px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase">Login ADM</button>
     </header>
 
     <main class="container mx-auto p-4 flex-grow flex items-center justify-center text-center">
         <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl border-white/5">
-            <h2 id="escola-titulo" class="text-xl font-bold mb-2 uppercase text-blue-400 italic">Guaratinguetá</h2>
-            <h3 id="sub-escola" class="text-xs font-bold text-slate-400 mb-6 uppercase">Dr. Guilherme Eugênio Filippo Fernandes</h3>
+            <h2 id="escola-titulo" class="text-xl font-bold mb-2 uppercase text-blue-400 italic">CARREGANDO...</h2>
+            <h3 id="sub-escola" class="text-xs font-bold text-slate-400 mb-6 uppercase">AGUARDE</h3>
             <h2 class="text-3xl font-black mb-10 uppercase italic text-white">Agendar Visita</h2>
             <form id="form-agendamento" class="space-y-6 text-left">
                 <div class="grid grid-cols-3 gap-2" id="day-selector">
-                    <button type="button" data-date="2026-03-04" onclick="selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase text-white">04/03<br>Qua</button>
-                    <button type="button" data-date="2026-03-05" onclick="selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase text-white">05/03<br>Qui</button>
-                    <button type="button" data-date="2026-03-06" onclick="selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase text-white">06/03<br>Sex</button>
-                    <button type="button" data-date="2026-03-07" onclick="selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase text-white">07/03<br>Sab</button>
-                    <button type="button" data-date="2026-03-08" onclick="selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase bg-blue-900/20 border-blue-500/30 text-blue-400">08/03<br>Dom</button>
+                    <button type="button" data-date="2026-03-04" onclick="selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase">04/03<br>Qua</button>
+                    <button type="button" data-date="2026-03-05" onclick="selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase">05/03<br>Qui</button>
+                    <button type="button" data-date="2026-03-06" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase">06/03<br>Sex</button>
+                    <button type="button" data-date="2026-03-07" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase">07/03<br>Sab</button>
+                    <button type="button" data-date="2026-03-08" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase bg-blue-900/20 border-blue-500/30 text-blue-400">08/03<br>Dom</button>
                 </div>
                 <input type="hidden" id="data-selecionada">
                 <div class="space-y-4">
@@ -97,26 +97,32 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- FUNÇÕES DE INTERFACE ---
+        // --- FUNÇÕES DE UTILIDADE (RESTAURADAS E PROTEGIDAS) ---
+        const paraDataBR = (str) => { 
+            if(!str || typeof str !== 'string' || !str.includes('-')) return str || "---"; 
+            const parts = str.split("-");
+            return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : str;
+        };
+        window.formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
+
+        // --- INTERFACE ---
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
         window.fecharAdmin = () => document.getElementById('admin-modal').style.display = 'none';
         window.acessoAdmin = async () => { if(prompt("Chave ADM:") === "2025") { document.getElementById('admin-modal').style.display = 'block'; await carregarProjetos(); await carregarRelatorio(); } };
 
-        // --- LÓGICA DE AGENDAMENTO ---
+        // --- AGENDAMENTO ---
         window.selecionarDia = async (btn) => {
             document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             const data = btn.getAttribute('data-date');
             document.getElementById('data-selecionada').value = data;
-            
             const elHorario = document.getElementById('horario');
-            elHorario.innerHTML = '<option value="">Carregando horários...</option>';
+            elHorario.innerHTML = '<option value="">Buscando vagas...</option>';
 
             const snapAtivo = await get(ref(db, `config/projeto_ativo`));
             const p = snapAtivo.val() || "guaratingueta-guilherme";
             const [nova, raiz] = await Promise.all([get(ref(db, `dados/${p}/agendamentos/${data}`)), get(ref(db, `agendamentos/${data}`))]);
             const ag = {...(raiz.val()||{}), ...(nova.val()||{})};
-            
             const counts = {}; for(let id in ag){ let hL = id.split('-').slice(0,2).join(':'); counts[hL] = (counts[hL]||0)+1; }
             
             elHorario.innerHTML = '<option value="">Escolha um Horário</option>';
@@ -133,18 +139,13 @@
             e.preventDefault();
             const snapAtivo = await get(ref(db, `config/projeto_ativo`));
             const p = snapAtivo.val() || "guaratingueta-guilherme";
-            const d = document.getElementById('data-selecionada').value;
-            const h = document.getElementById('horario').value;
-            const n = document.getElementById('nome').value;
+            const d = document.getElementById('data-selecionada').value, h = document.getElementById('horario').value, n = document.getElementById('nome').value;
             const id = `${h.replace(':','-')}-${n.replace(/\s+/g, '').substring(0,8)}-${Date.now().toString().slice(-3)}`;
-            
-            const dados = { data: d, horario: h, nome_formando: n, telefone: document.getElementById('telefone').value, endereco: document.getElementById('endereco').value, resultado: "Pendente" };
-            await set(ref(db, `dados/${p}/agendamentos/${d}/${id}`), dados);
-            alert("Agendamento realizado!");
-            location.reload();
+            await set(ref(db, `dados/${p}/agendamentos/${d}/${id}`), { data: d, horario: h, nome_formando: n, telefone: document.getElementById('telefone').value, endereco: document.getElementById('endereco').value, resultado: "Pendente" });
+            alert("Sucesso!"); location.reload();
         });
 
-        // --- LÓGICA DASHBOARD ADMIN ---
+        // --- DASHBOARD ---
         async function carregarProjetos() {
             const snap = await get(ref(db, `config/projetos`));
             const ativo = await get(ref(db, `config/projeto_ativo`));
@@ -159,13 +160,10 @@
         }
 
         async function carregarRelatorio() {
-            const projeto = document.getElementById('projeto-ativo').value;
             const [snapDados, snapRaizAg, snapRaizAv] = await Promise.all([get(ref(db, `dados`)), get(ref(db, `agendamentos`)), get(ref(db, `avulsos`))]);
             window.dadosCompletos = [];
-            
             const rAg = snapRaizAg.val() || {}; for(let d in rAg) for(let h in rAg[d]) window.dadosCompletos.push({...rAg[d][h], id: h, data: d, path: `agendamentos/${d}/${h}`});
             const rAv = snapRaizAv.val() || {}; for(let id in rAv) window.dadosCompletos.push({...rAv[id], id: id, path: `avulsos/${id}`});
-            
             const todos = snapDados.val() || {};
             for(let pKey in todos) {
                 const ags = todos[pKey].agendamentos || {};
@@ -185,41 +183,47 @@
         };
 
         function renderizarLista(lista, dataFiltrada) {
-            let t = { vendidos:0, pix:0, dinheiro:0, vale:0, nq:0, comissaoDia:0 };
+            let t = { vendidos:0, comissaoDia:0, vales: 0 };
             const compData = dataFiltrada || new Date().toLocaleDateString('en-CA');
-            let hT = '<table class="w-full text-[11px] text-left"><thead class="bg-slate-700"><tr><th class="p-3">DATA</th><th class="p-3">CLIENTE</th><th class="p-3">STATUS</th><th class="p-3">AÇÃO</th></tr></thead><tbody class="divide-y divide-white/5">';
+            let hT = '<table class="w-full text-[11px] text-left"><thead class="bg-slate-700"><tr><th class="p-3">DATA</th><th class="p-3">CLIENTE</th><th class="p-3 text-center">STATUS</th><th class="p-3 text-center">AÇÃO</th></tr></thead><tbody class="divide-y divide-white/5">';
             
             lista.forEach(item => {
                 if(item.resultado === "Venda") {
                     t.vendidos++;
-                    if(item.data === compData) {
-                        // Cálculo simplificado para o resumo
-                        const v = Number(item.valor) || 0;
-                        t.comissaoDia += v * 0.12;
-                    }
+                    if(item.data === compData) t.comissaoDia += (Number(item.valor) || 0) * 0.12;
                 }
                 const wz = item.endereco ? `https://www.waze.com/ul?q=${encodeURIComponent(item.endereco)}&navigate=yes` : '#';
-                hT += `<tr><td class="p-3">${paraDataBR(item.data)}<br>${item.horario||'DIR'}</td><td class="p-3"><b>${item.nome_formando}</b><br><a href="${wz}" target="_blank" class="text-blue-400 text-[9px]">📍 ${item.endereco||''}</a></td><td class="p-3">${item.resultado||'Pendente'}</td><td class="p-3"><button onclick="gerenciarItem('${item.path}')" class="bg-blue-600 px-2 py-1 rounded text-[9px]">GESTÃO</button></td></tr>`;
+                const wa = item.telefone ? `https://wa.me/55${item.telefone.replace(/\D/g,'')}` : '#';
+                hT += `<tr><td class="p-3">${paraDataBR(item.data)}<br>${item.horario||'DIR'}</td><td class="p-3"><b>${item.nome_formando}</b><br><a href="${wz}" target="_blank" class="text-blue-400 text-[9px]">📍 ${item.endereco||'Waze'}</a> | <a href="${wa}" target="_blank" class="text-emerald-400 text-[9px]">📱 Zap</a></td><td class="p-3 text-center">${item.resultado||'Pendente'}</td><td class="p-3 text-center"><button onclick="gerenciarItem('${item.path}')" class="bg-blue-600 px-2 py-1 rounded text-[9px]">GESTÃO</button></td></tr>`;
             });
-            document.getElementById('resumo-financeiro').innerHTML = `<div class="glass p-2 rounded-xl"><p class="text-[8px]">VENDAS</p><p class="font-black">${t.vendidos}</p></div><div class="glass p-2 rounded-xl"><p class="text-[8px]">COMIS.DIA</p><p class="font-black">${window.formatBRL(t.comissaoDia)}</p></div>`;
+            document.getElementById('resumo-financeiro').innerHTML = `<div class="glass p-2 rounded-xl"><p class="text-[8px]">TOTAL VENDAS</p><p class="font-black">${t.vendidos}</p></div><div class="glass p-2 rounded-xl"><p class="text-[8px]">COMIS. DIA</p><p class="font-black">${window.formatBRL(t.comissaoDia)}</p></div>`;
             document.getElementById('admin-content').innerHTML = hT + '</tbody></table>';
         }
 
         window.gerenciarItem = (p) => { window.itemPath = p; document.getElementById('modalGestao').style.display = 'flex'; };
         window.confirmarExclusao = async () => { if(confirm("Apagar?")) { await remove(ref(db, window.itemPath)); fecharModalGestao(); carregarRelatorio(); } };
         window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); document.getElementById('gestao-form').classList.remove('hidden'); document.getElementById('gestao-form').innerHTML = `<button onclick="salvarStatus('Venda')" class="w-full p-4 bg-emerald-600 rounded-xl mb-2">VENDA</button><button onclick="salvarStatus('NQ')" class="w-full p-4 bg-rose-600 rounded-xl">NQ</button>`; };
-        window.salvarStatus = async (s) => { let v = s === 'Venda' ? prompt("Valor:") : 0; await update(ref(db, window.itemPath), { resultado: s, valor: v }); fecharModalGestao(); carregarRelatorio(); };
+        window.salvarStatus = async (s) => { let v = s === 'Venda' ? prompt("Valor Total:") : 0; await update(ref(db, window.itemPath), { resultado: s, valor: v }); fecharModalGestao(); carregarRelatorio(); };
 
-        // --- INICIALIZAÇÃO SEGURA ---
+        window.copiarRelatorio = () => {
+            const f = window.formatBRL;
+            const seletor = document.getElementById('projeto-ativo');
+            const proj = seletor?.options[seletor.selectedIndex]?.text || "Projeto";
+            const dataLimite = document.getElementById('filtro-data-admin').value || new Date().toLocaleDateString('en-CA');
+            const acumulado = window.dadosCompletos.filter(i => i.data <= dataLimite);
+            const v = acumulado.filter(i => i.resultado === "Venda"), n = acumulado.filter(i => i.resultado === "NQ");
+            let total = 0; v.forEach(item => total += (Number(item.valor) || 0));
+            const msg = `*RELATÓRIO: ${proj}*\n*Data:* ${paraDataBR(dataLimite)}\n\nVendas: ${v.length}\nNQ: ${n.length}\n\nTotal Vendido: ${f(total)}`;
+            const el = document.createElement('textarea'); el.value = msg; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); alert("Copiado!");
+        };
+
+        // --- INICIALIZAÇÃO ---
         (async () => {
-            // 1. Esconde dias passados imediatamente
             const agora = new Date();
             document.querySelectorAll('.day-btn').forEach(btn => {
                 const [y, m, d] = btn.getAttribute("data-date").split("-");
                 if (agora > new Date(y, m-1, d, (d == "08" || d == "07") ? 15 : 20, 30)) btn.style.display = "none";
             });
-
-            // 2. Busca nomes da escola
             try {
                 const snapAtivo = await get(ref(db, `config/projeto_ativo`));
                 const slug = snapAtivo.val() || "guaratingueta-guilherme";
@@ -228,7 +232,7 @@
                     document.getElementById('escola-titulo').textContent = info.val().cidade;
                     document.getElementById('sub-escola').textContent = info.val().escola;
                 }
-            } catch(e) { console.error("Firebase offline ou lento"); }
+            } catch(e) {}
         })();
     </script>
 </body>
