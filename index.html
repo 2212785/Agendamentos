@@ -70,9 +70,9 @@
                 </div>
                 <div class="space-y-6">
                     <div class="glass rounded-[2rem] p-6 border-white/5">
-                        <h3 class="text-lg font-bold text-white uppercase italic mb-4 text-center">Comissões</h3>
+                        <h3 class="text-lg font-bold text-white uppercase italic mb-4 text-center">Extrato Comissões</h3>
                         <div id="comissao-content" class="space-y-2 max-h-[400px] overflow-y-auto pr-2"></div>
-                        <div id="fechamento-final" class="mt-6"></div>
+                        <div id="fechamento-final" class="mt-6 border-t border-white/10 pt-4"></div>
                     </div>
                 </div>
             </div>
@@ -147,242 +147,123 @@
         };
 
         function renderizarLista(lista) {
-
-let t = { vendidos:0,totalVendas:0,pix:0,dinheiro:0,debito:0,credito:0,boleto:0,vale:0,nq:0,comissao:0,comissaoDia:0 };
-let cidades = {};
-let vendasHoje = 0;
-
-const hoje = new Date().toLocaleDateString('en-CA');
-const amanha = new Date();
-amanha.setDate(amanha.getDate()+1);
-const dataAmanha = amanha.toLocaleDateString('en-CA');
-
-lista.sort((a,b)=>{
-let d = (a.data||"").localeCompare(b.data||"");
-if(d!==0) return d;
-return (a.horario||"").localeCompare(b.horario||"");
-});
-
-let hT = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">AÇÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
-
-let hC = '<table class="w-full text-[10px]"><tbody>';
-
-lista.forEach(item=>{
-
-let comItem = 0;
-
-if(item.resultado==="Venda"){
-
-t.vendidos++;
-t.totalVendas += Number(item.valor);
-
-if(item.data===hoje) vendasHoje++;
-
-if(item.cidade){
-cidades[item.cidade] = (cidades[item.cidade]||0)+1;
-}
-
-if(Array.isArray(item.pagamentos)){
-item.pagamentos.forEach(p=>{
-
-const v = Number(p.valor);
-
-if(p.tipo==="Dinheiro"){
-t.dinheiro+=v;
-t.vale+=v;
-comItem += v*0.12;
-}
-
-if(p.tipo==="Pix"){
-t.pix+=v;
-t.vale+=v;
-comItem += v*0.12;
-}
-
-if(p.tipo==="Cartão Débito"){
-t.debito+=v;
-comItem += v*0.12;
-}
-
-if(p.tipo==="Cartão Crédito"){
-t.credito+=v;
-comItem += v*0.12;
-}
-
-if(p.tipo==="Boleto"){
-
-const ent = Number(p.entrada||0);
-
-t.boleto += (v-ent);
-
-comItem += (ent*0.12)+((v-ent)*0.08);
-
-if(p.forma_entrada==="Dinheiro"){
-t.dinheiro+=ent;
-t.vale+=ent;
-}
-
-if(p.forma_entrada==="Pix"){
-t.pix+=ent;
-t.vale+=ent;
-}
-
-}
-
-});
-}
-
-t.comissao += comItem;
-
-if(item.data===hoje){
-t.comissaoDia += comItem;
-}
-
-hC += `<tr>
-<td class="py-2 uppercase font-bold text-slate-300">${item.nome_formando}</td>
-<td class="py-2 text-right text-emerald-400 font-black">${window.formatBRL(comItem)}</td>
-</tr>`;
-
-}
-
-else if(item.resultado==="NQ"){
-t.nq++;
-}
-
-const colors = {
-Venda:'text-emerald-500',
-NQ:'text-rose-500',
-Pendente:'text-slate-400'
-};
-
-const wLink = item.telefone ? `https://wa.me/55${item.telefone.replace(/\D/g,'')}`:'#';
-
-hT += `<tr class="hover:bg-slate-800/40">
-
-<td class="p-4 font-bold">
-${paraDataBR(item.data)}
-<br>
-<span class="text-[9px] text-slate-500">${item.horario||'DIRETO'}</span>
-</td>
-
-<td class="p-4">
-
-<span class="uppercase font-black text-white">${item.nome_formando}</span>
-
-<br>
-
-<span class="text-blue-400 text-[10px] block">${item.endereco||''}</span>
-
-<a href="${wLink}" target="_blank" class="text-emerald-400 text-[9px] font-bold underline italic">
-
-WhatsApp: ${item.telefone||''}
-
-</a>
-
-</td>
-
-<td class="p-4 text-center font-black ${colors[item.resultado]||''}">
-
-${item.resultado||'Pendente'}
-
-</td>
-
-<td class="p-4 text-center">
-
-<button onclick="window.gerenciarItem('${item.tipo}','${item.data}','${item.id}')"
-class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-lg text-[9px] uppercase border border-blue-400/30">
-
-Gerenciar
-
-</button>
-
-</td>
-
-</tr>`;
-
-});
-
-const taxa = lista.length ? ((t.vendidos/lista.length)*100).toFixed(1) : 0;
-
-const agendaAmanha = lista.filter(i=>i.data===dataAmanha).length;
-
-const qtdeDias = Object.keys(lista.reduce((a,b)=>{a[b.data]=1;return a},{})).length||1;
-
-const diasComVenda = Object.keys(lista.filter(i=>i.resultado==="Venda").reduce((a,b)=>{a[b.data]=1;return a},{})).length||1;
-
-const previsaoSemana = (t.comissao/diasComVenda)*7;
-
-const ticketMedio = t.vendidos ? t.totalVendas/t.vendidos : 0;
-
-const ranking = Object.entries(cidades)
-.sort((a,b)=>b[1]-a[1])
-.slice(0,5)
-.map(c=>`<div class="flex justify-between text-[10px]"><span>${c[0]}</span><span>${c[1]}</span></div>`)
-.join('');
-
-document.getElementById('resumo-financeiro').innerHTML = `
-
-<div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500">
-<p class="text-[7px] font-bold text-slate-400 uppercase">CONVERSÃO</p>
-<p class="text-sm font-black">${taxa}%</p>
-</div>
-
-<div class="glass p-2 rounded-xl text-center border-t-2 border-orange-500">
-<p class="text-[7px] font-bold uppercase">AGENDA AMANHÃ</p>
-<p class="text-[9px] font-black">${agendaAmanha}</p>
-</div>
-
-<div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500">
-<p class="text-[7px] font-bold uppercase">VENDAS HOJE</p>
-<p class="text-[9px] font-black">${vendasHoje}</p>
-</div>
-
-<div class="glass p-2 rounded-xl text-center border-t-2 border-cyan-500">
-<p class="text-[7px] font-bold uppercase">PIX</p>
-<p class="text-[9px] font-black">${window.formatBRL(t.pix)}</p>
-</div>
-
-<div class="glass p-2 rounded-xl text-center border-t-2 border-green-500">
-<p class="text-[7px] font-bold uppercase">DINHEIRO</p>
-<p class="text-[9px] font-black">${window.formatBRL(t.dinheiro)}</p>
-</div>
-
-<div class="bg-blue-600 p-2 rounded-xl text-center text-white shadow-xl">
-<p class="text-[7px] font-bold uppercase">TOTAL VENDAS</p>
-<p class="text-[10px] font-black">${window.formatBRL(t.totalVendas)}</p>
-</div>
-
-<div class="bg-purple-600 p-2 rounded-xl text-center text-white shadow-xl">
-<p class="text-[7px] font-bold uppercase">COMISSÃO HOJE</p>
-<p class="text-[10px] font-black">${window.formatBRL(t.comissaoDia)}</p>
-</div>
-
-<div class="glass p-2 rounded-xl text-center border-t-2 border-purple-500">
-<p class="text-[7px] font-bold uppercase">PREVISÃO SEMANA</p>
-<p class="text-[10px] font-black">${window.formatBRL(previsaoSemana)}</p>
-</div>
-
-<div class="glass p-2 rounded-xl text-center border-t-2 border-yellow-500">
-<p class="text-[7px] font-bold uppercase">TICKET MÉDIO</p>
-<p class="text-[10px] font-black">${window.formatBRL(ticketMedio)}</p>
-</div>
-
-<div class="glass p-2 rounded-xl border-t-2 border-pink-500 col-span-2">
-<p class="text-[7px] font-bold uppercase mb-1 text-center">TOP CIDADES</p>
-${ranking}
-</div>
-`;
-
-document.getElementById('admin-content').innerHTML = hT+'</tbody></table>';
-
-document.getElementById('comissao-content').innerHTML = hC+'</tbody></table>';
-
-window.resumoAtual = t;
-
-gerarGrafico(lista);
-
-}
+            // Inicialização de Variáveis
+            let t = { vendidos:0, totalVendas:0, pix:0, dinheiro:0, debito:0, credito:0, boleto:0, vale:0, nq:0, comissao:0, comissaoDia:0 };
+            let cidades = {};
+            let vendasHoje = 0;
+
+            // Datas Críticas
+            const hoje = new Date().toLocaleDateString('en-CA'); // AAAA-MM-DD local
+            const amanha = new Date();
+            amanha.setDate(amanha.getDate()+1);
+            const dataAmanha = amanha.toLocaleDateString('en-CA');
+
+            lista.sort((a,b) => {
+                let d = (a.data||"").localeCompare(b.data||"");
+                if(d!==0) return d;
+                return (a.horario||"").localeCompare(b.horario||"");
+            });
+
+            let hT = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">AÇÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
+            let hC = '<table class="w-full text-[10px]"><tbody>';
+
+            lista.forEach(item => {
+                let comItem = 0;
+
+                if(item.resultado === "Venda") {
+                    const valorVenda = Number(item.valor) || 0;
+                    t.vendidos++;
+                    t.totalVendas += valorVenda;
+
+                    if(item.data === hoje) vendasHoje++;
+                    if(item.city) cidades[item.city] = (cidades[item.city]||0)+1;
+
+                    if(Array.isArray(item.pagamentos)) {
+                        item.pagamentos.forEach(p => {
+                            const v = Number(p.valor) || 0;
+                            const taxa = 0.12;
+
+                            if(p.tipo === "Dinheiro" || p.tipo === "Pix") {
+                                t[p.tipo.toLowerCase()] += v;
+                                t.vale += v;
+                                comItem += v * taxa;
+                            } else if(p.tipo === "Cartão Débito") {
+                                t.debito += v;
+                                comItem += v * taxa;
+                            } else if(p.tipo === "Cartão Crédito") {
+                                t.credito += v;
+                                comItem += v * taxa;
+                            } else if(p.tipo === "Boleto") {
+                                const ent = Number(p.entrada) || 0;
+                                const rest = v - ent;
+                                t.boleto += rest;
+                                comItem += (ent * 0.12) + (rest * 0.08);
+
+                                if(p.forma_entrada === "Dinheiro" || p.forma_entrada === "Pix") {
+                                    t[p.forma_entrada.toLowerCase()] += ent;
+                                    t.vale += ent;
+                                }
+                            }
+                        });
+                    }
+
+                    t.comissao += comItem;
+                    if(item.data === hoje) t.comissaoDia += comItem;
+
+                    hC += `<tr><td class="py-2 uppercase font-bold text-slate-300">${item.nome_formando}</td><td class="py-2 text-right text-emerald-400 font-black">${window.formatBRL(comItem)}</td></tr>`;
+                } else if(item.resultado === "NQ") {
+                    t.nq++;
+                }
+
+                const colors = { Venda:'text-emerald-500', NQ:'text-rose-500', Pendente:'text-slate-400' };
+                const wLink = item.telefone ? `https://wa.me/55${item.telefone.replace(/\D/g,'')}` : '#';
+
+                hT += `<tr class="hover:bg-slate-800/40">
+                    <td class="p-4 font-bold">${paraDataBR(item.data)}<br><span class="text-[9px] text-slate-500">${item.horario||'DIRETO'}</span></td>
+                    <td class="p-4"><span class="uppercase font-black text-white">${item.nome_formando}</span><br><span class="text-blue-400 text-[10px] block">${item.endereco||''}</span><a href="${wLink}" target="_blank" class="text-emerald-400 text-[9px] font-bold underline italic">WhatsApp: ${item.telefone||''}</a></td>
+                    <td class="p-4 text-center font-black ${colors[item.resultado]||''}">${item.resultado||'Pendente'}</td>
+                    <td class="p-4 text-center"><button onclick="window.gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-lg text-[9px] uppercase border border-blue-400/30">Gerenciar</button></td>
+                </tr>`;
+            });
+
+            // Indicadores PRO
+            const taxa = lista.length ? ((t.vendidos / lista.length) * 100).toFixed(1) : 0;
+            const agendaAmanha = lista.filter(i => i.data === dataAmanha).length;
+            const qtdeDiasComVenda = Object.keys(lista.filter(i=>i.resultado==="Venda").reduce((a,b)=>{a[b.data]=1;return a},{})).length || 1;
+            const previsaoSemana = (t.comissao / qtdeDiasComVenda) * 7;
+            const ticketMedio = t.vendidos ? t.totalVendas / t.vendidos : 0;
+
+            const ranking = Object.entries(cidades).sort((a,b)=>b[1]-a[1]).slice(0,5)
+                .map(c=>`<div class="flex justify-between text-[10px]"><span>${c[0]}</span><span>${c[1]}</span></div>`).join('');
+
+            document.getElementById('resumo-financeiro').innerHTML = `
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500"><p class="text-[7px] font-bold text-slate-400 uppercase">CONVERSÃO</p><p class="text-sm font-black">${taxa}%</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-orange-500"><p class="text-[7px] font-bold uppercase">AGENDA AMANHÃ</p><p class="text-[9px] font-black">${agendaAmanha}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500 text-emerald-400"><p class="text-[7px] font-bold uppercase">VENDAS HOJE</p><p class="text-[9px] font-black">${vendasHoje}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-cyan-500 text-cyan-400"><p class="text-[7px] font-bold uppercase">PIX</p><p class="text-[9px] font-black">${window.formatBRL(t.pix)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-green-500 text-green-400"><p class="text-[7px] font-bold uppercase">DINHEIRO</p><p class="text-[9px] font-black">${window.formatBRL(t.dinheiro)}</p></div>
+                <div class="bg-blue-600 p-2 rounded-xl text-center text-white shadow-xl"><p class="text-[7px] font-bold uppercase">TOTAL VENDAS</p><p class="text-[10px] font-black">${window.formatBRL(t.totalVendas)}</p></div>
+                <div class="bg-purple-600 p-2 rounded-xl text-center text-white shadow-xl"><p class="text-[7px] font-bold uppercase">COMISSÃO HOJE</p><p class="text-[10px] font-black">${window.formatBRL(t.comissaoDia)}</p></div>
+                <div class="bg-amber-500 p-2 rounded-xl text-center text-amber-950 shadow-xl"><p class="text-[7px] font-bold uppercase">VALES (D+P)</p><p class="text-[10px] font-black">${window.formatBRL(t.vale)}</p></div>
+            `;
+
+            document.getElementById('admin-content').innerHTML = hT + '</tbody></table>';
+            document.getElementById('comissao-content').innerHTML = hC + '</tbody></table>';
             
+            const saldoFinal = t.comissao - t.vale;
+            document.getElementById('fechamento-final').innerHTML = `
+                <div class="mt-4 p-4 rounded-2xl border-2 text-right ${saldoFinal >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}">
+                    <p class="text-[8px] font-black uppercase text-slate-400">Comissão Hoje: ${window.formatBRL(t.comissaoDia)}</p>
+                    <p class="text-[8px] font-black uppercase text-slate-400 mb-2">Comissão Acumulada: ${window.formatBRL(t.comissao)}</p>
+                    <p class="text-[10px] font-bold uppercase text-white">Saldo a Receber</p>
+                    <p class="text-3xl font-black italic">${window.formatBRL(Math.abs(saldoFinal))}</p>
+                </div>
+            `;
+
+            window.resumoAtual = t;
+            gerarGrafico(lista);
+        }
+
         function gerarGrafico(lista) {
             const vendasPorDia = {};
             lista.forEach(item => { if(item.resultado === "Venda") { vendasPorDia[item.data] = (vendasPorDia[item.data] || 0) + 1; } });
@@ -397,6 +278,7 @@ gerarGrafico(lista);
             });
         }
 
+        // Funções Globais de Janela
         window.enviarRelatorioWhats = () => {
             const t = window.resumoAtual;
             const texto = `📊 *RELATÓRIO ELITE SALES*\n\n✅ Vendas: ${t.vendidos}\n💰 Total: ${window.formatBRL(t.totalVendas)}\n\n💵 Dinheiro: ${window.formatBRL(t.dinheiro)}\n💎 Pix: ${window.formatBRL(t.pix)}\n💳 Cartão: ${window.formatBRL(t.debito + t.credito)}\n\n⭐ *Comissão Hoje: ${window.formatBRL(t.comissaoDia)}*`;
@@ -471,4 +353,3 @@ gerarGrafico(lista);
     </script>
 </body>
 </html>
-
