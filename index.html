@@ -48,7 +48,7 @@
                 <div class="flex flex-wrap gap-3 w-full lg:w-auto items-center">
                     <div class="flex flex-col">
                         <label class="text-[9px] uppercase font-bold text-slate-400 ml-1">Filtrar por Dia</label>
-                        <input type="date" id="filtro-data-admin" onchange="window.filtrarLista()" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-blue-500">
+                        <input type="date" id="filtro-data-admin" onchange="window.filtrarLista()" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none">
                     </div>
                     <button onclick="window.lancarVendaDireta()" class="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase shadow mt-auto">Venda Direta</button>
                     <button onclick="window.enviarRelatorioWhats()" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase shadow mt-auto">Relatório WhatsApp</button>
@@ -65,7 +65,7 @@
                     <div class="glass rounded-[2rem] border-white/5">
                         <div class="p-6 pb-0 flex justify-between items-center">
                             <h3 class="text-lg font-bold uppercase text-white">Roteiro</h3>
-                            <input type="text" id="busca-admin" onkeyup="window.filtrarLista()" placeholder="Pesquisar cliente..." class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white outline-none w-48">
+                            <input type="text" id="busca-admin" onkeyup="window.filtrarLista()" placeholder="Pesquisar..." class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white outline-none w-48">
                         </div>
                         <div id="admin-content" class="overflow-x-auto p-4"></div>
                     </div>
@@ -95,6 +95,8 @@
                     <button type="button" data-date="2026-03-05" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">05/03<br>Qui</button>
                     <button type="button" data-date="2026-03-06" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">06/03<br>Sex</button>
                     <button type="button" data-date="2026-03-07" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">07/03<br>Sab</button>
+                    <button type="button" data-date="2026-03-08" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">08/03<br>Dom</button>
+                    
                 </div>
                 <input type="hidden" id="data-selecionada" required>
                 <div class="space-y-4">
@@ -131,9 +133,21 @@
         window.formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
         const paraDataBR = (str) => { if(!str || !str.includes('-')) return "---"; const [y,m,d] = str.split("-"); return `${d}/${m}/${y}`; };
 
+        // --- EXPOSIÇÃO GLOBAL ---
         window.acessoAdmin = () => { if(prompt("Chave ADM:") === "2025") { document.getElementById('admin-modal').style.display = 'block'; window.carregarRelatorio(); } };
         window.fecharAdmin = () => document.getElementById('admin-modal').style.display = 'none';
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
+
+        // --- FILTRO DE BOTÕES DE DATA ---
+        const autoCheckDates = () => {
+            const agora = new Date();
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                const dataBtn = btn.getAttribute("data-date");
+                const [y, m, d] = dataBtn.split("-");
+                const dataLimite = new Date(y, m-1, d, 20, 30); // Limite 20:30 do próprio dia
+                if (agora > dataLimite) btn.style.display = "none";
+            });
+        };
 
         window.carregarRelatorio = async () => {
             const [sAg, sAv] = await Promise.all([get(ref(db, PATH)), get(ref(db, AVULSO))]);
@@ -146,7 +160,6 @@
         window.filtrarLista = () => {
             const busca = document.getElementById('busca-admin').value.toLowerCase();
             const filtroData = document.getElementById('filtro-data-admin').value;
-            
             let filtrados = window.dadosCompletos.filter(item => {
                 const matchNome = (item.nome_formando || "").toLowerCase().includes(busca);
                 const matchData = filtroData ? (item.data === filtroData) : true;
@@ -174,8 +187,7 @@
                             if(p.tipo === "Dinheiro" || p.tipo === "Pix") { t[p.tipo.toLowerCase()] += v; t.vale += v; comItem += v * 0.12; }
                             else if(p.tipo.includes("Cartão")) { t[p.tipo.includes("Débito") ? "debito" : "credito"] += v; comItem += v * 0.12; }
                             else if(p.tipo === "Boleto") {
-                                const ent = Number(p.entrada || 0); t.boleto += (v - ent);
-                                comItem += (ent * 0.12) + ((v - ent) * 0.08);
+                                const ent = Number(p.entrada || 0); t.boleto += (v - ent); comItem += (ent * 0.12) + ((v - ent) * 0.08);
                                 if(p.forma_entrada === "Dinheiro" || p.forma_entrada === "Pix") { t[p.forma_entrada.toLowerCase()] += ent; t.vale += ent; }
                             }
                         });
@@ -206,9 +218,10 @@
             
             document.getElementById('admin-content').innerHTML = hT + '</tbody></table>';
             document.getElementById('comissao-content').innerHTML = `<table class="w-full"><tbody>${hC}</tbody></table>`;
-            document.getElementById('fechamento-final').innerHTML = `<div class="p-4 rounded-2xl border-2 text-right bg-emerald-500/10 border-emerald-500/30"><p class="text-[8px] font-black uppercase text-slate-400">Total Acumulado: ${window.formatBRL(t.comissao)}</p><p class="text-3xl font-black italic">${window.formatBRL(t.comissao - t.vale)}</p></div>`;
+            const saldo = t.comissao - t.vale;
+            document.getElementById('fechamento-final').innerHTML = `<div class="p-4 rounded-2xl border-2 text-right bg-emerald-500/10 border-emerald-500/30"><p class="text-[8px] font-black uppercase text-slate-400">Total Acumulado: ${window.formatBRL(t.comissao)}</p><p class="text-3xl font-black italic">${window.formatBRL(saldo)}</p></div>`;
             window.resumoAtual = t; window.gerarGrafico(window.dadosCompletos);
-        }
+        };
 
         window.gerarGrafico = (listaCompleta) => {
             const vD = {}; listaCompleta.forEach(i => { if(i.resultado === "Venda") vD[i.data] = (vD[i.data] || 0) + 1; });
@@ -248,26 +261,7 @@
             }
         };
 
-        document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const d = document.getElementById('data-selecionada').value, h = document.getElementById('horario').value;
-            const uniqueID = `${h.replace(':','-')}-${Date.now()}`;
-            const dados = { data: d, horario: h, nome_formando: document.getElementById('nome').value, telefone: document.getElementById('telefone').value, city: document.getElementById('cidade').value, endereco: document.getElementById('endereco').value, resultado: "Pendente" };
-            await set(ref(db, `${PATH}/${d}/${uniqueID}`), dados);
-            const msg = `*NOVA VISITA AGENDADA*\n\n*Nome:* ${dados.nome_formando}\n*Data:* ${paraDataBR(d)}\n*Horário:* ${h}`;
-            window.open(`https://wa.me/${MEU_WHATSAPP}?text=${encodeURIComponent(msg)}`);
-            location.reload();
-        });
-
-        document.querySelectorAll('.day-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
-                document.getElementById('data-selecionada').value = btn.getAttribute('data-date');
-                await window.gerarHorariosDisponiveis(btn.getAttribute('data-date'), document.getElementById('horario'));
-            });
-        });
-
-        window.carregarRelatorio();
+        autoCheckDates(); // Esconde datas passadas ao carregar
     </script>
 </body>
 </html>
