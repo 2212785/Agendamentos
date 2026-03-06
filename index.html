@@ -242,41 +242,214 @@
         };
 
         function renderizarLista(lista) {
-            let t = { vendidos: 0, totalVendas: 0, pix: 0, dinheiro: 0, debito: 0, credito: 0, boleto: 0, vale: 0, nq: 0, comissao: 0 };
-            lista.sort((a,b) => (a.data || "").localeCompare(b.data || ""));
-            let hT = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE/ENDEREÇO/WHATS</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">AÇÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
-            let hC = '<table class="w-full text-[10px]"><tbody>';
-            lista.forEach(item => {
-                let comItem = 0;
-                if(item.resultado === "Venda") {
-                    t.vendidos++; t.totalVendas += Number(item.valor);
-                    if(Array.isArray(item.pagamentos)) {
-                        item.pagamentos.forEach(p => {
-                            const v = Number(p.valor);
-                            if(p.tipo === "Dinheiro") { t.dinheiro += v; t.vale += v; comItem += v * 0.12; }
-                            else if(p.tipo === "Pix") { t.pix += v; t.vale += v; comItem += v * 0.12; }
-                            else if(p.tipo === "Cartão Débito") { t.debito += v; comItem += v * 0.12; }
-                            else if(p.tipo === "Cartão Crédito") { t.credito += v; comItem += v * 0.12; }
-                            else if(p.tipo === "Boleto") {
-                                const ent = Number(p.entrada || 0); t.boleto += (v - ent);
-                                comItem += (ent * 0.12) + ((v - ent) * 0.08);
-                                if(p.forma_entrada === "Dinheiro" || p.forma_entrada === "Pix") { t[p.forma_entrada.toLowerCase()] += ent; t.vale += ent; }
-                            }
-                        });
-                    }
-                    t.comissao += comItem; hC += `<tr><td class="py-2 uppercase font-bold">${item.nome_formando}</td><td class="py-2 text-right text-emerald-400 font-black">${window.formatBRL(comItem)}</td></tr>`;
-                } else if(item.resultado === "NQ") t.nq++;
-                const colors = { 'Venda': 'text-emerald-500', 'NQ': 'text-rose-500', 'Pendente': 'text-slate-400' };
-                const wLink = item.telefone ? `https://wa.me/55${item.telefone.replace(/\D/g,'')}` : '#';
-                hT += `<tr class="hover:bg-slate-800/40"><td class="p-4 font-bold">${paraDataBR(item.data)}<br><span class="text-[9px] text-slate-500">${item.horario || 'DIRETO'}</span></td><td class="p-4"><span class="uppercase font-black text-white">${item.nome_formando}</span><br><span class="text-blue-400 text-[10px] block">${item.endereco || 'Endereço N/A'}</span><a href="${wLink}" target="_blank" class="text-emerald-400 text-[9px] font-bold underline">Whats: ${item.telefone || 'N/A'}</a></td><td class="p-4 text-center font-black ${colors[item.resultado] || ''}">${item.resultado || 'Pendente'}</td><td class="p-4 text-center"><button onclick="window.gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-lg text-[9px] uppercase border border-blue-400/30">Gerenciar</button></td></tr>`;
-            });
-            document.getElementById('resumo-financeiro').innerHTML = `<div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500"><p class="text-[7px] font-bold text-slate-400 uppercase">EFICIÊNCIA</p><p class="text-sm font-black">${t.vendidos}/${lista.length}</p></div><div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500 text-emerald-400"><p class="text-[7px] font-bold uppercase">DINHEIRO</p><p class="text-[9px] font-black">${window.formatBRL(t.dinheiro)}</p></div><div class="glass p-2 rounded-xl text-center border-t-2 border-cyan-500 text-cyan-400"><p class="text-[7px] font-bold uppercase">PIX</p><p class="text-[9px] font-black">${window.formatBRL(t.pix)}</p></div><div class="glass p-2 rounded-xl text-center border-t-2 border-blue-400 text-blue-300"><p class="text-[7px] font-bold uppercase">DÉBITO</p><p class="text-[9px] font-black">${window.formatBRL(t.debito)}</p></div><div class="glass p-2 rounded-xl text-center border-t-2 border-indigo-400 text-indigo-300"><p class="text-[7px] font-bold uppercase">CRÉDITO</p><p class="text-[9px] font-black">${window.formatBRL(t.credito)}</p></div><div class="bg-blue-600 p-2 rounded-xl text-center text-white shadow-xl"><p class="text-[7px] font-bold uppercase">TOTAL</p><p class="text-[10px] font-black">${window.formatBRL(t.totalVendas)}</p></div><div class="bg-amber-500 p-2 rounded-xl text-center text-amber-950 shadow-xl"><p class="text-[7px] font-bold uppercase">VALES (D+P)</p><p class="text-[10px] font-black">${window.formatBRL(t.vale)}</p></div>`;
-            document.getElementById('admin-content').innerHTML = hT + '</tbody></table>';
-            document.getElementById('comissao-content').innerHTML = hC + '</tbody></table>';
-            const s = t.comissao - t.vale;
-            document.getElementById('fechamento-final').innerHTML = `<div class="mt-4 p-4 rounded-2xl border-2 text-right ${s >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}"><p class="text-[8px] font-black uppercase">Saldo: ${window.formatBRL(t.comissao)}</p><p class="text-3xl font-black italic">${window.formatBRL(Math.abs(s))}</p></div>`;
-            window.resumoAtual = t;
-        }
+
+let t = { 
+vendidos: 0, 
+totalVendas: 0, 
+pix: 0, 
+dinheiro: 0, 
+debito: 0, 
+credito: 0, 
+boleto: 0, 
+vale: 0, 
+nq: 0, 
+comissao: 0,
+comissaoDia: 0
+};
+
+const hoje = new Date().toISOString().split('T')[0];
+
+lista.sort((a,b) => (a.data || "").localeCompare(b.data || ""));
+
+let hT = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE/ENDEREÇO/WHATS</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">AÇÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
+
+let hC = '<table class="w-full text-[10px]"><tbody>';
+
+lista.forEach(item => {
+
+let comItem = 0;
+
+if(item.resultado === "Venda") {
+
+t.vendidos++;
+t.totalVendas += Number(item.valor);
+
+if(Array.isArray(item.pagamentos)) {
+
+item.pagamentos.forEach(p => {
+
+const v = Number(p.valor);
+
+if(p.tipo === "Dinheiro") {
+t.dinheiro += v;
+t.vale += v;
+comItem += v * 0.12;
+}
+
+else if(p.tipo === "Pix") {
+t.pix += v;
+t.vale += v;
+comItem += v * 0.12;
+}
+
+else if(p.tipo === "Cartão Débito") {
+t.debito += v;
+comItem += v * 0.12;
+}
+
+else if(p.tipo === "Cartão Crédito") {
+t.credito += v;
+comItem += v * 0.12;
+}
+
+else if(p.tipo === "Boleto") {
+
+const ent = Number(p.entrada || 0);
+
+t.boleto += (v - ent);
+
+comItem += (ent * 0.12) + ((v - ent) * 0.08);
+
+if(p.forma_entrada === "Dinheiro" || p.forma_entrada === "Pix") {
+t[p.forma_entrada.toLowerCase()] += ent;
+t.vale += ent;
+}
+
+}
+
+});
+
+}
+
+t.comissao += comItem;
+
+if(item.data === hoje){
+t.comissaoDia += comItem;
+}
+
+hC += `
+<tr>
+<td class="py-2 uppercase font-bold">${item.nome_formando}</td>
+<td class="py-2 text-right text-emerald-400 font-black">${window.formatBRL(comItem)}</td>
+</tr>
+`;
+
+}
+
+else if(item.resultado === "NQ") t.nq++;
+
+const colors = {
+'Venda': 'text-emerald-500',
+'NQ': 'text-rose-500',
+'Pendente': 'text-slate-400'
+};
+
+const wLink = item.telefone ? `https://wa.me/55${item.telefone.replace(/\D/g,'')}` : '#';
+
+hT += `
+<tr class="hover:bg-slate-800/40">
+
+<td class="p-4 font-bold">
+${paraDataBR(item.data)}
+<br>
+<span class="text-[9px] text-slate-500">${item.horario || 'DIRETO'}</span>
+</td>
+
+<td class="p-4">
+<span class="uppercase font-black text-white">${item.nome_formando}</span>
+<br>
+<span class="text-blue-400 text-[10px] block">${item.endereco || 'Endereço N/A'}</span>
+<a href="${wLink}" target="_blank" class="text-emerald-400 text-[9px] font-bold underline">
+Whats: ${item.telefone || 'N/A'}
+</a>
+</td>
+
+<td class="p-4 text-center font-black ${colors[item.resultado] || ''}">
+${item.resultado || 'Pendente'}
+</td>
+
+<td class="p-4 text-center">
+<button onclick="window.gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-lg text-[9px] uppercase border border-blue-400/30">
+Gerenciar
+</button>
+</td>
+
+</tr>
+`;
+
+});
+
+document.getElementById('resumo-financeiro').innerHTML = `
+
+<div class="glass p-2 rounded-xl text-center border-t-2 border-blue-500">
+<p class="text-[7px] font-bold text-slate-400 uppercase">EFICIÊNCIA</p>
+<p class="text-sm font-black">${t.vendidos}/${lista.length}</p>
+</div>
+
+<div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500 text-emerald-400">
+<p class="text-[7px] font-bold uppercase">DINHEIRO</p>
+<p class="text-[9px] font-black">${window.formatBRL(t.dinheiro)}</p>
+</div>
+
+<div class="glass p-2 rounded-xl text-center border-t-2 border-cyan-500 text-cyan-400">
+<p class="text-[7px] font-bold uppercase">PIX</p>
+<p class="text-[9px] font-black">${window.formatBRL(t.pix)}</p>
+</div>
+
+<div class="glass p-2 rounded-xl text-center border-t-2 border-blue-400 text-blue-300">
+<p class="text-[7px] font-bold uppercase">DÉBITO</p>
+<p class="text-[9px] font-black">${window.formatBRL(t.debito)}</p>
+</div>
+
+<div class="glass p-2 rounded-xl text-center border-t-2 border-indigo-400 text-indigo-300">
+<p class="text-[7px] font-bold uppercase">CRÉDITO</p>
+<p class="text-[9px] font-black">${window.formatBRL(t.credito)}</p>
+</div>
+
+<div class="bg-purple-600 p-2 rounded-xl text-center text-white shadow-xl">
+<p class="text-[7px] font-bold uppercase">COMISSÃO HOJE</p>
+<p class="text-[10px] font-black">${window.formatBRL(t.comissaoDia)}</p>
+</div>
+
+<div class="bg-blue-600 p-2 rounded-xl text-center text-white shadow-xl">
+<p class="text-[7px] font-bold uppercase">TOTAL</p>
+<p class="text-[10px] font-black">${window.formatBRL(t.totalVendas)}</p>
+</div>
+
+<div class="bg-amber-500 p-2 rounded-xl text-center text-amber-950 shadow-xl">
+<p class="text-[7px] font-bold uppercase">VALES (D+P)</p>
+<p class="text-[10px] font-black">${window.formatBRL(t.vale)}</p>
+</div>
+
+`;
+
+document.getElementById('admin-content').innerHTML = hT + '</tbody></table>';
+document.getElementById('comissao-content').innerHTML = hC + '</tbody></table>';
+
+const s = t.comissao - t.vale;
+
+document.getElementById('fechamento-final').innerHTML = `
+
+<div class="mt-4 p-4 rounded-2xl border-2 text-right ${s >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}">
+
+<p class="text-[8px] font-black uppercase">
+Comissão Hoje: ${window.formatBRL(t.comissaoDia)}
+</p>
+
+<p class="text-[8px] font-black uppercase">
+Comissão Total: ${window.formatBRL(t.comissao)}
+</p>
+
+<p class="text-3xl font-black italic">
+${window.formatBRL(Math.abs(s))}
+</p>
+
+</div>
+`;
+
+window.resumoAtual = t;
+
+}
 
         window.copiarRelatorio = async () => {
             const cid = prompt("Cidade:"); if(!cid) return;
@@ -289,3 +462,4 @@
     </script>
 </body>
 </html>
+
