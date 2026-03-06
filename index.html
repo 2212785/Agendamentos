@@ -144,18 +144,19 @@
 
         window.filtrarLista = () => {
             const fData = document.getElementById('filtro-data-admin').value;
+            // 1. FILTRAR POR DATA PRIMEIRO
             let listaFiltrada = window.dadosCompletos.filter(i => (fData ? i.data === fData : true));
             
-            // --- LÓGICA DE ORDENAÇÃO CRONOLÓGICA ---
+            // 2. ORDENAR CRONOLOGICAMENTE
             listaFiltrada.sort((a, b) => {
-                const dataA = a.data || '0000-00-00';
-                const dataB = b.data || '0000-00-00';
+                const dataA = a.data || '9999-12-31';
+                const dataB = b.data || '9999-12-31';
                 if (dataA !== dataB) return dataA.localeCompare(dataB);
                 
-                // Se a data for igual, ordena pelo horário (trata 'DIR' como final da lista)
-                const horaA = a.horario || '99:99';
-                const horaB = b.horario || '99:99';
-                return horaA.localeCompare(horaB);
+                // Se a data for igual, ordena pela hora. 'DIR' (Venda Direta) vai para o final.
+                const hA = a.horario && a.horario !== 'DIR' ? a.horario : '99:99';
+                const hB = b.horario && b.horario !== 'DIR' ? b.horario : '99:99';
+                return hA.localeCompare(hB);
             });
 
             renderizarLista(listaFiltrada, fData);
@@ -187,8 +188,7 @@
 
                 const wz = item.endereco ? `https://www.waze.com/ul?q=${encodeURIComponent(item.endereco)}&navigate=yes` : '#';
                 const wa = item.telefone ? `https://wa.me/55${item.telefone.replace(/\D/g,'')}` : '#';
-                const horaDisplay = item.horario || 'DIR';
-                hT += `<tr class="hover:bg-slate-800/40"><td class="p-3"><b>${paraDataBR(item.data)}</b><br><span class="text-blue-400 font-bold">${horaDisplay}</span></td><td class="p-3"><b>${item.nome_formando}</b><br><a href="${wz}" target="_blank" class="text-blue-400 text-[9px]">📍 Waze</a> | <a href="${wa}" target="_blank" class="text-emerald-400 text-[9px]">📱 Zap</a></td><td class="p-3 text-center">${item.resultado||'Pendente'}</td><td class="p-3 text-center"><button onclick="gerenciarItem('${item.path}')" class="bg-blue-600 px-2 py-1 rounded text-[9px]">GESTÃO</button></td></tr>`;
+                hT += `<tr class="hover:bg-slate-800/40"><td class="p-3"><b>${paraDataBR(item.data)}</b><br><span class="text-blue-400 font-bold">${item.horario||'DIR'}</span></td><td class="p-3"><b>${item.nome_formando}</b><br><a href="${wz}" target="_blank" class="text-blue-400 text-[9px]">📍 Waze</a> | <a href="${wa}" target="_blank" class="text-emerald-400 text-[9px]">📱 Zap</a></td><td class="p-3 text-center">${item.resultado||'Pendente'}</td><td class="p-3 text-center"><button onclick="gerenciarItem('${item.path}')" class="bg-blue-600 px-2 py-1 rounded text-[9px]">GESTÃO</button></td></tr>`;
             });
 
             const totalAtendidos = t.v + t.nq;
