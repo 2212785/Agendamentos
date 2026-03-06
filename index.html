@@ -55,7 +55,7 @@
                     <button onclick="window.fecharAdmin()" class="flex-1 lg:flex-none bg-rose-600/20 text-rose-500 border border-rose-500/50 px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase font-black mt-auto">Sair</button>
                 </div>
             </div>
-            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-10 gap-3 mb-6"></div>
+            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-11 gap-2 mb-6"></div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 space-y-6">
                     <div class="glass p-6 rounded-[2rem] border-white/5">
@@ -131,7 +131,6 @@
         window.formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
         const paraDataBR = (str) => { if(!str || !str.includes('-')) return "---"; const [y,m,d] = str.split("-"); return `${d}/${m}/${y}`; };
 
-        // --- EXPOSIÇÃO GLOBAL ---
         window.selecionarDia = async (btn) => {
             document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -195,7 +194,6 @@
             let t = { vendidos:0, totalVendas:0, pix:0, dinheiro:0, debito:0, credito:0, boleto:0, vale:0, nq:0, comissao:0, comissaoDia:0 };
             const hojeLocal = new Date().toLocaleDateString('en-CA');
             const dataParaComparar = dataFiltrada || hojeLocal;
-            let nqTotal = 0;
 
             lista.sort((a,b) => (a.data||"").localeCompare(b.data||"") || (a.horario||"").localeCompare(b.horario||""));
             let hT = '<table class="w-full text-left text-[11px]"><thead class="bg-slate-700/50 text-slate-300 uppercase"><tr><th class="p-4">DATA</th><th class="p-4">CLIENTE/ENDEREÇO</th><th class="p-4 text-center">STATUS</th><th class="p-4 text-center">AÇÃO</th></tr></thead><tbody class="divide-y divide-slate-700/50">';
@@ -219,16 +217,15 @@
                     t.comissao += comItem; 
                     if(item.data === dataParaComparar) t.comissaoDia += comItem;
                     hC += `<tr><td class="py-2 uppercase font-bold text-slate-300">${item.nome_formando}</td><td class="py-2 text-right text-emerald-400 font-black">${window.formatBRL(comItem)}</td></tr>`;
-                } else if(item.resultado === "NQ") {
-                    t.nq++;
-                }
+                } else if(item.resultado === "NQ") t.nq++;
 
                 const colors = { Venda:'text-emerald-500', NQ:'text-rose-500', Pendente:'text-slate-400' };
                 const wLink = item.telefone ? `https://wa.me/55${item.telefone.replace(/\D/g,'')}` : '#';
                 hT += `<tr class="hover:bg-slate-800/40"><td class="p-4 font-bold text-[10px]">${paraDataBR(item.data)}<br><span class="text-slate-500">${item.horario||'DIRETO'}</span></td><td class="p-4"><span class="uppercase font-black text-white text-[10px]">${item.nome_formando}</span><br><span class="text-blue-400 text-[9px] block">${item.endereco||''}</span><a href="${wLink}" target="_blank" class="text-emerald-400 text-[8px] underline italic">WhatsApp: ${item.telefone||''}</a></td><td class="p-4 text-center font-black text-[9px] ${colors[item.resultado]||''}">${item.resultado||'Pendente'}</td><td class="p-4 text-center"><button onclick="window.gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-lg text-[9px] uppercase border border-blue-400/30">Gerenciar</button></td></tr>`;
             });
 
-            const taxa = lista.length ? ((t.vendidos / lista.length) * 100).toFixed(1) : 0;
+            const taxa = lista.length ? ((t.vendidos/lista.length)*100).toFixed(1) : 0;
+            const tMedio = t.vendidos > 0 ? (t.totalVendas / t.vendidos) : 0;
             const labelComissao = dataFiltrada ? `COMISSÃO EM ${paraDataBR(dataFiltrada)}` : "COMISSÃO HOJE";
 
             document.getElementById('resumo-financeiro').innerHTML = `
@@ -236,6 +233,7 @@
                 <div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-500"><p class="text-[7px] font-bold uppercase">VENDAS DIA</p><p class="text-[9px] font-black">${lista.filter(i=>i.resultado==='Venda' && i.data===(dataFiltrada||hojeLocal)).length}</p></div>
                 <div class="glass p-2 rounded-xl text-center border-t-2 border-emerald-300"><p class="text-[7px] font-bold uppercase">VENDAS TOTAL</p><p class="text-[9px] font-black">${t.vendidos}</p></div>
                 <div class="glass p-2 rounded-xl text-center border-t-2 border-rose-500"><p class="text-[7px] font-bold uppercase text-rose-300">NQ TOTAL</p><p class="text-[9px] font-black">${t.nq}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-t-2 border-blue-300"><p class="text-[7px] font-bold uppercase text-blue-300">TICKET MÉDIO</p><p class="text-[9px] font-black">${window.formatBRL(tMedio)}</p></div>
                 <div class="glass p-2 rounded-xl text-center border-t-2 border-cyan-500"><p class="text-[7px] font-bold uppercase">PIX</p><p class="text-[9px] font-black">${window.formatBRL(t.pix)}</p></div>
                 <div class="glass p-2 rounded-xl text-center border-t-2 border-green-500"><p class="text-[7px] font-bold uppercase text-white">DINHEIRO</p><p class="text-[9px] font-black">${window.formatBRL(t.dinheiro)}</p></div>
                 <div class="bg-purple-600 p-2 rounded-xl text-center text-white shadow-xl"><p class="text-[7px] font-bold uppercase">${labelComissao}</p><p class="text-[10px] font-black">${window.formatBRL(t.comissaoDia)}</p></div>
