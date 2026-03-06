@@ -49,7 +49,7 @@
                     <button onclick="window.fecharAdmin()" class="bg-rose-600/20 text-rose-500 border border-rose-500/50 px-5 py-2.5 rounded-xl font-bold text-[10px] uppercase font-black transition hover:bg-rose-600 hover:text-white">Sair</button>
                 </div>
             </div>
-            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-11 gap-2 mb-6 text-center text-white"></div>
+            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-11 gap-2 mb-6 text-center text-white text-[10px]"></div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 space-y-6">
                     <div class="glass p-6 rounded-[2rem] border-white/5"><canvas id="graficoVendas"></canvas></div>
@@ -73,8 +73,8 @@
 
     <main class="container mx-auto p-4 flex-grow flex items-center justify-center text-center">
         <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl border-white/5">
-            <h2 id="escola-titulo" class="text-xl font-bold mb-2 uppercase text-blue-400 italic">CARREGANDO...</h2>
-            <h3 id="sub-escola" class="text-xs font-bold text-slate-400 mb-6 uppercase">AGUARDE</h3>
+            <h2 id="escola-titulo" class="text-xl font-bold mb-2 uppercase text-blue-400 italic">...</h2>
+            <h3 id="sub-escola" class="text-xs font-bold text-slate-400 mb-6 uppercase">...</h3>
             <h2 class="text-3xl font-black mb-10 uppercase italic text-white">Agendar Visita</h2>
             <form id="form-agendamento" class="space-y-6 text-left">
                 <div class="grid grid-cols-3 gap-2" id="day-selector">
@@ -110,17 +110,17 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const PATH = 'agendamentos', AVULSO = 'avulsos', MEU_WHATSAPP = "5516993291674";
+        const MEU_WHATSAPP = "5516993291674";
 
         let chartInstance = null;
         window.formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
         const paraDataBR = (str) => { if(!str || !str.includes('-')) return "---"; const [y,m,d] = str.split("-"); return `${d}/${m}/${y}`; };
 
-        window.acessoAdmin = async () => { if(prompt("Chave ADM:") === "2025") { document.getElementById('admin-modal').style.display = 'block'; await carregarProjetosLocal(); await carregarRelatorioLocal(); } };
+        window.acessoAdmin = async () => { if(prompt("Chave:") === "2025") { document.getElementById('admin-modal').style.display = 'block'; await window.carregarProjetos(); await window.carregarRelatorio(); } };
         window.fecharAdmin = () => document.getElementById('admin-modal').style.display = 'none';
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
 
-        async function carregarProjetosLocal() {
+        window.carregarProjetos = async () => {
             const snap = await get(ref(db, `config/projetos`));
             const ativoSnap = await get(ref(db, `config/projeto_ativo`));
             const slugAtivo = ativoSnap.val() || "guaratingueta-guilherme";
@@ -132,24 +132,44 @@
                 if(key === slugAtivo) opt.selected = true;
                 seletor.appendChild(opt);
             }
-        }
+        };
 
-        async function carregarRelatorioLocal() {
-            const projeto = document.getElementById('projeto-ativo').value;
+        window.carregarRelatorio = async () => {
+            const seletor = document.getElementById('projeto-ativo');
+            const projeto = seletor.value || "guaratingueta-guilherme";
             await set(ref(db, `config/projeto_ativo`), projeto);
-            const [sAg, sAv, sLegAg, sLegAv] = await Promise.all([
-                get(ref(db, `dados/${projeto}/agendamentos`)), get(ref(db, `dados/${projeto}/avulsos`)),
-                get(ref(db, PATH)), get(ref(db, AVULSO))
+            
+            // BUSCA TOTAL - Inclui nós raízes e pastas de dados
+            const [snapDados, snapRaizAg, snapRaizAv] = await Promise.all([
+                get(ref(db, `dados`)), 
+                get(ref(db, `agendamentos`)), 
+                get(ref(db, `avulsos`))
             ]);
+
             window.dadosCompletos = [];
-            const legAg = sLegAg.val() || {}; for(let d in legAg) for(let h in legAg[d]) window.dadosCompletos.push({...legAg[d][h], id: h, data: d, tipo: 'legado_agenda'});
-            const legAv = sLegAv.val() || {}; for(let id in legAv) window.dadosCompletos.push({...legAv[id], id, tipo: 'legado_avulso'});
-            const ag = sAg.val() || {}, av = sAv.val() || {};
-            for(let d in ag) for(let h in ag[d]) window.dadosCompletos.push({...ag[d][h], id: h, data: d, tipo: 'agenda'});
-            for(let id in av) window.dadosCompletos.push({...av[id], id, tipo: 'avulso'});
+            
+            // 1. Processa Raiz (Legado)
+            const rAg = snapRaizAg.val() || {};
+            for(let d in rAg) for(let h in rAg[d]) window.dadosCompletos.push({...rAg[d][h], id: h, data: d, tipo: 'legado_ag'});
+            const rAv = snapRaizAv.val() || {};
+            for(let id in rAv) window.dadosCompletos.push({...rAv[id], id, tipo: 'legado_av'});
+
+            // 2. Processa Pasta Dados (Projetos Novos)
+            const todosProjetos = snapDados.val() || {};
+            for(let pKey in todosProjetos) {
+                const ags = todosProjetos[pKey].agendamentos || {};
+                for(let d in ags) for(let h in ags[d]) window.dadosCompletos.push({...ags[d][h], id: h, data: d, tipo: 'projeto_ag'});
+                const avs = todosProjetos[pKey].avulsos || {};
+                for(let id in avs) window.dadosCompletos.push({...avs[id], id, tipo: 'projeto_av'});
+            }
+
+            // REMOVE DUPLICADOS POR ID (Prevenção)
+            const uniqueMap = new Map();
+            window.dadosCompletos.forEach(item => uniqueMap.set(item.id, item));
+            window.dadosCompletos = Array.from(uniqueMap.values());
+
             window.filtrarLista();
-        }
-        window.carregarRelatorio = carregarRelatorioLocal;
+        };
 
         window.filtrarLista = () => {
             const fData = document.getElementById('filtro-data-admin').value;
@@ -177,14 +197,16 @@
                     t.comissao += comItem; if(item.data === compData) t.comissaoDia += comItem;
                     hC += `<tr><td class="py-2 uppercase font-bold text-slate-300 text-white">${item.nome_formando}</td><td class="py-2 text-right text-emerald-400 font-black">${window.formatBRL(comItem)}</td></tr>`;
                 } else if(item.resultado === "NQ") t.nq++;
-                const wa_url = item.telefone ? `https://wa.me/55${item.telefone.replace(/\D/g,'')}` : '#';
-                const waze_url = item.endereco ? `https://www.waze.com/ul?q=${encodeURIComponent(item.endereco)}&navigate=yes` : '#';
-                hT += `<tr class="hover:bg-slate-800/40 text-white"><td class="p-4 font-bold text-[10px] text-white">${paraDataBR(item.data)}<br><span class="text-slate-500 font-normal">${item.horario||'DIRETO'}</span></td><td class="p-4"><span class="uppercase font-black text-white text-[10px]">${item.nome_formando}</span><br><a href="${waze_url}" target="_blank" class="text-blue-400 text-[9px] hover:underline block">📍 ${item.endereco||''}</a><a href="${wa_url}" target="_blank" class="text-emerald-400 text-[8px] underline italic">WhatsApp: ${item.telefone||''}</a></td><td class="p-4 text-center font-black text-[9px]">${item.resultado||'Pendente'}</td><td class="p-4 text-center"><button onclick="window.gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-lg text-[9px] uppercase border border-blue-400/30">Gerenciar</button></td></tr>`;
+                const wLink = item.telefone ? `https://wa.me/55${item.telefone.replace(/\D/g,'')}` : '#';
+                const waze = item.endereco ? `https://www.waze.com/ul?q=${encodeURIComponent(item.endereco)}&navigate=yes` : '#';
+                hT += `<tr class="hover:bg-slate-800/40 text-white"><td class="p-4 font-bold text-[10px] text-white">${paraDataBR(item.data)}<br><span class="text-slate-500 font-normal">${item.horario||'DIRETO'}</span></td><td class="p-4"><span class="uppercase font-black text-white text-[10px]">${item.nome_formando}</span><br><a href="${waze}" target="_blank" class="text-blue-400 text-[9px] hover:underline block">📍 ${item.endereco||''}</a><a href="${wLink}" target="_blank" class="text-emerald-400 text-[8px] underline italic">WhatsApp: ${item.telefone||''}</a></td><td class="p-4 text-center font-black text-[9px]">${item.resultado||'Pendente'}</td><td class="p-4 text-center"><button onclick="window.gerenciarItem('${item.tipo}','${item.data}','${item.id}')" class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-lg text-[9px] uppercase border border-blue-400/30">Gerenciar</button></td></tr>`;
             });
-            document.getElementById('resumo-financeiro').innerHTML = `<div class="glass p-2 rounded-xl border-t-2 border-blue-500 text-white"><p class="text-[7px] font-bold">EFICIÊNCIA</p><p class="text-sm font-black">${lista.length ? ((t.vendidos/lista.length)*100).toFixed(1) : 0}%</p></div><div class="glass p-2 rounded-xl border-t-2 border-emerald-500 text-white"><p class="text-[7px] font-bold">VENDAS DIA</p><p class="text-[9px] font-black">${lista.filter(i=>i.resultado==='Venda'&&i.data===compData).length}</p></div><div class="glass p-2 rounded-xl border-t-2 border-emerald-300 text-white"><p class="text-[7px] font-bold uppercase">VENDAS TOTAL</p><p class="text-[9px] font-black">${t.vendidos}</p></div><div class="glass p-2 rounded-xl border-t-2 border-rose-500 text-white"><p class="text-[7px] font-bold uppercase text-rose-300">NQ TOTAL</p><p class="text-[9px] font-black">${t.nq}</p></div><div class="glass p-2 rounded-xl border-t-2 border-blue-300 text-white"><p class="text-[7px] font-bold text-blue-300 uppercase">TICKET MÉDIO</p><p class="text-[9px] font-black">${window.formatBRL(t.vendidos?t.totalVendas/t.vendidos:0)}</p></div><div class="glass p-2 rounded-xl border-t-2 border-cyan-500 text-white"><p class="text-[7px] font-bold uppercase text-white">PIX</p><p class="text-[9px] font-black">${window.formatBRL(t.pix)}</p></div><div class="glass p-2 rounded-xl border-t-2 border-green-500 text-white"><p class="text-[7px] font-bold uppercase text-white">DINHEIRO</p><p class="text-[9px] font-black">${window.formatBRL(t.dinheiro)}</p></div><div class="bg-purple-600 p-2 rounded-xl shadow-xl text-white"><p class="text-[7px] font-bold uppercase">COMISSÃO DIA</p><p class="text-[10px] font-black">${window.formatBRL(t.comissaoDia)}</p></div><div class="bg-blue-600 p-2 rounded-xl shadow-xl text-white"><p class="text-[7px] font-bold uppercase">TOTAL VENDIDO</p><p class="text-[10px] font-black">${window.formatBRL(t.totalVendas)}</p></div><div class="glass p-2 rounded-xl border-t-2 border-purple-500 text-white"><p class="text-[7px] font-bold">PREVISÃO SEMANA</p><p class="text-[10px] font-black text-white">${window.formatBRL((t.comissao/((Object.keys(lista.filter(i=>i.resultado==="Venda").reduce((a,b)=>{a[b.data]=1;return a},{})).length || 1)))*7)}</p></div><div class="bg-amber-500 p-2 rounded-xl shadow-xl text-amber-950 text-white"><p class="text-[7px] font-bold uppercase">VALES (D+P)</p><p class="text-[10px] font-black">${window.formatBRL(t.vale)}</p></div>`;
+            const qtdeDias = Object.keys(lista.filter(i=>i.resultado==="Venda").reduce((a,b)=>{a[b.data]=1;return a},{})).length || 1;
+            document.getElementById('resumo-financeiro').innerHTML = `<div class="glass p-2 rounded-xl border-t-2 border-blue-500 text-white"><p class="text-[7px] font-bold">EFICIÊNCIA</p><p class="text-sm font-black">${lista.length ? ((t.vendidos/lista.length)*100).toFixed(1) : 0}%</p></div><div class="glass p-2 rounded-xl border-t-2 border-emerald-500 text-white"><p class="text-[7px] font-bold text-white">VENDAS DIA</p><p class="text-[9px] font-black">${lista.filter(i=>i.resultado==='Venda'&&i.data===compData).length}</p></div><div class="glass p-2 rounded-xl border-t-2 border-emerald-300 text-white"><p class="text-[7px] font-bold uppercase">VENDAS TOTAL</p><p class="text-[9px] font-black">${t.vendidos}</p></div><div class="glass p-2 rounded-xl border-t-2 border-rose-500 text-white"><p class="text-[7px] font-bold uppercase text-rose-300">NQ TOTAL</p><p class="text-[9px] font-black">${t.nq}</p></div><div class="glass p-2 rounded-xl border-t-2 border-blue-300 text-white"><p class="text-[7px] font-bold text-blue-300 uppercase">TICKET MÉDIO</p><p class="text-[9px] font-black">${window.formatBRL(t.vendidos?t.totalVendas/t.vendidos:0)}</p></div><div class="glass p-2 rounded-xl border-t-2 border-cyan-500 text-white"><p class="text-[7px] font-bold uppercase text-white">PIX</p><p class="text-[9px] font-black">${window.formatBRL(t.pix)}</p></div><div class="glass p-2 rounded-xl border-t-2 border-green-500 text-white"><p class="text-[7px] font-bold uppercase text-white">DINHEIRO</p><p class="text-[9px] font-black">${window.formatBRL(t.dinheiro)}</p></div><div class="bg-purple-600 p-2 rounded-xl shadow-xl text-white"><p class="text-[7px] font-bold uppercase">COMISSÃO DIA</p><p class="text-[10px] font-black">${window.formatBRL(t.comissaoDia)}</p></div><div class="bg-blue-600 p-2 rounded-xl shadow-xl text-white"><p class="text-[7px] font-bold uppercase">TOTAL VENDIDO</p><p class="text-[10px] font-black">${window.formatBRL(t.totalVendas)}</p></div><div class="glass p-2 rounded-xl border-t-2 border-purple-500 text-white"><p class="text-[7px] font-bold uppercase text-white">PREVISÃO SEMANA</p><p class="text-[10px] font-black">${window.formatBRL((t.comissao/qtdeDias)*7)}</p></div><div class="bg-amber-500 p-2 rounded-xl shadow-xl text-amber-950 text-white"><p class="text-[7px] font-bold uppercase">VALES (D+P)</p><p class="text-[10px] font-black">${window.formatBRL(t.vale)}</p></div>`;
             document.getElementById('admin-content').innerHTML = hT + '</tbody></table>';
             document.getElementById('comissao-content').innerHTML = `<table class="w-full text-white"><tbody>${hC}</tbody></table>`;
-            document.getElementById('fechamento-final').innerHTML = `<div class="p-4 rounded-2xl border-2 text-right bg-emerald-500/10 border-emerald-500/30 text-white"><p class="text-[8px] font-black uppercase text-slate-400">Total Líquido</p><p class="text-3xl font-black italic">${window.formatBRL(t.comissao-t.vale)}</p></div>`;
+            const saldo = t.comissao - t.vale;
+            document.getElementById('fechamento-final').innerHTML = `<div class="p-4 rounded-2xl border-2 text-right bg-emerald-500/10 border-emerald-500/30 text-white"><p class="text-[8px] font-black uppercase text-slate-400">Total Líquido</p><p class="text-3xl font-black italic">${window.formatBRL(saldo)}</p></div>`;
             window.dataAtivaParaRelatorio = dataFiltrada; window.gerarGrafico(window.dadosCompletos);
         }
 
@@ -196,7 +218,7 @@
 
         window.copiarRelatorio = () => {
             const f = window.formatBRL;
-            const proj = document.getElementById('projeto-ativo')?.options[document.getElementById('projeto-ativo').selectedIndex]?.text || "Projeto Atual";
+            const proj = document.getElementById('projeto-ativo')?.options[document.getElementById('projeto-ativo').selectedIndex]?.text || "Projeto";
             const dataLimite = window.dataAtivaParaRelatorio || new Date().toLocaleDateString('en-CA');
             const acumulado = window.dadosCompletos.filter(i => i.data <= dataLimite);
             const v = acumulado.filter(i => i.resultado === "Venda"), n = acumulado.filter(i => i.resultado === "NQ");
@@ -207,20 +229,20 @@
                     item.pagamentos.forEach(pg => {
                         const val = Number(pg.valor) || 0; const ent = Number(pg.entrada || 0);
                         if(pg.tipo === "Dinheiro") { r.d += val; r.val += val; } else if(pg.tipo === "Pix") { r.p += val; r.val += val; }
-                        else if(pg.tipo === "Cartão Débito") r.deb += val; else if(pg.tipo === "Cartão Crédito") r.cre += val;
+                        else if(pg.tipo.includes("Débito")) r.deb += val; else if(pg.tipo.includes("Crédito")) r.cre += val;
                         else if(pg.tipo === "Boleto") { r.bol += (val - ent); if(pg.forma_entrada === "Dinheiro") { r.d += ent; r.val += ent; } if(pg.forma_entrada === "Pix") { r.p += ent; r.val += ent; } }
                     });
                 }
             });
-            const msg = `*RELATÓRIO: ${proj}*\n*Data:* ${paraDataBR(dataLimite)}\n\nVendas: ${v.length}\nNQ: ${n.length}\n\nDinheiro: ${f(r.d)}\nPix: ${f(r.p)}\nDébito: ${f(r.deb)}\nCrédito: ${f(r.cre)}\nBoleto: ${f(r.bol)}\n\nTotal Vendido: ${f(r.v)}\nVales ${f(r.val)}`;
-            const el = document.createElement('textarea'); el.value = msg; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); alert("RELATÓRIO COPIADO!");
+            const msg = `*RELATÓRIO: ${proj}*\n*Filtro:* ${paraDataBR(dataLimite)}\n\nVendas: ${v.length}\nNQ: ${n.length}\n\nDinheiro: ${f(r.d)}\nPix: ${f(r.p)}\nDébito: ${f(r.deb)}\nCrédito: ${f(r.cre)}\nBoleto: ${f(r.bol)}\n\nTotal Vendido: ${f(r.v)}\nVales ${f(r.val)}`;
+            const el = document.createElement('textarea'); el.value = msg; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); alert("RELATÓRIO ACUMULADO COPIADO!");
         };
 
         window.selecionarDia = async (btn) => { document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); document.getElementById('data-selecionada').value = btn.getAttribute('data-date'); await window.gerarHorariosDisponiveis(btn.getAttribute('data-date'), document.getElementById('horario')); };
         
         window.gerarHorariosDisponiveis = async (d, el) => {
-            const ativoSnap = await get(ref(db, `config/projeto_ativo`));
-            const p = ativoSnap.val() || "guaratingueta-guilherme";
+            const snapAtivo = await get(ref(db, `config/projeto_ativo`));
+            const p = snapAtivo.val() || "guaratingueta-guilherme";
             const [nova, raiz] = await Promise.all([get(ref(db, `dados/${p}/agendamentos/${d}`)), get(ref(db, `agendamentos/${d}`))]);
             const ag = {...(raiz.val()||{}), ...(nova.val()||{})};
             const counts = {}; for(let id in ag){ let hL = id.split('-').slice(0,2).join(':'); counts[hL] = (counts[hL]||0)+1; }
@@ -237,10 +259,10 @@
 
         document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
             e.preventDefault(); 
-            const ativoSnap = await get(ref(db, `config/projeto_ativo`));
-            const p = ativoSnap.val() || "guaratingueta-guilherme";
+            const snapAtivo = await get(ref(db, `config/projeto_ativo`));
+            const p = snapAtivo.val() || "guaratingueta-guilherme";
             const d = document.getElementById('data-selecionada').value, h = document.getElementById('horario').value, n = document.getElementById('nome').value;
-            const id = `${h.replace(':','-')}-${n.replace(/\s+/g, '').substring(0,10)}`;
+            const id = `${h.replace(':','-')}-${n.replace(/\s+/g, '').substring(0,8)}-${Date.now().toString().slice(-4)}`;
             const dados = { data: d, horario: h, nome_formando: n, telefone: document.getElementById('telefone').value, endereco: document.getElementById('endereco').value, resultado: "Pendente" };
             await set(ref(db, `dados/${p}/agendamentos/${d}/${id}`), dados);
             window.open(`https://wa.me/${MEU_WHATSAPP}?text=${encodeURIComponent("*NOVA VISITA*\n"+dados.nome_formando+"\n"+paraDataBR(d))}`);
@@ -253,9 +275,9 @@
         window.prepararVenda = () => { window.tempPagamentos = []; document.getElementById('gestao-form').innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-800 p-4 rounded-xl text-white font-black text-center mb-4"><div class="grid grid-cols-2 gap-2 mb-4 text-white"><button onclick="window.addPg('Dinheiro')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Dinheiro</button><button onclick="window.addPg('Pix')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Pix</button><button onclick="window.addPg('Cartão Débito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Débito</button><button onclick="window.addPg('Cartão Crédito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Crédito</button><button onclick="window.addPg('Boleto')" class="p-2 bg-blue-900 rounded-lg text-[9px] col-span-2">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4"></div><button onclick="window.finalizarVendaReal()" class="w-full p-4 bg-emerald-600 rounded-xl font-black uppercase text-xs text-white">Confirmar</button>`; };
         window.addPg = (tipo) => { const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0); if(v <= 0) return; let pg = { tipo, valor: v }; if(tipo === 'Boleto') { const ent = prompt("Entrada? 1-Sim 2-Não"); if(ent === "1") { pg.entrada = parseFloat(prompt("Valor Entrada:")?.replace(',','.') || 0); const fE = prompt("Forma: 1-Dinheiro 2-Pix"); pg.forma_entrada = fE === "1" ? "Dinheiro" : "Pix"; } } window.tempPagamentos.push(pg); window.renderTemp(); };
         window.renderTemp = () => { document.getElementById('lista-p').innerHTML = window.tempPagamentos.map((p, i) => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px] text-white"><span>${p.tipo}</span><span class="font-black text-emerald-400 text-white">${window.formatBRL(p.valor)} <button onclick="window.tempPagamentos.splice(${i},1);window.renderTemp();" class="text-rose-500 ml-2">✕</button></span></div>`).join(''); };
-        window.finalizarVendaReal = async () => { const total = parseFloat(document.getElementById('vTotal').value), soma = window.tempPagamentos.reduce((acc, c) => acc + c.valor, 0); if(!total || Math.abs(total - soma) > 0.1) return alert("Total não confere!"); const p = document.getElementById('projeto-ativo').value; const { tipo, data, id } = window.itemSendoGerenciado; let dbRef = tipo.includes('legado') ? (tipo.includes('agenda') ? `agendamentos/${data}/${id}` : `avulsos/${id}`) : (tipo === 'agenda' ? `dados/${p}/agendamentos/${data}/${id}` : `dados/${p}/avulsos/${id}`); await update(ref(db, dbRef), { resultado: "Venda", valor: total, pagamentos: window.tempPagamentos }); window.fecharModalGestao(); window.carregarRelatorio(); };
-        window.salvarStatusRapido = async (s) => { const p = document.getElementById('projeto-ativo').value, { tipo, data, id } = window.itemSendoGerenciado; let dbRef = tipo.includes('legado') ? (tipo.includes('agenda') ? `agendamentos/${data}/${id}` : `avulsos/${id}`) : (tipo === 'agenda' ? `dados/${p}/agendamentos/${data}/${id}` : `dados/${p}/avulsos/${id}`); await update(ref(db, dbRef), { resultado: s, valor: 0 }); window.fecharModalGestao(); window.carregarRelatorio(); };
-        window.confirmarExclusao = async () => { if(confirm("Apagar?")) { const p = document.getElementById('projeto-ativo').value, { tipo, data, id } = window.itemSendoGerenciado; let dbRef = tipo.includes('legado') ? (tipo.includes('agenda') ? `agendamentos/${data}/${id}` : `avulsos/${id}`) : (tipo === 'agenda' ? `dados/${p}/agendamentos/${data}/${id}` : `dados/${p}/avulsos/${id}`); await remove(ref(db, dbRef)); window.fecharModalGestao(); window.carregarRelatorio(); } };
+        window.finalizarVendaReal = async () => { const total = parseFloat(document.getElementById('vTotal').value), soma = window.tempPagamentos.reduce((acc, c) => acc + c.valor, 0); if(!total || Math.abs(total - soma) > 0.1) return alert("Total não confere!"); const p = document.getElementById('projeto-ativo').value; const { tipo, data, id } = window.itemSendoGerenciado; let dbRef = tipo.includes('legado') ? (tipo.includes('ag') ? `agendamentos/${data}/${id}` : `avulsos/${id}`) : (tipo.includes('ag') ? `dados/${p}/agendamentos/${data}/${id}` : `dados/${p}/avulsos/${id}`); await update(ref(db, dbRef), { resultado: "Venda", valor: total, pagamentos: window.tempPagamentos }); window.fecharModalGestao(); window.carregarRelatorio(); };
+        window.salvarStatusRapido = async (s) => { const p = document.getElementById('projeto-ativo').value, { tipo, data, id } = window.itemSendoGerenciado; let dbRef = tipo.includes('legado') ? (tipo.includes('ag') ? `agendamentos/${data}/${id}` : `avulsos/${id}`) : (tipo.includes('ag') ? `dados/${p}/agendamentos/${data}/${id}` : `dados/${p}/avulsos/${id}`); await update(ref(db, dbRef), { resultado: s, valor: 0 }); window.fecharModalGestao(); window.carregarRelatorio(); };
+        window.confirmarExclusao = async () => { if(confirm("Apagar?")) { const p = document.getElementById('projeto-ativo').value, { tipo, data, id } = window.itemSendoGerenciado; let dbRef = tipo.includes('legado') ? (tipo.includes('ag') ? `agendamentos/${data}/${id}` : `avulsos/${id}`) : (tipo.includes('ag') ? `dados/${p}/agendamentos/${data}/${id}` : `dados/${p}/avulsos/${id}`); await remove(ref(db, dbRef)); window.fecharModalGestao(); window.carregarRelatorio(); } };
 
         (async () => {
             const agora = new Date();
@@ -263,21 +285,16 @@
                 const [y, m, d] = btn.getAttribute("data-date").split("-");
                 if (agora > new Date(y, m-1, d, (d == "08" || d == "07") ? 15 : 20, 30)) btn.style.display = "none";
             });
-            
-            // BUSCA O PROJETO OBRIGATORIAMENTE ANTES DE MOSTRAR OS NOMES
             const ativoSnap = await get(ref(db, `config/projeto_ativo`));
             const slug = ativoSnap.val() || "guaratingueta-guilherme";
             const infoSnap = await get(ref(db, `config/projetos/${slug}`));
-            
             if(infoSnap.exists()){
                 const info = infoSnap.val();
                 document.getElementById('escola-titulo').textContent = info.cidade;
                 document.getElementById('sub-escola').textContent = info.escola;
-            } else {
-                document.getElementById('escola-titulo').textContent = "GUARATINGUETÁ";
-                document.getElementById('sub-escola').textContent = "DR. GUILHERME EUGÊNIO";
             }
         })();
     </script>
 </body>
 </html>
+
