@@ -214,7 +214,6 @@
             document.getElementById('admin-content').innerHTML = hT + '</tbody></table>';
             document.getElementById('comissao-content').innerHTML = `<table class="w-full text-white"><tbody>${hC}</tbody></table>`;
             
-            // CORREÇÃO FINAL: SALDO A RECEBER (COMISSÃO TOTAL - VALES)
             const saldoAReceber = t.comTot - t.vale;
             document.getElementById('fechamento-final').innerHTML = `
                 <div class="space-y-1">
@@ -230,29 +229,46 @@
 
         window.gerenciarItem = (p) => { window.itemPath = p; document.getElementById('modalGestao').style.display = 'flex'; };
         window.confirmarExclusao = async () => { if(confirm("Apagar?")) { await remove(ref(db, window.itemPath)); fecharModalGestao(); await carregarRelatorio(); } };
-        window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); document.getElementById('gestao-form').classList.remove('hidden'); document.getElementById('gestao-form').innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-800 p-4 rounded-xl text-center mb-4 text-white outline-none"><div class="grid grid-cols-2 gap-2 mb-4 text-white"><button onclick="addPg('Dinheiro')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Dinheiro</button><button onclick="addPg('Pix')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Pix</button><button onclick="addPg('Cartão Débito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Débito</button><button onclick="addPg('Cartão Crédito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Crédito</button><button onclick="addPg('Boleto')" class="p-2 bg-blue-900 rounded-lg text-[9px] col-span-2">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4"></div><button onclick="finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black">CONFIRMAR VENDA</button><button onclick="salvarStatusSimples('NQ')" class="w-full p-2 bg-rose-600 rounded-xl mt-4 text-[10px]">SALVAR COMO NQ</button>`; window.tempPgs = []; };
+        window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); document.getElementById('gestao-form').classList.remove('hidden'); document.getElementById('gestao-form').innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-800 p-4 rounded-xl text-center mb-4 text-white outline-none"><div class="grid grid-cols-2 gap-2 mb-4 text-white"><button onclick="addPg('Dinheiro')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Dinheiro</button><button onclick="addPg('Pix')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Pix</button><button onclick="addPg('Cartão Débito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Débito</button><button onclick="addPg('Cartão Crédito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Crédito</button><button onclick="addPg('Boleto')" class="p-2 bg-blue-900 rounded-lg text-[9px] col-span-2">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4"></div><button onclick="finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white">CONFIRMAR VENDA</button><button onclick="salvarStatusSimples('NQ')" class="w-full p-2 bg-rose-600 rounded-xl mt-4 text-[10px] text-white">SALVAR COMO NQ</button>`; window.tempPgs = []; };
         window.addPg = (tipo) => { const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0); if(v <= 0) return; let pg = { tipo, valor: v }; if(tipo === 'Boleto') { const ent = prompt("Entrada? 1-Sim 2-Não"); if(ent === "1") { pg.entrada = parseFloat(prompt("Valor Entrada:")?.replace(',','.') || 0); const fE = prompt("Forma: 1-Dinheiro 2-Pix"); pg.forma_entrada = fE === "1" ? "Dinheiro" : "Pix"; } } window.tempPgs.push(pg); renderTemp(); };
         function renderTemp() { document.getElementById('lista-p').innerHTML = window.tempPgs.map((p, i) => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]"><span>${p.tipo}</span><span class="text-emerald-400">${window.formatBRL(p.valor)}</span></div>`).join(''); }
         window.finalizarVenda = async () => { const tot = parseFloat(document.getElementById('vTotal').value); if(!tot) return alert("Informe o valor!"); await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, pagamentos: window.tempPgs }); fecharModalGestao(); await carregarRelatorio(); };
         window.salvarStatusSimples = async (s) => { await update(ref(db, window.itemPath), { resultado: s, valor: 0 }); fecharModalGestao(); await carregarRelatorio(); };
 
+        // --- REGRA DAS 3 HORAS IMPLEMENTADA AQUI ---
         window.selecionarDia = async (btn) => {
             document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
             const d = btn.getAttribute('data-date'); document.getElementById('data-selecionada').value = d;
             const elH = document.getElementById('horario'); elH.innerHTML = '<option>Buscando...</option>';
+            
             const snapAtivo = await get(ref(db, `config/projeto_ativo`));
             const p = snapAtivo.val() || "guaratingueta-guilherme";
             const [nova, raiz] = await Promise.all([get(ref(db, `dados/${p}/agendamentos/${d}`)), get(ref(db, `agendamentos/${d}`))]);
             const ag = {...(raiz.val()||{}), ...(nova.val()||{})};
             const counts = {}; for(let id in ag){ let hL = id.split('-').slice(0,2).join(':'); counts[hL] = (counts[hL]||0)+1; }
+            
+            // Logica de bloqueio 3h
+            const agora = new Date();
+            const hojeISO = agora.toLocaleDateString('en-CA');
+            const limite3h = new Date(agora.getTime() + (3 * 60 * 60 * 1000));
+
             elH.innerHTML = '<option value="">Escolha um Horário</option>';
             let cur = new Date(`${d}T09:00:00`), lim = (new Date(d + 'T00:00:00').getDay() % 6 === 0) ? "15:00" : "20:30";
+            
             while(cur <= new Date(`${d}T${lim}:00`)){
                 let hF = cur.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
                 let v = Math.max(0, 2 - (counts[hF]||0));
-                if(v > 0){ let opt=document.createElement('option'); opt.value=hF; opt.textContent=`${hF} (${v} vagas)`; elH.appendChild(opt); }
+                
+                // Se for hoje, só mostra horários após limite3h
+                let exibir = true;
+                if(d === hojeISO && cur < limite3h) exibir = false;
+
+                if(v > 0 && exibir){ 
+                    let opt=document.createElement('option'); opt.value=hF; opt.textContent=`${hF} (${v} vagas)`; elH.appendChild(opt); 
+                }
                 cur.setMinutes(cur.getMinutes()+30);
             }
+            if(elH.options.length === 1) elH.innerHTML = '<option value="">Indisponível para hoje</option>';
         };
 
         window.copiarRelatorio = () => {
