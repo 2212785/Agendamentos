@@ -62,7 +62,7 @@
                         <h3 class="text-sm font-bold uppercase mb-4 flex items-center gap-2">Vendas por Período</h3>
                         <canvas id="graficoVendas"></canvas>
                     </div>
-                    <div class="glass rounded-[2rem] border-white/5">
+                    <div class="glass rounded-[2rem] overflow-hidden border-white/5">
                         <div class="p-6 pb-0 flex justify-between items-center">
                             <h3 class="text-lg font-bold uppercase text-white">Roteiro</h3>
                             <input type="text" id="busca-admin" onkeyup="window.filtrarLista()" placeholder="Pesquisar..." class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white outline-none w-48">
@@ -91,12 +91,10 @@
             <h2 class="text-3xl font-black mb-10 uppercase italic text-white">Agendar Visita</h2>
             <form id="form-agendamento" class="space-y-6 text-left">
                 <div class="grid grid-cols-2 gap-2" id="day-selector">
-                    <button type="button" data-date="2026-03-04" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">04/03<br>Qua</button>
-                    <button type="button" data-date="2026-03-05" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">05/03<br>Qui</button>
-                    <button type="button" data-date="2026-03-06" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">06/03<br>Sex</button>
-                    <button type="button" data-date="2026-03-07" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">07/03<br>Sab</button>
-                    <button type="button" data-date="2026-03-08" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">08/03<br>Dom</button>
-                    
+                    <button type="button" data-date="2026-03-04" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">04/03<br>Qua</button>
+                    <button type="button" data-date="2026-03-05" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">05/03<br>Qui</button>
+                    <button type="button" data-date="2026-03-06" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">06/03<br>Sex</button>
+                    <button type="button" data-date="2026-03-07" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[10px] font-black uppercase">07/03<br>Sab</button>
                 </div>
                 <input type="hidden" id="data-selecionada" required>
                 <div class="space-y-4">
@@ -133,21 +131,47 @@
         window.formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
         const paraDataBR = (str) => { if(!str || !str.includes('-')) return "---"; const [y,m,d] = str.split("-"); return `${d}/${m}/${y}`; };
 
-        // --- EXPOSIÇÃO GLOBAL ---
+        // --- EXPOSIÇÃO GLOBAL DE AGENDAMENTO ---
+        window.selecionarDia = async (btn) => {
+            document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const data = btn.getAttribute('data-date');
+            document.getElementById('data-selecionada').value = data;
+            await window.gerarHorariosDisponiveis(data, document.getElementById('horario'));
+        };
+
+        window.gerarHorariosDisponiveis = async (dataEscolhida, selectElement) => {
+            selectElement.innerHTML = '<option>Consultando...</option>';
+            const snap = await get(ref(db, `${PATH}/${dataEscolhida}`));
+            const ocupadosRaw = snap.exists() ? snap.val() : {};
+            const contagemHorarios = {};
+            for (let id in ocupadosRaw) { const hL = id.split('-').slice(0, 2).join(':'); contagemHorarios[hL] = (contagemHorarios[hL] || 0) + 1; }
+            const hojeStr = new Date().toLocaleDateString('en-CA'), isWeekend = (new Date(dataEscolhida + 'T00:00:00').getDay() % 6 === 0);
+            selectElement.innerHTML = '<option value="">Escolha um Horário</option>';
+            let cursor = new Date(`${dataEscolhida}T09:00:00`), final = new Date(`${dataEscolhida}T${isWeekend ? "15:00" : "20:30"}:00`);
+            while(cursor <= final) {
+                let hF = cursor.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+                const agN = contagemHorarios[hF] || 0;
+                if(agN < 2) { let opt = document.createElement('option'); opt.value = hF; opt.textContent = `${hF} (${2 - agN} vaga${2-agN>1?'s':''})`; selectElement.appendChild(opt); }
+                cursor.setMinutes(cursor.getMinutes() + 30);
+            }
+        };
+
+        document.getElementById('form-agendamento').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const d = document.getElementById('data-selecionada').value, h = document.getElementById('horario').value;
+            const uniqueID = `${h.replace(':','-')}-${Date.now()}`;
+            const dados = { data: d, horario: h, nome_formando: document.getElementById('nome').value, telefone: document.getElementById('telefone').value, city: document.getElementById('cidade').value, endereco: document.getElementById('endereco').value, resultado: "Pendente" };
+            await set(ref(db, `${PATH}/${d}/${uniqueID}`), dados);
+            const msg = `*NOVA VISITA AGENDADA*\n\n*Nome:* ${dados.nome_formando}\n*Data:* ${paraDataBR(d)}\n*Horário:* ${h}`;
+            window.open(`https://wa.me/${MEU_WHATSAPP}?text=${encodeURIComponent(msg)}`);
+            location.reload();
+        });
+
+        // --- EXPOSIÇÃO GLOBAL DE ADMIN ---
         window.acessoAdmin = () => { if(prompt("Chave ADM:") === "2025") { document.getElementById('admin-modal').style.display = 'block'; window.carregarRelatorio(); } };
         window.fecharAdmin = () => document.getElementById('admin-modal').style.display = 'none';
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
-
-        // --- FILTRO DE BOTÕES DE DATA ---
-        const autoCheckDates = () => {
-            const agora = new Date();
-            document.querySelectorAll('.day-btn').forEach(btn => {
-                const dataBtn = btn.getAttribute("data-date");
-                const [y, m, d] = dataBtn.split("-");
-                const dataLimite = new Date(y, m-1, d, 20, 30); // Limite 20:30 do próprio dia
-                if (agora > dataLimite) btn.style.display = "none";
-            });
-        };
 
         window.carregarRelatorio = async () => {
             const [sAg, sAv] = await Promise.all([get(ref(db, PATH)), get(ref(db, AVULSO))]);
@@ -221,7 +245,7 @@
             const saldo = t.comissao - t.vale;
             document.getElementById('fechamento-final').innerHTML = `<div class="p-4 rounded-2xl border-2 text-right bg-emerald-500/10 border-emerald-500/30"><p class="text-[8px] font-black uppercase text-slate-400">Total Acumulado: ${window.formatBRL(t.comissao)}</p><p class="text-3xl font-black italic">${window.formatBRL(saldo)}</p></div>`;
             window.resumoAtual = t; window.gerarGrafico(window.dadosCompletos);
-        };
+        }
 
         window.gerarGrafico = (listaCompleta) => {
             const vD = {}; listaCompleta.forEach(i => { if(i.resultado === "Venda") vD[i.data] = (vD[i.data] || 0) + 1; });
@@ -243,25 +267,18 @@
         window.lancarVendaDireta = async () => { const n = prompt("Nome:"); if(!n) return; await push(ref(db, AVULSO), { nome_formando: n, data: new Date().toLocaleDateString('en-CA'), horario: "08:00", resultado: "Pendente" }); window.carregarRelatorio(); };
         window.enviarRelatorioWhats = () => { const t = window.resumoAtual; const texto = `📊 *RELATÓRIO ELITE SALES*\n\n✅ Vendas: ${t.vendidos}\n💰 Total: ${window.formatBRL(t.totalVendas)}\n\n💵 Dinheiro: ${window.formatBRL(t.dinheiro)}\n💎 Pix: ${window.formatBRL(t.pix)}\n💳 Cartão: ${window.formatBRL(t.debito + t.credito)}\n\n⭐ *Comissão Hoje: ${window.formatBRL(t.comissaoDia)}*`; window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank'); };
 
-        // --- SISTEMA DE AGENDAMENTO ---
-        window.gerarHorariosDisponiveis = async (dataEscolhida, selectElement) => {
-            selectElement.innerHTML = '<option>Consultando...</option>';
-            const snap = await get(ref(db, `${PATH}/${dataEscolhida}`));
-            const ocupadosRaw = snap.exists() ? snap.val() : {};
-            const contagemHorarios = {};
-            for (let id in ocupadosRaw) { const hL = id.split('-').slice(0, 2).join(':'); contagemHorarios[hL] = (contagemHorarios[hL] || 0) + 1; }
-            const isW = (new Date(dataEscolhida + 'T00:00:00').getDay() % 6 === 0);
-            selectElement.innerHTML = '<option value="">Escolha um Horário</option>';
-            let cursor = new Date(`${dataEscolhida}T09:00:00`), final = new Date(`${dataEscolhida}T${isW ? "15:00" : "20:30"}:00`);
-            while(cursor <= final) {
-                let hF = cursor.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-                const agN = contagemHorarios[hF] || 0;
-                if(agN < 2) { let opt = document.createElement('option'); opt.value = hF; opt.textContent = `${hF} (${2 - agN} vaga${2-agN>1?'s':''})`; selectElement.appendChild(opt); }
-                cursor.setMinutes(cursor.getMinutes() + 30);
-            }
+        // --- FILTRO DE BOTÕES DE DATA ---
+        const autoCheckDates = () => {
+            const agora = new Date();
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                const dataBtn = btn.getAttribute("data-date");
+                const [y, m, d] = dataBtn.split("-");
+                const dataLimite = new Date(y, m-1, d, 20, 30);
+                if (agora > dataLimite) btn.style.display = "none";
+            });
         };
 
-        autoCheckDates(); // Esconde datas passadas ao carregar
+        autoCheckDates();
     </script>
 </body>
 </html>
