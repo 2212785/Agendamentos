@@ -61,8 +61,8 @@
         </div>
     </main>
 
-    <header class="p-6 flex justify-between items-center text-white">
-        <span class="text-2xl font-black italic uppercase">Portal <span class="text-blue-500">do formando</span></span>
+    <header class="p-6 flex justify-between items-center">
+        <span class="text-2xl font-black italic uppercase text-white text-white">Portal <span class="text-blue-500">do formando</span></span>
         <button onclick="window.acessoAdmin()" class="glass px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase text-white">Login ADM</button>
     </header>
 
@@ -129,7 +129,11 @@
             const [sA, sV] = await Promise.all([get(ref(db, `dados/${projeto}/agendamentos`)), get(ref(db, `dados/${projeto}/avulsos`))]);
             window.dadosCompletos = [];
             const ags = sA.val() || {};
-            Object.keys(ags).forEach(d => Object.keys(ags[d]).forEach(id => window.dadosCompletos.push({...ags[d][id], id, data: d, path: `dados/${projeto}/agendamentos/${d}/${id}`})));
+            Object.keys(ags).forEach(d => {
+                if (ags[d]) {
+                    Object.keys(ags[d]).forEach(id => window.dadosCompletos.push({...ags[d][id], id, data: d, path: `dados/${projeto}/agendamentos/${d}/${id}`}));
+                }
+            });
             const avs = sV.val() || {};
             Object.keys(avs).forEach(id => window.dadosCompletos.push({...avs[id], id, path: `dados/${projeto}/avulsos/${id}`}));
             window.filtrarLista();
@@ -230,7 +234,7 @@
                 } else if(item.resultado === "NQ") nq++;
             });
             const dL = dF ? pDT(dF) : "ACUMULADO GERAL";
-            const txt = `*Relatório de Vendas*\n*Projeto:* ${projNome}\n*Data:* ${dL}\n\n✅ Vendas: ${v}\n❌ NQ: ${nq}\n\n💵 Dinheiro: ${f(din)}\n💎 Pix: ${f(pix)}\n💳 Débito: ${f(deb)}\n💳 Crédito: ${f(cre)}\n📄 Boleto: ${f(bol)}\n\n💰 *Total Vendido: ${f(totV)}*\n💸 *Vales: ${f(val)}*`;
+            const txt = `*Relatório de Vendas*\n*Projeto:* ${projNome}\n*Data:* ${dL}\n\n✅ Vendas: ${v}\n❌ NQ: ${nq}\n\n💵 Dinheiro: ${f(din)}\n💎 Pix: ${f(pix)}\n💳 Débito: ${f(deb)}\n💳 Crédito: ${f(cre)}\n📄 Boleto: ${f(bol)}\n\n💰 *Total Vendido: ${fBR(totV)}*\n💸 *Vales: ${fBR(val)}*`;
             const el = document.createElement('textarea'); el.value = txt; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
             alert("RELATÓRIO COPIADO!");
         };
@@ -252,26 +256,22 @@
             const sAt = await get(ref(db, "config/projeto_ativo")); const p = sAt.val() || "guaratingueta-guilherme";
             const snap = await get(ref(db, `dados/${p}/agendamentos/${d}`));
             const counts = {}; const ag = snap.val() || {};
-            Object.keys(ag).forEach(id => { let hL = id.split('-').slice(0,2).join(':'); counts[hL] = (counts[hL]||0)+1; });
+            Object.keys(ag).forEach(id => { if(id && id.includes('-')){ let hL = id.split('-').slice(0,2).join(':'); counts[hL] = (counts[hL]||0)+1; } });
             elH.innerHTML = '<option value="">Escolha um Horário</option>';
             let cur = new Date(`${d}T09:00:00`);
             const diaSemana = new Date(d + 'T00:00:00').getDay();
             const eFinalDeSemana = (diaSemana === 0 || diaSemana === 6);
-            let limStr = eFinalDeSemana ? "17:00" : ((new Date(d + 'T00:00:00').getDay() % 6 === 0) ? "15:00" : "20:30");
+            let limStr = eFinalDeSemana ? "17:00" : "20:30";
 
             while(cur <= new Date(`${d}T${limStr}:00`)){
                 let hF = cur.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-                
-                // REGRA DAS 3 HORAS CORRIGIDA
                 let permitir = true;
                 const agora = new Date();
                 const hojeISO = agora.toLocaleDateString('en-CA');
                 if(d === hojeISO) {
-                    const diffMilis = cur - agora;
-                    const diffHoras = diffMilis / (1000 * 60 * 60);
+                    const diffHoras = (cur - agora) / (1000 * 60 * 60);
                     if(diffHoras < 3) permitir = false;
                 }
-
                 if(permitir && (2 - (counts[hF]||0)) > 0){ let opt=document.createElement('option'); opt.value=hF; opt.textContent=`${hF} (${2 - (counts[hF]||0)} vagas)`; elH.appendChild(opt); }
                 cur.setMinutes(cur.getMinutes()+30);
             }
@@ -286,11 +286,16 @@
                 if (agora > new Date(y, m-1, d, limiteH, 30)) btn.style.display = "none";
             });
             document.getElementById("form-agendamento").addEventListener("submit", async function(e){
-                e.preventDefault(); const n = document.getElementById("nome").value, t = document.getElementById("telefone").value, en = document.getElementById("endereco").value, h = document.getElementById("horario").value, d = document.getElementById("data-selecionada").value;
+                e.preventDefault(); 
+                const n = document.getElementById("nome").value, t = document.getElementById("telefone").value, en = document.getElementById("endereco").value, h = document.getElementById("horario").value, d = document.getElementById("data-selecionada").value;
+                if(!d || !h) return alert("Selecione data e horário!");
+                // TRAVA DE DATA GARANTIDA PARA WHATSAPP
+                const dataParaZap = d.split("-").reverse().join("/");
                 try{
                     const sP = await get(ref(db, "config/projeto_ativo")); const p = sP.val() || "guaratingueta-guilherme";
                     await set(ref(db, `dados/${p}/agendamentos/${d}/${h.replace(":","-")}-${Date.now()}`), { nome_formando: n, telefone: t, endereco: en, horario: h, data: d, resultado: "Pendente", criado_em: new Date().toISOString() });
-                    window.open(`https://wa.me/5516993291674?text=${encodeURIComponent("*NOVO AGENDAMENTO*\n\n👤 Formando: "+n+"\n📅 Data: "+pDT(d)+"\n⏰ Horário: "+h+"\n📍 Endereço:\n"+en)}`, "_blank");
+                    const msgZap = `*NOVO AGENDAMENTO*\n\n👤 Formando: ${n}\n📅 Data: ${dataParaZap}\n⏰ Horário: ${h}\n📍 Endereço:\n${en}`;
+                    window.open(`https://wa.me/5516993291674?text=${encodeURIComponent(msgZap)}`, "_blank");
                     alert("Sucesso!"); location.reload();
                 }catch(e){ alert("Erro!"); }
             });
@@ -303,3 +308,4 @@
     </script>
 </body>
 </html>
+
