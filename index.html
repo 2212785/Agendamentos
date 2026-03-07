@@ -53,7 +53,7 @@
                     <div id="admin-content" class="glass rounded-[2rem] overflow-x-auto p-4 border-white/5 text-white"></div>
                 </div>
                 <div class="space-y-6">
-                    <div class="glass rounded-[2rem] p-6 border-white/5 text-center text-white text-white">
+                    <div class="glass rounded-[2rem] p-6 border-white/5 text-center text-white">
                         <h3 class="text-lg font-bold text-white uppercase italic mb-4">Detalhamento</h3>
                         <div id="comissao-content" class="space-y-2 max-h-[400px] overflow-y-auto pr-2 text-left text-[10px]"></div>
                         <div id="fechamento-final" class="mt-6 border-t border-white/10 pt-4 text-white text-right"></div>
@@ -108,27 +108,12 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- AUXILIARES ---
         const paraDataBR = (s) => (s && s.includes('-')) ? s.split("-").reverse().join("/") : s;
         window.formatBRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
 
-        // --- ADMIN ---
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
         window.fecharAdmin = () => document.getElementById('admin-modal').style.display = 'none';
         window.acessoAdmin = async () => { if(prompt("Chave ADM:") === "2025") { document.getElementById('admin-modal').style.display = 'block'; await carregarProjetos(); await carregarRelatorio(); } };
-
-        async function carregarProjetos() {
-            const snap = await get(ref(db, `config/projetos`));
-            const ativo = await get(ref(db, `config/projeto_ativo`));
-            const seletor = document.getElementById('projeto-ativo');
-            seletor.innerHTML = '';
-            const lista = snap.val() || {};
-            for(let key in lista) {
-                let opt = document.createElement('option'); opt.value = key; opt.textContent = `${lista[key].cidade} - ${lista[key].escola}`;
-                if(key === ativo.val()) opt.selected = true;
-                seletor.appendChild(opt);
-            }
-        }
 
         async function carregarRelatorio() {
             const snapProjeto = await get(ref(db,"config/projeto_ativo"));
@@ -160,7 +145,7 @@
 
         function renderizarLista(listaVisivel, dataFiltro) {
             let t = { v:0, totV:0, pix:0, din:0, deb:0, cre:0, bol:0, vale:0, nq:0, nqDia:0, comDia:0, comTot:0, vDia:0 };
-            let hT = '<table class="w-full text-[11px] text-left text-white"><thead class="bg-slate-700 text-white"><tr><th class="p-3">DATA/HORA</th><th class="p-3">CLIENTE / INFO</th><th class="p-3 text-center">STATUS</th><th class="p-3 text-center">AÇÃO</th></tr></thead><tbody class="divide-y divide-white/5">';
+            let hT = '<table class="w-full text-[11px] text-left text-white"><thead class="bg-slate-700 text-white"><tr><th class="p-3 text-white">DATA/HORA</th><th class="p-3 text-white">CLIENTE / INFO</th><th class="p-3 text-center text-white">STATUS</th><th class="p-3 text-center text-white">AÇÃO</th></tr></thead><tbody class="divide-y divide-white/5">';
             let hC = '';
 
             listaVisivel.forEach(item => {
@@ -183,30 +168,32 @@
                         });
                     } else { comItem = vVenda * 0.12; }
                     t.comTot += comItem; if(!dataFiltro || item.data === dataFiltro) { t.vDia++; t.comDia += comItem; }
-                    hC += `<tr><td class="py-1 uppercase font-bold text-slate-300">${item.nome_formando}</td><td class="py-1 text-right text-emerald-400 font-black">${window.formatBRL(comItem)}</td></tr>`;
+                    hC += `<tr><td class="py-1 uppercase font-bold text-slate-300">${item.nome_formando}</td><td class="py-1 text-right text-emerald-400 font-black text-white">${window.formatBRL(comItem)}</td></tr>`;
                 } else if(item.resultado === "NQ") { corStatus = "text-rose-500 font-bold"; t.nq++; if(!dataFiltro || item.data === dataFiltro) t.nqDia++; }
 
                 const wz = item.endereco ? `https://www.waze.com/ul?q=${encodeURIComponent(item.endereco)}&navigate=yes` : '#';
                 const wa = item.telefone ? `https://wa.me/55${item.telefone.replace(/\D/g,'')}` : '#';
-                hT += `<tr class="hover:bg-slate-800/40"><td class="p-3 text-white"><b>${paraDataBR(item.data)}</b><br><span class="text-blue-400 font-bold">${item.horario||'DIR'}</span></td><td class="p-3 text-white"><span class="uppercase font-black text-white text-[10px] text-white">${item.nome_formando}</span><br><span class="text-slate-300 text-[10px] block leading-tight mt-1 text-white">📍 ${item.endereco || 'Sem endereço'}</span><span class="text-emerald-400 text-[10px] block mt-1">📱 WhatsApp: ${item.telefone || 'Sem número'}</span><div class="flex gap-4 mt-2"><a href="${wz}" target="_blank" class="text-blue-400 text-[9px] hover:underline uppercase italic">Waze</a><a href="${wa}" target="_blank" class="text-emerald-400 text-[9px] hover:underline uppercase italic">Zap</a></div></td><td class="p-3 text-center ${corStatus}">${item.resultado||'Pendente'}</td><td class="p-3 text-center text-white"><button onclick="gerenciarItem('${item.path}')" class="bg-blue-600 px-2 py-1 rounded text-[9px] font-bold">GERENCIAR</button></td></tr>`;
+                hT += `<tr class="hover:bg-slate-800/40"><td class="p-3 text-white"><b>${paraDataBR(item.data)}</b><br><span class="text-blue-400 font-bold">${item.horario||'DIR'}</span></td><td class="p-3"><span class="uppercase font-black text-white text-[10px]">${item.nome_formando}</span><br><span class="text-slate-300 text-[10px] block leading-tight mt-1 text-white">📍 ${item.endereco || 'Sem endereço'}</span><span class="text-emerald-400 text-[10px] block mt-1">📱 WhatsApp: ${item.telefone || 'Sem número'}</span><div class="flex gap-4 mt-2"><a href="${wz}" target="_blank" class="text-blue-400 text-[9px] hover:underline uppercase italic">Waze</a><a href="${wa}" target="_blank" class="text-emerald-400 text-[9px] hover:underline uppercase italic">Zap</a></div></td><td class="p-3 text-center ${corStatus}">${item.resultado||'Pendente'}</td><td class="p-3 text-center text-white"><button onclick="gerenciarItem('${item.path}')" class="bg-blue-600 px-2 py-1 rounded text-[9px] font-bold">GERENCIAR</button></td></tr>`;
             });
 
             const label = dataFiltro ? 'DIA' : 'TOT';
-            document.getElementById('resumo-financeiro').innerHTML = `<div class="glass p-1 rounded-xl border-t border-blue-500 text-white"><p class="text-[6px]">EFICIÊNCIA</p><p class="text-[9px] font-black">${(t.v+t.nq)>0?((t.v/(t.v+t.nq))*100).toFixed(0):0}%</p></div><div class="glass p-1 rounded-xl border-t border-emerald-500 text-white"><p class="text-[6px]">V. ${label}</p><p class="text-[9px] font-black">${t.vDia}</p></div><div class="glass p-1 rounded-xl border-t border-rose-500 text-white"><p class="text-[6px]">NQ ${label}</p><p class="text-[9px] font-black text-rose-400">${t.nqDia}</p></div><div class="glass p-1 rounded-xl border-t border-blue-300 text-white"><p class="text-[6px]">TICKET MÉD.</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.v?t.totV/t.v:0)}</p></div><div class="glass p-1 rounded-xl border-t border-cyan-500 text-white text-white text-white text-white"><p class="text-[6px]">PIX</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.pix)}</p></div><div class="glass p-1 rounded-xl border-t border-green-500 text-white text-white text-white text-white text-white text-white"><p class="text-[6px]">DINHEIRO</p><p class="text-[9px] font-black text-white text-white text-white">${window.formatBRL(t.din)}</p></div><div class="glass p-1 rounded-xl border-t border-yellow-500 text-white text-white text-white text-white text-white text-white text-white"><p class="text-[6px]">CRÉDITO</p><p class="text-[9px] font-black text-white text-white text-white">${window.formatBRL(t.cre)}</p></div><div class="glass p-1 rounded-xl border-t border-orange-500 text-white text-white text-white text-white text-white text-white text-white text-white text-white"><p class="text-[6px]">DÉBITO</p><p class="text-[9px] font-black text-white text-white text-white">${window.formatBRL(t.deb)}</p></div><div class="glass p-1 rounded-xl border-t border-purple-500 text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white"><p class="text-[6px]">BOLETO</p><p class="text-[9px] font-black text-white text-white text-white text-white text-white">${window.formatBRL(t.bol)}</p></div><div class="bg-purple-600 p-1 rounded-xl shadow-lg text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white"><p class="text-[6px]">COMIS. ${label}</p><p class="text-[9px] font-black text-white text-white text-white text-white text-white text-white">${window.formatBRL(t.comDia)}</p></div><div class="bg-blue-600 p-1 rounded-xl shadow-lg text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white"><p class="text-[6px]">TOTAL VENDIDO</p><p class="text-[9px] font-black text-white text-white text-white text-white text-white text-white text-white">${window.formatBRL(t.totV)}</p></div>`;
+            document.getElementById('resumo-financeiro').innerHTML = `<div class="glass p-1 rounded-xl border-t border-blue-500 text-white"><p class="text-[6px]">EFICIÊNCIA</p><p class="text-[9px] font-black text-white">${(t.v+t.nq)>0?((t.v/(t.v+t.nq))*100).toFixed(0):0}%</p></div><div class="glass p-1 rounded-xl border-t border-emerald-500 text-white"><p class="text-[6px]">V. ${label}</p><p class="text-[9px] font-black text-white">${t.vDia}</p></div><div class="glass p-1 rounded-xl border-t border-rose-500 text-white"><p class="text-[6px]">NQ ${label}</p><p class="text-[9px] font-black text-rose-400 text-white">${t.nqDia}</p></div><div class="glass p-1 rounded-xl border-t border-blue-300 text-white text-white"><p class="text-[6px]">TICKET MÉD.</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.v?t.totV/t.v:0)}</p></div><div class="glass p-1 rounded-xl border-t border-cyan-500 text-white text-white text-white"><p class="text-[6px]">PIX</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.pix)}</p></div><div class="glass p-1 rounded-xl border-t border-green-500 text-white text-white text-white text-white"><p class="text-[6px]">DINHEIRO</p><p class="text-[9px] font-black text-white text-white">${window.formatBRL(t.din)}</p></div><div class="glass p-1 rounded-xl border-t border-yellow-500 text-white text-white text-white text-white text-white"><p class="text-[6px]">CRÉDITO</p><p class="text-[9px] font-black text-white text-white text-white">${window.formatBRL(t.cre)}</p></div><div class="glass p-1 rounded-xl border-t border-orange-500 text-white text-white text-white text-white text-white text-white text-white"><p class="text-[6px]">DÉBITO</p><p class="text-[9px] font-black text-white text-white text-white text-white">${window.formatBRL(t.deb)}</p></div><div class="glass p-1 rounded-xl border-t border-purple-500 text-white text-white text-white text-white text-white text-white text-white text-white text-white"><p class="text-[6px]">BOLETO</p><p class="text-[9px] font-black text-white text-white text-white text-white text-white text-white">${window.formatBRL(t.bol)}</p></div><div class="bg-purple-600 p-1 rounded-xl shadow-lg text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white"><p class="text-[6px]">COMIS. ${label}</p><p class="text-[9px] font-black text-white text-white text-white text-white text-white text-white text-white">${window.formatBRL(t.comDia)}</p></div><div class="bg-blue-600 p-1 rounded-xl shadow-lg text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white"><p class="text-[6px]">TOTAL VENDIDO</p><p class="text-[9px] font-black text-white text-white text-white text-white text-white text-white text-white text-white">${window.formatBRL(t.totV)}</p></div>`;
             document.getElementById('comissao-content').innerHTML = `<table class="w-full text-white text-white text-white"><tbody>${hC}</tbody></table>`;
-            document.getElementById('fechamento-final').innerHTML = `<div class="space-y-1 text-white text-white text-white text-white text-white text-white"><p class="text-[8px] uppercase text-slate-400">Bruta: ${window.formatBRL(t.comTot)}</p><p class="text-[8px] uppercase text-rose-400">Vales: - ${window.formatBRL(t.vale)}</p><div class="pt-2 border-t border-white/10 mt-2 text-white"><p class="text-[10px] font-black uppercase text-blue-400">A Receber</p><p class="text-2xl font-black italic text-emerald-400 text-white text-white text-white">${window.formatBRL(t.comTot - t.vale)}</p></div></div>`;
+            document.getElementById('fechamento-final').innerHTML = `<div class="space-y-1 text-white text-white text-white text-white text-white text-white"><p class="text-[8px] uppercase text-slate-400">Bruta: ${window.formatBRL(t.comTot)}</p><p class="text-[8px] uppercase text-rose-400">Vales: - ${window.formatBRL(t.vale)}</p><div class="pt-2 border-t border-white/10 mt-2 text-white"><p class="text-[10px] font-black uppercase text-blue-400">A Receber</p><p class="text-2xl font-black italic text-emerald-400 text-white text-white text-white text-white">${window.formatBRL(t.comTot - t.vale)}</p></div></div>`;
             document.getElementById('admin-content').innerHTML = hT + '</tbody></table>';
         }
 
-        // --- LANÇAMENTOS, RELATÓRIO E EXCLUSÃO ---
         window.gerenciarItem = (p) => { window.itemPath = p; document.getElementById('modalGestao').style.display = 'flex'; };
-        window.confirmarExclusao = async () => { if(confirm("Apagar?")) { await remove(ref(db, window.itemPath)); fecharModalGestao(); await carregarRelatorio(); } };
         
+        window.confirmarExclusao = async () => { 
+            if(confirm("Apagar?")) { await remove(ref(db, window.itemPath)); fecharModalGestao(); await carregarRelatorio(); } 
+        };
+
         window.abrirAvulso = () => {
             document.getElementById('modalGestao').style.display = 'flex';
             document.getElementById('gestao-menu').classList.add('hidden');
             document.getElementById('gestao-form').classList.remove('hidden');
-            document.getElementById('gestao-form').innerHTML = `<h3 class="text-white font-bold mb-4 uppercase text-xs text-white">Novo Avulso</h3><input type="text" id="av-nome" placeholder="NOME" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white text-sm outline-none"><input type="tel" id="av-tel" placeholder="TEL" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white text-sm outline-none"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white text-sm outline-none"><input type="date" id="av-data" class="w-full bg-slate-800 p-3 rounded-xl mb-4 text-white text-sm outline-none"><button onclick="salvarNovoAvulso()" class="w-full p-4 bg-blue-600 rounded-xl font-black text-white uppercase text-xs text-white">Informar Valores</button>`;
+            document.getElementById('gestao-form').innerHTML = `<h3 class="text-white font-bold mb-4 uppercase text-xs">Novo Avulso</h3><input type="text" id="av-nome" placeholder="NOME" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white text-sm outline-none"><input type="tel" id="av-tel" placeholder="TEL" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white text-sm outline-none"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white text-sm outline-none"><input type="date" id="av-data" class="w-full bg-slate-800 p-3 rounded-xl mb-4 text-white text-sm outline-none"><button onclick="salvarNovoAvulso()" class="w-full p-4 bg-blue-600 rounded-xl font-black text-white uppercase text-xs">Informar Valores</button>`;
             document.getElementById('av-data').value = new Date().toLocaleDateString('en-CA');
         };
 
@@ -219,17 +206,13 @@
             fluxoResultado();
         };
 
-        // --- GERAR TEXTO PARA WHATSAPP ---
         window.copiarRelatorio = () => {
             const f = window.formatBRL;
             const dataFiltro = document.getElementById('filtro-data-admin').value || new Date().toLocaleDateString('en-CA');
             const seletor = document.getElementById('projeto-ativo');
             const projNome = seletor.options[seletor.selectedIndex].text;
-            
-            // Calculamos as métricas do dia filtrado
             let v=0, nq=0, tot=0, pix=0, din=0, cre=0, deb=0, bol=0, val=0, com=0;
             const listaDia = window.dadosCompletos.filter(i => i.data === dataFiltro);
-            
             listaDia.forEach(item => {
                 if(item.resultado === "Venda") {
                     v++; tot += Number(item.valor) || 0;
@@ -248,14 +231,12 @@
                     } else { com += (Number(item.valor)||0) * 0.12; }
                 } else if(item.resultado === "NQ") nq++;
             });
-
             const texto = `*RELATÓRIO: ${projNome}*\n*Data:* ${paraDataBR(dataFiltro)}\n\n✅ Vendas: ${v}\n❌ NQ: ${nq}\n\n💵 Dinheiro: ${f(din)}\n💎 Pix: ${f(pix)}\n💳 Débito: ${f(deb)}\n💳 Crédito: ${f(cre)}\n📄 Boleto: ${f(bol)}\n\n💰 *Total Vendido: ${f(tot)}*\n💸 *Vales/Entradas: ${f(val)}*\n🎁 *Comissão Dia: ${f(com)}*`;
-            
             const el = document.createElement('textarea'); el.value = texto; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-            alert("RELATÓRIO COPIADO! Agora é só colar no WhatsApp.");
+            alert("COPIADO!");
         };
 
-        window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); document.getElementById('gestao-form').classList.remove('hidden'); document.getElementById('gestao-form').innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-800 p-4 rounded-xl text-center mb-4 text-white outline-none"><div class="grid grid-cols-2 gap-2 mb-4 text-white"><button onclick="addPg('Dinheiro')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Dinheiro</button><button onclick="addPg('Pix')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Pix</button><button onclick="addPg('Cartão Débito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Débito</button><button onclick="addPg('Cartão Crédito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Crédito</button><button onclick="addPg('Boleto')" class="p-2 bg-blue-900 rounded-lg text-[9px] col-span-2">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4 text-white text-white text-white"></div><button onclick="finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white text-white text-white">CONFIRMAR VENDA</button><button onclick="salvarStatusSimples('NQ')" class="w-full p-2 bg-rose-600 rounded-xl mt-4 text-[10px] text-white text-white text-white">SALVAR COMO NQ</button>`; window.tempPgs = []; };
+        window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); document.getElementById('gestao-form').classList.remove('hidden'); document.getElementById('gestao-form').innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-800 p-4 rounded-xl text-center mb-4 text-white outline-none"><div class="grid grid-cols-2 gap-2 mb-4 text-white"><button onclick="addPg('Dinheiro')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Dinheiro</button><button onclick="addPg('Pix')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Pix</button><button onclick="addPg('Cartão Débito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Débito</button><button onclick="addPg('Cartão Crédito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Crédito</button><button onclick="addPg('Boleto')" class="p-2 bg-blue-900 rounded-lg text-[9px] col-span-2">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4 text-white"></div><button onclick="finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white">CONFIRMAR VENDA</button><button onclick="salvarStatusSimples('NQ')" class="w-full p-2 bg-rose-600 rounded-xl mt-4 text-[10px] text-white">SALVAR COMO NQ</button>`; window.tempPgs = []; };
         window.addPg = (tipo) => { const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0); if(v <= 0) return; let pg = { tipo, valor: v }; if(tipo === 'Boleto') { const ent = prompt("Entrada? 1-Sim 2-Não"); if(ent === "1") { pg.entrada = parseFloat(prompt("Valor Entrada:")?.replace(',','.') || 0); const fE = prompt("Forma: 1-Dinheiro 2-Pix"); pg.forma_entrada = fE === "1" ? "Dinheiro" : "Pix"; } } window.tempPgs.push(pg); renderTemp(); };
         function renderTemp() { document.getElementById('lista-p').innerHTML = window.tempPgs.map(p => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]"><span>${p.tipo}</span><span class="text-emerald-400">${window.formatBRL(p.valor)}</span></div>`).join(''); }
         window.finalizarVenda = async () => { const tot = parseFloat(document.getElementById('vTotal').value); if(!tot) return alert("Informe o valor!"); await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, pagamentos: window.tempPgs }); fecharModalGestao(); await carregarRelatorio(); };
