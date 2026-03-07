@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales PRO - Super BI</title>
+    <title>Elite Sales PRO - v5.0 Master BI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -15,10 +15,9 @@
         .view-section { display: none; min-height: 100vh; width: 100%; }
         .view-active { display: flex; flex-direction: column; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
-        .day-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
+        .day-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; display: none; }
         .day-btn.active { background: #3b82f6 !important; border-color: #60a5fa !important; }
-        .card-bi { background: #0f172a; border-left: 4px solid #3b82f6; transition: all 0.3s; }
-        .card-bi:hover { background: #1e293b; }
+        .card-bi { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.05); border-top: 3px solid #3b82f6; }
     </style>
 </head>
 <body>
@@ -26,12 +25,13 @@
     <div id="modalGestao">
         <div class="glass w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl">
             <div class="flex justify-between items-center mb-8">
-                <h2 class="text-xl font-black uppercase text-blue-400">Atualizar Visita</h2>
+                <h2 class="text-xl font-black uppercase text-blue-400">Registrar Visita</h2>
                 <button onclick="window.fecharModalGestao()" class="bg-slate-800 text-white w-10 h-10 rounded-full font-bold">✕</button>
             </div>
             <div id="gestao-menu" class="grid grid-cols-1 gap-4">
-                <button onclick="window.fluxoResultado()" class="bg-emerald-600/20 border border-emerald-500/30 p-8 rounded-3xl text-emerald-400 font-black uppercase hover:bg-emerald-600 hover:text-white transition">Registrar Resultado</button>
-                <button onclick="window.confirmarExclusao()" class="bg-rose-600/10 text-rose-500 p-4 rounded-2xl font-bold uppercase text-[10px]">Excluir Agendamento</button>
+                <button onclick="window.fluxoResultado()" class="bg-emerald-600/20 border border-emerald-500/30 p-8 rounded-3xl text-emerald-400 font-black uppercase hover:bg-emerald-600 hover:text-white transition">Informar Venda</button>
+                <button onclick="window.salvarStatusSimples('NQ')" class="bg-rose-600/10 text-rose-500 p-4 rounded-2xl font-bold uppercase text-xs">Marcar como NQ</button>
+                <button onclick="window.confirmarExclusao()" class="text-slate-500 text-[10px] uppercase font-bold mt-4 hover:text-rose-500">Excluir Agendamento</button>
             </div>
             <div id="gestao-form" class="hidden space-y-4"></div>
         </div>
@@ -46,19 +46,19 @@
             <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl">
                 <div class="text-center mb-8">
                     <h2 id="escola-titulo" class="text-2xl font-extrabold uppercase text-blue-400 italic">Guaratinguetá</h2>
-                    <h3 id="sub-escola" class="text-xs font-bold text-slate-400 uppercase tracking-widest">Dr. Guilherme Filippo</h3>
+                    <h3 id="sub-escola" class="text-xs font-bold text-slate-400 uppercase tracking-widest text-white">Dr. Guilherme Filippo</h3>
                 </div>
-                <form id="form-agendamento" class="space-y-4">
+                <form id="form-agendamento" class="space-y-4 text-white">
                     <div class="grid grid-cols-2 gap-2 mb-4" id="day-selector">
                         <button type="button" data-date="2026-03-07" onclick="window.selecionarDia(this)" class="day-btn rounded-2xl py-4 text-[10px] font-black uppercase text-white">Sab 07/03</button>
                         <button type="button" data-date="2026-03-08" onclick="window.selecionarDia(this)" class="day-btn rounded-2xl py-4 text-[10px] font-black uppercase text-white">Dom 08/03</button>
                     </div>
                     <input type="hidden" id="data-selecionada">
-                    <input type="text" id="nome" required placeholder="Nome do Formando" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none text-white focus:border-blue-500 transition">
-                    <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none text-white focus:border-blue-500 transition">
+                    <input type="text" id="nome" required placeholder="Nome do Formando" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-blue-500 transition">
+                    <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-blue-500 transition">
                     <select id="horario" required class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none text-white"><option value="">Selecione o Dia</option></select>
-                    <textarea id="endereco" required placeholder="Endereço de Visita" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none text-white transition" rows="2"></textarea>
-                    <button type="submit" class="btn-primary w-full py-5 rounded-2xl font-black uppercase shadow-lg shadow-blue-900/40 text-white">Confirmar Agendamento</button>
+                    <textarea id="endereco" required placeholder="Endereço de Visita" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none transition" rows="2"></textarea>
+                    <button type="submit" class="btn-primary w-full py-5 rounded-2xl font-black uppercase text-white shadow-lg">Finalizar Agendamento</button>
                 </form>
             </div>
         </main>
@@ -66,15 +66,15 @@
 
     <section id="view-logistica" class="view-section p-6">
         <div class="max-w-4xl mx-auto w-full">
-            <nav class="flex justify-between items-center mb-10">
+            <nav class="flex justify-between items-center mb-10 text-white">
                 <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest">← Sair</button>
                 <div class="flex gap-2 p-1 bg-slate-900 rounded-2xl border border-white/5">
                     <button class="bg-blue-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-white shadow-lg">Visitas</button>
-                    <button onclick="window.switchView('view-financeiro')" class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-slate-400 hover:text-white transition">Dashboard BI</button>
+                    <button onclick="window.switchView('view-financeiro')" class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-slate-400 hover:text-white transition">Resultados BI</button>
                 </div>
             </nav>
-            <div class="flex flex-col md:flex-row justify-between items-end gap-6 mb-8">
-                <h1 class="text-3xl font-black italic uppercase">Minha <span class="text-blue-500">Rota</span></h1>
+            <div class="flex flex-col md:flex-row justify-between items-end gap-6 mb-8 text-white">
+                <h1 class="text-3xl font-black italic uppercase text-white">Minha <span class="text-blue-500 text-white">Rota</span></h1>
                 <div class="flex gap-3 w-full md:w-auto">
                     <input type="date" id="filtro-data-logistica" onchange="window.filtrarLogistica()" class="flex-grow bg-slate-900 border border-white/10 rounded-2xl px-4 py-3 text-xs font-bold text-white outline-none">
                     <button onclick="window.abrirAvulso()" class="bg-white text-black px-6 py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-blue-50 transition">+ Avulso</button>
@@ -84,29 +84,37 @@
         </div>
     </section>
 
-    <section id="view-financeiro" class="view-section p-6">
-        <div class="max-w-6xl mx-auto w-full">
+    <section id="view-financeiro" class="view-section p-6 text-white">
+        <div class="max-w-7xl mx-auto w-full">
             <nav class="flex justify-between items-center mb-10">
-                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest">← Voltar</button>
-                <button onclick="window.copiarRelatorio()" class="bg-emerald-600 px-8 py-3 rounded-2xl text-[10px] font-black uppercase text-white shadow-lg">Copiar Relatório Zap</button>
+                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest">← Roteiro</button>
+                <div class="flex gap-4 items-center">
+                    <input type="date" id="filtro-bi" onchange="window.filtrarBI()" class="bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none">
+                    <button onclick="window.copiarRelatorio()" class="bg-emerald-600 px-6 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg">Copiar Zap</button>
+                </div>
             </nav>
-            
-            <div id="bi-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+
+            <div id="bi-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
                 </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2 glass rounded-[3rem] p-8">
-                    <h3 class="font-black uppercase text-[10px] mb-6 text-slate-400 tracking-widest">Participação por Pagamento</h3>
-                    <canvas id="chartBI" style="max-height: 280px;"></canvas>
+                    <h3 class="font-black uppercase text-[10px] mb-8 text-slate-400 tracking-widest">Distribuição por Forma de Pagamento</h3>
+                    <canvas id="chartBI" style="max-height: 300px;"></canvas>
                 </div>
-                <div class="glass rounded-[3rem] p-8">
-                    <h3 class="font-black uppercase text-[10px] mb-6 text-slate-400 tracking-widest text-center">Eficiência Real</h3>
+                <div class="glass rounded-[3rem] p-8 flex flex-col items-center">
+                    <h3 class="font-black uppercase text-[10px] mb-8 text-slate-400 tracking-widest text-center">Eficiência de Conversão</h3>
                     <div class="relative w-full aspect-square max-w-[200px] mx-auto">
                         <canvas id="chartDonut"></canvas>
-                        <div id="perc-center" class="absolute inset-0 flex items-center justify-center flex-col text-white">
+                        <div id="perc-center" class="absolute inset-0 flex items-center justify-center flex-col">
                             <span class="text-4xl font-black">0%</span>
+                            <span class="text-[8px] text-slate-500 uppercase font-bold">Taxa Real</span>
                         </div>
                     </div>
+                </div>
+                <div class="lg:col-span-3 glass rounded-[3rem] p-8">
+                    <h3 class="font-black uppercase text-[10px] mb-6 text-slate-400 tracking-widest italic">Detalhamento Financeiro (Vendas)</h3>
+                    <div id="extrato-bi" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-2"></div>
                 </div>
             </div>
         </div>
@@ -132,17 +140,17 @@
         const pDT = (s) => (s && s.includes('-')) ? s.split("-").reverse().join("/") : s;
         let chart1 = null, chart2 = null;
 
-        // --- NAVEGAÇÃO SPA (OCULTA FORMULÁRIO) ---
+        // --- NAVEGAÇÃO ---
         window.switchView = (id) => {
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active'));
             document.getElementById(id).classList.add('view-active');
             if(id !== 'view-agendamento') window.carregarRelatorio();
         };
 
-        window.acessoAdmin = () => { if(prompt("Chave ADM:") === "2025") window.switchView('view-logistica'); };
+        window.acessoAdmin = () => { if(prompt("Senha ADM:") === "2025") window.switchView('view-logistica'); };
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
 
-        // --- ENGINE ---
+        // --- CARREGAMENTO ---
         window.carregarRelatorio = async () => {
             const sAt = await get(ref(db, "config/projeto_ativo"));
             const p = sAt.val() || "guaratingueta-guilherme";
@@ -155,12 +163,18 @@
             Object.keys(avs).forEach(id => window.dadosCompletos.push({...avs[id], id, path: `dados/${p}/avulsos/${id}`}));
             
             window.filtrarLogistica();
+            window.filtrarBI();
         };
 
         window.filtrarLogistica = () => {
             const fData = document.getElementById('filtro-data-logistica').value;
             let lista = fData ? window.dadosCompletos.filter(i => i.data === fData) : window.dadosCompletos;
             renderizarLogistica(lista);
+        };
+
+        window.filtrarBI = () => {
+            const fData = document.getElementById('filtro-bi').value;
+            let lista = fData ? window.dadosCompletos.filter(i => i.data === fData) : window.dadosCompletos;
             renderizarBI(lista, fData);
         };
 
@@ -170,73 +184,81 @@
             lista.sort((a,b) => new Date(`${a.data}T${a.horario||'23:59'}`) - new Date(`${b.data}T${b.horario||'23:59'}`));
             lista.forEach(item => {
                 const cor = item.resultado === "Venda" ? "border-emerald-500/40 bg-emerald-500/5" : (item.resultado === "NQ" ? "border-rose-500/40 bg-rose-500/5" : "border-white/10");
-                const wz = `https://www.waze.com/ul?q=${encodeURIComponent(item.endereco || '')}&navigate=yes`;
-                const zap = `https://wa.me/55${(item.telefone||'').replace(/\D/g,'')}`;
+                const txtStatus = item.resultado === "Venda" ? `<span class="text-emerald-400 font-black text-xs uppercase mb-2 block">✓ Venda Realizada</span>` : (item.resultado === "NQ" ? `<span class="text-rose-500 font-black text-xs uppercase mb-2 block">✗ NQ - Não Qualificado</span>` : "");
+                const waNum = (item.telefone || '').replace(/\D/g, '');
                 container.innerHTML += `
                     <div class="glass p-6 rounded-[2.5rem] border-l-8 ${cor} flex flex-col md:flex-row justify-between items-center gap-4 text-white">
                         <div class="flex-grow text-center md:text-left">
+                            ${txtStatus}
                             <span class="bg-blue-600 px-3 py-1 rounded-lg font-black text-[10px] mr-2">${item.horario || 'DIR'}</span>
                             <span class="text-slate-500 font-bold text-[10px] uppercase">${pDT(item.data)}</span>
                             <h3 class="text-2xl font-black uppercase mt-2">${item.nome_formando}</h3>
-                            <a href="${zap}" target="_blank" class="text-emerald-400 font-bold text-sm block mb-3 underline">📱 WhatsApp: ${item.telefone}</a>
-                            <a href="${wz}" target="_blank" class="text-slate-400 text-sm leading-relaxed block hover:text-blue-400 transition italic">📍 ${item.endereco || 'Abrir GPS'}</a>
+                            <a href="https://wa.me/55${waNum}" target="_blank" class="text-emerald-400 font-bold text-sm block mb-3 underline underline-offset-4">📱 WhatsApp: ${item.telefone}</a>
+                            <a href="https://www.waze.com/ul?q=${encodeURIComponent(item.endereco||'')}&navigate=yes" target="_blank" class="text-slate-400 text-sm leading-relaxed block hover:text-blue-400 transition italic">📍 ${item.endereco || 'Abrir GPS'}</a>
                         </div>
-                        <button onclick="window.gerenciarItem('${item.path}')" class="btn-primary px-12 py-6 rounded-3xl font-black uppercase text-xs shadow-xl shadow-blue-900/30 text-white">Gerenciar</button>
+                        <button onclick="window.gerenciarItem('${item.path}')" class="btn-primary px-12 py-6 rounded-3xl font-black uppercase text-xs shadow-xl text-white">Gerenciar</button>
                     </div>`;
             });
         }
 
-        function renderizarBI(lista, dF) {
+        function renderizarBI(lista, dataF) {
             let m = { v:0, nq:0, tot:0, pix:0, din:0, deb:0, cre:0, bol:0, val:0, com:0 };
+            let extrato = '';
+
             lista.forEach(i => {
                 if(i.resultado === "Venda") {
-                    m.v++; const valV = Number(i.valor) || 0; m.tot += valV;
+                    m.v++; const vV = Number(i.valor) || 0; m.tot += vV;
                     let comI = 0;
                     if(Array.isArray(i.pagamentos)) {
                         i.pagamentos.forEach(p => {
-                            const v = Number(p.valor)||0, ent = Number(p.entrada)||0;
-                            if(p.tipo === "Pix") m.pix += v; else if(p.tipo === "Dinheiro") m.din += v; else if(p.tipo.includes("Débito")) m.deb += v; else if(p.tipo.includes("Crédito")) m.cre += v;
-                            else if(p.tipo === "Boleto") { m.bol += (v-ent); comI += (ent*0.12)+((v-ent)*0.08); if(p.forma_entrada === "Pix") m.pix += ent; else if(p.forma_entrada === "Dinheiro") m.din += ent; if(ent > 0) m.val += ent; }
-                            if(p.tipo !== "Boleto") { if(p.tipo === "Pix" || p.tipo === "Dinheiro") m.val += v; comI += v * 0.12; }
+                            const valP = Number(p.valor)||0, ent = Number(p.entrada)||0;
+                            if(p.tipo === "Pix") m.pix += valP; else if(p.tipo === "Dinheiro") m.din += valP; else if(p.tipo.includes("Débito")) m.deb += valP; else if(p.tipo.includes("Crédito")) m.cre += valP;
+                            else if(p.tipo === "Boleto") { m.bol += (valP-ent); comI += (ent*0.12)+((valP-ent)*0.08); if(p.forma_entrada === "Pix") m.pix += ent; else if(p.forma_entrada === "Dinheiro") m.din += ent; if(ent > 0) m.val += ent; }
+                            if(p.tipo !== "Boleto") { if(p.tipo === "Pix" || p.tipo === "Dinheiro") m.val += valP; comI += valP * 0.12; }
                         });
-                    } else { comI = valV * 0.12; }
+                    } else { comI = vV * 0.12; }
                     m.com += comI;
+                    extrato += `<div class="bg-white/5 p-3 rounded-xl flex justify-between items-center text-[10px] border border-white/5"><span>${i.nome_formando}</span><span class="text-emerald-400 font-bold">${fBR(comI)}</span></div>`;
                 } else if(i.resultado === "NQ") m.nq++;
             });
 
             const tx = (m.v + m.nq) > 0 ? ((m.v / (m.v + m.nq)) * 100).toFixed(0) : 0;
-            const p = (v) => m.tot > 0 ? ((v / m.tot) * 100).toFixed(0) + '%' : '0%';
-            
+            const label = dataF ? `DO DIA (${pDT(dataF)})` : "ACUMULADO GERAL";
+            const perc = (v) => m.tot > 0 ? ((v / m.tot) * 100).toFixed(0) + '%' : '0%';
+
             document.getElementById('bi-grid').innerHTML = `
-                <div class="card-bi p-6 rounded-3xl"><p class="text-[9px] font-bold text-slate-500 uppercase italic">Faturamento Total</p><p class="text-3xl font-black text-emerald-400">${fBR(m.tot)}</p></div>
-                <div class="card-bi p-6 rounded-3xl border-emerald-500"><p class="text-[9px] font-bold text-slate-500 uppercase">Vendas Realizadas</p><p class="text-3xl font-black">${m.v}</p></div>
-                <div class="card-bi p-6 rounded-3xl border-rose-500"><p class="text-[9px] font-bold text-slate-500 uppercase">Perdas (NQ)</p><p class="text-3xl font-black text-rose-500">${m.nq}</p></div>
-                <div class="card-bi p-6 rounded-3xl border-cyan-400"><p class="text-[9px] font-bold text-slate-500 uppercase italic">Pix (${p(m.pix)})</p><p class="text-3xl font-black">${fBR(m.pix)}</p></div>
-                <div class="card-bi p-6 rounded-3xl border-green-500"><p class="text-[9px] font-bold text-slate-500 uppercase italic">Dinheiro (${p(m.din)})</p><p class="text-3xl font-black text-emerald-500">${fBR(m.din)}</p></div>
-                <div class="card-bi p-6 rounded-3xl border-blue-500"><p class="text-[9px] font-bold text-slate-500 uppercase italic">Cartão Crédito (${p(m.cre)})</p><p class="text-3xl font-black text-blue-400">${fBR(m.cre)}</p></div>
-                <div class="card-bi p-6 rounded-3xl border-purple-500"><p class="text-[9px] font-bold text-slate-500 uppercase italic">Boleto (${p(m.bol)})</p><p class="text-3xl font-black text-purple-400">${fBR(m.bol)}</p></div>
-                <div class="card-bi p-6 rounded-3xl border-yellow-500 bg-emerald-950/20"><p class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Comissão Líquida</p><p class="text-3xl font-black text-emerald-400">${fBR(m.com - m.val)}</p></div>
+                <div class="card-bi p-6 rounded-3xl border-emerald-500 bg-emerald-950/10"><p class="text-[9px] font-bold text-emerald-500 uppercase">Faturamento ${label}</p><p class="text-4xl font-black text-emerald-400">${fBR(m.tot)}</p></div>
+                <div class="card-bi p-6 rounded-3xl"><p class="text-[9px] font-bold text-slate-500 uppercase">Vendas / NQ</p><p class="text-3xl font-black text-white">${m.v} <span class="text-slate-600">/</span> <span class="text-rose-500">${m.nq}</span></p></div>
+                <div class="card-bi p-6 rounded-3xl border-blue-500"><p class="text-[9px] font-bold text-blue-500 uppercase italic">Ticket Médio</p><p class="text-3xl font-black">${fBR(m.v ? m.tot/m.v : 0)}</p></div>
+                <div class="card-bi p-6 rounded-3xl border-emerald-500"><p class="text-[9px] font-bold text-emerald-500 uppercase italic">Comissão Líquida</p><p class="text-3xl font-black text-emerald-400 underline">${fBR(m.com - m.val)}</p></div>
+                <div class="card-bi p-4 rounded-2xl border-cyan-400"><p class="text-[8px] font-bold text-slate-500 uppercase italic">Pix (${perc(m.pix)})</p><p class="text-2xl font-black">${fBR(m.pix)}</p></div>
+                <div class="card-bi p-4 rounded-2xl border-green-500"><p class="text-[8px] font-bold text-slate-500 uppercase italic">Dinheiro (${perc(m.din)})</p><p class="text-2xl font-black">${fBR(m.din)}</p></div>
+                <div class="card-bi p-4 rounded-2xl border-blue-400"><p class="text-[8px] font-bold text-slate-500 uppercase italic">Crédito (${perc(m.cre)})</p><p class="text-2xl font-black">${fBR(m.cre)}</p></div>
+                <div class="card-bi p-4 rounded-2xl border-purple-500"><p class="text-[8px] font-bold text-slate-500 uppercase italic">Boleto (${perc(m.bol)})</p><p class="text-2xl font-black">${fBR(m.bol)}</p></div>
             `;
 
             document.getElementById('perc-center').children[0].innerText = tx + "%";
+            document.getElementById('extrato-bi').innerHTML = extrato || '<p class="col-span-full text-center text-slate-600">Sem vendas registradas.</p>';
+
             if(chart1) chart1.destroy();
-            chart1 = new Chart(document.getElementById('chartBI'), { type: 'bar', data: { labels: ['Pix', 'Din', 'Déb', 'Créd', 'Bol'], datasets: [{ data: [m.pix, m.din, m.deb, m.cre, m.bol], backgroundColor: ['#22d3ee', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'] }] }, options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { ticks: { color: '#475569' } } } } });
+            chart1 = new Chart(document.getElementById('chartBI'), { type: 'bar', data: { labels: ['Pix', 'Din', 'Déb', 'Créd', 'Bol'], datasets: [{ data: [m.pix, m.din, m.deb, m.cre, m.bol], backgroundColor: ['#22d3ee', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'] }] }, options: { plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#475569' } }, x: { ticks: { color: '#94a3b8' } } } } });
             if(chart2) chart2.destroy();
             chart2 = new Chart(document.getElementById('chartDonut'), { type: 'doughnut', data: { datasets: [{ data: [m.v, m.nq || 0.1], backgroundColor: ['#10b981', '#1e293b'], borderWidth: 0 }] }, options: { cutout: '85%', plugins: { legend: { display: false } } } });
         }
 
         // --- GESTÃO ---
         window.gerenciarItem = (p) => { window.itemPath = p; document.getElementById('modalGestao').style.display = 'flex'; };
-        window.confirmarExclusao = async () => { if(confirm("Apagar?")) { await remove(ref(db, window.itemPath)); window.fecharModalGestao(); await window.carregarRelatorio(); } };
-        window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-800 p-4 rounded-xl text-center mb-4 text-white outline-none border border-white/10"><div class="grid grid-cols-2 gap-2 mb-4"><button onclick="window.addPg('Dinheiro')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Dinheiro</button><button onclick="window.addPg('Pix')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Pix</button><button onclick="window.addPg('Cartão Débito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Débito</button><button onclick="window.addPg('Cartão Crédito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Crédito</button><button onclick="window.addPg('Boleto')" class="p-2 bg-blue-900 rounded-lg text-[9px] col-span-2">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4 text-white"></div><button onclick="window.finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white">CONFIRMAR VENDA</button><button onclick="window.salvarStatusSimples('NQ')" class="w-full p-2 bg-rose-600 rounded-xl mt-4 text-[10px]">SALVAR NQ</button>`; window.tempPgs = []; };
-        window.addPg = (tipo) => { const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0); if(v <= 0) return; let pg = { tipo, valor: v }; if(tipo === 'Boleto') { const ent = prompt("Entrada? 1-Sim 2-Não"); if(ent === "1") { pg.entrada = parseFloat(prompt("Valor Entrada:")?.replace(',','.') || 0); const fE = prompt("Forma: 1-Dinheiro 2-Pix"); pg.forma_entrada = fE === "1" ? "Dinheiro" : "Pix"; } } window.tempPgs.push(pg); document.getElementById('lista-p').innerHTML = window.tempPgs.map(p => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]"><span>${p.tipo}</span><span class="text-emerald-400">${fBR(p.valor)}</span></div>`).join(''); };
-        window.finalizarVenda = async () => { const tot = parseFloat(document.getElementById('vTotal').value); if(!tot) return alert("Valor!"); await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, pagamentos: window.tempPgs }); window.fecharModalGestao(); await window.carregarRelatorio(); };
+        window.confirmarExclusao = async () => { if(confirm("Apagar agendamento?")) { await remove(ref(db, window.itemPath)); window.fecharModalGestao(); await window.carregarRelatorio(); } };
         window.salvarStatusSimples = async (s) => { await update(ref(db, window.itemPath), { resultado: s, valor: 0 }); window.fecharModalGestao(); await window.carregarRelatorio(); };
-        window.abrirAvulso = () => { document.getElementById('modalGestao').style.display = 'flex'; document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-bold mb-4 uppercase text-xs">Novo Avulso</h3><input type="text" id="av-nome" placeholder="NOME" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white outline-none"><input type="tel" id="av-tel" placeholder="TEL" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white outline-none"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white outline-none"><input type="date" id="av-data" class="w-full bg-slate-800 p-3 rounded-xl mb-4 text-white outline-none"><button onclick="window.salvarNovoAvulso()" class="w-full p-4 bg-blue-600 rounded-xl font-black text-white uppercase text-xs">Salvar</button>`; document.getElementById('av-data').value = new Date().toLocaleDateString('en-CA'); };
+        window.abrirAvulso = () => { document.getElementById('modalGestao').style.display = 'flex'; document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Novo Avulso</h3><input type="text" id="av-nome" placeholder="NOME" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white outline-none"><input type="tel" id="av-tel" placeholder="TEL" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white outline-none"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white outline-none"><input type="date" id="av-data" class="w-full bg-slate-800 p-3 rounded-xl mb-4 text-white outline-none"><button onclick="window.salvarNovoAvulso()" class="w-full p-4 bg-blue-600 rounded-xl font-black text-white uppercase text-xs">Avançar</button>`; document.getElementById('av-data').value = new Date().toLocaleDateString('en-CA'); };
         window.salvarNovoAvulso = async () => { const n = document.getElementById('av-nome').value, d = document.getElementById('av-data').value; if(!n || !d) return alert("Nome/Data!"); const sP = await get(ref(db, "config/projeto_ativo")); const p = sP.val(); window.itemPath = `dados/${p}/avulsos/AV-${Date.now()}`; await set(ref(db, window.itemPath), { nome_formando: n, telefone: document.getElementById('av-tel').value, endereco: document.getElementById('av-end').value, data: d, resultado: "Pendente" }); window.fluxoResultado(); };
+        window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-800 p-4 rounded-xl text-center mb-4 text-white outline-none border border-white/10"><div class="grid grid-cols-2 gap-2 mb-4 text-white"><button onclick="window.addPg('Dinheiro')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Dinheiro</button><button onclick="window.addPg('Pix')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Pix</button><button onclick="window.addPg('Cartão Débito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Débito</button><button onclick="window.addPg('Cartão Crédito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Crédito</button><button onclick="window.addPg('Boleto')" class="p-2 bg-blue-900 rounded-lg text-[9px] col-span-2">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4 text-white"></div><button onclick="window.finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white">SALVAR VENDA</button>`; window.tempPgs = []; };
+        window.addPg = (tipo) => { const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0); if(v <= 0) return; let pg = { tipo, valor: v }; if(tipo === 'Boleto') { const ent = prompt("Entrada? 1-Sim 2-Não"); if(ent === "1") { pg.entrada = parseFloat(prompt("Valor Entrada:")?.replace(',','.') || 0); const fE = prompt("Forma: 1-Dinheiro 2-Pix"); pg.forma_entrada = fE === "1" ? "Dinheiro" : "Pix"; } } window.tempPgs.push(pg); document.getElementById('lista-p').innerHTML = window.tempPgs.map(p => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]"><span>${p.tipo}</span><span class="text-emerald-400 font-bold">${fBR(p.valor)}</span></div>`).join(''); };
+        window.finalizarVenda = async () => { const tot = parseFloat(document.getElementById('vTotal').value); if(!tot) return alert("Valor!"); await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, pagamentos: window.tempPgs }); window.fecharModalGestao(); await window.carregarRelatorio(); };
 
+        // --- RELATÓRIO WHATSAPP ---
         window.copiarRelatorio = () => {
-            const f = fBR; const dF = document.getElementById('filtro-data-logistica').value;
+            const f = fBR; const dF = document.getElementById('filtro-bi').value;
             const seletor = document.getElementById('log-projeto-ativo');
             const pNome = (seletor && seletor.selectedIndex !== -1) ? seletor.options[seletor.selectedIndex].text : "Relatório";
             let v=0, nq=0, totV=0, pix=0, din=0, cre=0, deb=0, bol=0, val=0;
@@ -245,11 +267,11 @@
                 if(item.resultado === "Venda") { v++; totV += Number(item.valor) || 0; if(Array.isArray(item.pagamentos)) { item.pagamentos.forEach(p => { const valP = Number(p.valor)||0, ent = Number(p.entrada)||0; if(p.tipo === "Boleto") { bol += (valP-ent); if(ent>0) { val+=ent; if(p.forma_entrada === "Pix") pix+=ent; else din+=ent; } } else { if(p.tipo==="Pix") pix+=valP; else if(p.tipo==="Dinheiro") din+=valP; else if(p.tipo.includes("Débito")) deb+=valP; else cre+=valP; if(p.tipo==="Dinheiro"||p.tipo==="Pix") val+=valP; } }); } }
                 else if(item.resultado === "NQ") nq++;
             });
-            const dL = dF ? pDT(dF) : "ACUMULADO GERAL";
-            const txt = `*Relatório de Vendas*\n*Projeto:* ${pNome}\n*Data:* ${dL}\n\n✅ Vendas: ${v}\n❌ NQ: ${nq}\n\n💵 Dinheiro: ${f(din)}\n💎 Pix: ${f(pix)}\n💳 Débito: ${f(deb)}\n💳 Crédito: ${f(cre)}\n📄 Boleto: ${f(bol)}\n\n💰 *Total Vendido: ${f(totV)}*\n💸 *Vales: ${f(val)}*`;
+            const txt = `*Relatório de Vendas*\n*Projeto:* ${pNome}\n*Data:* ${dF ? pDT(dF) : 'ACUMULADO'}\n\n✅ Vendas: ${v}\n❌ NQ: ${nq}\n\n💵 Dinheiro: ${f(din)}\n💎 Pix: ${f(pix)}\n💳 Débito: ${f(deb)}\n💳 Crédito: ${f(cre)}\n📄 Boleto: ${f(bol)}\n\n💰 *Total Vendido: ${f(totV)}*\n💸 *Vales: ${f(val)}*`;
             const el = document.createElement('textarea'); el.value = txt; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); alert("COPIADO!");
         };
 
+        // --- AGENDAMENTO ---
         window.selecionarDia = async (btn) => {
             document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
             const d = btn.getAttribute('data-date'); document.getElementById('data-selecionada').value = d;
@@ -258,7 +280,7 @@
             const snap = await get(ref(db, `dados/${p}/agendamentos/${d}`));
             const counts = {}; const ag = snap.val() || {};
             Object.keys(ag).forEach(id => { if(id.includes('-')){ let hL = id.split('-').slice(0,2).join(':'); counts[hL] = (counts[hL]||0)+1; } });
-            elH.innerHTML = '<option value="">Selecione o Horário</option>';
+            elH.innerHTML = '<option value="">Escolha um Horário</option>';
             let cur = new Date(`${d}T09:00:00`);
             const eFinal = (new Date(d + 'T00:00:00').getDay() % 6 === 0);
             let limStr = eFinal ? "17:00" : "20:30";
@@ -272,19 +294,19 @@
 
         (async () => {
             const agora = new Date();
-            const dataHojeStr = agora.toLocaleDateString('en-CA');
+            const dHoje = agora.toLocaleDateString('en-CA');
             document.querySelectorAll('.day-btn').forEach(btn => {
-                const dataBtn = btn.getAttribute("data-date");
-                if (dataBtn < dataHojeStr) { btn.style.display = "none"; return; }
-                if (dataBtn === dataHojeStr) {
-                    const limiteAtendimento = (agora.getDay() % 6 === 0) ? 17 : 20;
-                    if (agora.getHours() >= (limiteAtendimento - 3)) { btn.style.display = "none"; return; }
+                const dBtn = btn.getAttribute("data-date");
+                if (dBtn < dHoje) return;
+                // OCULTA HOJE SE NÃO HOUVER VAGAS POSSÍVEIS (3H ANTES)
+                if (dBtn === dHoje) {
+                    const limAt = (agora.getDay() % 6 === 0) ? 17 : 20;
+                    if (agora.getHours() >= (limAt - 3)) return;
                 }
                 btn.style.display = "block";
             });
             document.getElementById("form-agendamento").addEventListener("submit", async function(e){
                 e.preventDefault(); const n = document.getElementById("nome").value, t = document.getElementById("telefone").value, en = document.getElementById("endereco").value, h = document.getElementById("horario").value, d = document.getElementById("data-selecionada").value;
-                if(!d || !h) return alert("Selecione data e hora!");
                 const sP = await get(ref(db, "config/projeto_ativo")); const p = sP.val();
                 await set(ref(db, `dados/${p}/agendamentos/${d}/${h.replace(":","-")}-${Date.now()}`), { nome_formando: n, telefone: t, endereco: en, horario: h, data: d, resultado: "Pendente", criado_em: new Date().toISOString() });
                 window.open(`https://wa.me/5516993291674?text=${encodeURIComponent("*NOVO AGENDAMENTO*\n👤: "+n+"\n📅: "+d.split("-").reverse().join("/")+"\n⏰: "+h+"\n📍: "+en)}`, "_blank");
