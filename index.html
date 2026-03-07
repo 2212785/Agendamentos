@@ -168,7 +168,22 @@
                     t.comTot += comItem; if(!dataFiltro || item.data === dataFiltro) { t.vDia++; t.comDia += comItem; }
                     hC += `<tr><td class="py-1 uppercase font-bold text-slate-300 text-white">${item.nome_formando}</td><td class="py-1 text-right text-emerald-400 font-black text-white">${fBR(comItem)}</td></tr>`;
                 } else if(item.resultado === "NQ") { corS = "text-rose-500 font-bold"; t.nq++; if(!dataFiltro || item.data === dataFiltro) t.nqDia++; }
-                hT += `<tr class="hover:bg-slate-800/40 text-white"><td class="p-3 text-white"><b>${pDT(item.data)}</b><br><span class="text-blue-400 font-bold">${item.horario||'DIR'}</span></td><td class="p-3 text-white"><span class="uppercase font-black text-white text-[10px] text-white">${item.nome_formando}</span><br><span class="text-slate-400 text-[9px] block leading-tight text-white">📍 ${item.endereco || 'Sem endereço'}</span></td><td class="p-3 text-center ${corS}">${item.resultado||'Pendente'}</td><td class="p-3 text-center text-white"><button onclick="window.gerenciarItem('${item.path}')" class="bg-blue-600 px-2 py-1 rounded text-[9px] font-bold text-white">GERENCIAR</button></td></tr>`;
+                
+                // CORREÇÃO DOS LINKS WAZE E WHATSAPP NA LISTA ADM
+                const waNum = (item.telefone || '').replace(/\D/g, '');
+                const waLink = waNum ? `https://wa.me/55${waNum}` : '#';
+                const wazeLink = `https://www.waze.com/ul?q=${encodeURIComponent(item.endereco || '')}&navigate=yes`;
+                
+                hT += `<tr class="hover:bg-slate-800/40 text-white">
+                    <td class="p-3 text-white"><b>${pDT(item.data)}</b><br><span class="text-blue-400 font-bold">${item.horario||'DIR'}</span></td>
+                    <td class="p-3 text-white">
+                        <span class="uppercase font-black text-white text-[10px] text-white">${item.nome_formando}</span><br>
+                        <a href="${waLink}" target="_blank" class="text-emerald-400 text-[9px] block leading-tight font-bold mb-1">📱 WhatsApp: ${item.telefone || 'N/A'}</a>
+                        <a href="${wazeLink}" target="_blank" class="text-slate-400 text-[9px] block leading-tight hover:underline">📍 ${item.endereco || 'Sem endereço'}</a>
+                    </td>
+                    <td class="p-3 text-center ${corS}">${item.resultado||'Pendente'}</td>
+                    <td class="p-3 text-center text-white"><button onclick="window.gerenciarItem('${item.path}')" class="bg-blue-600 px-2 py-1 rounded text-[9px] font-bold text-white">GERENCIAR</button></td>
+                </tr>`;
             });
             const label = dataFiltro ? 'DIA' : 'TOT';
             document.getElementById('resumo-financeiro').innerHTML = `<div class="glass p-1 rounded-xl border-t border-blue-500 text-white"><p class="text-[6px]">EFICIÊNCIA</p><p class="text-[9px] font-black">${((t.v+t.nq)>0?((t.v/(t.v+t.nq))*100):0).toFixed(0)}%</p></div><div class="glass p-1 rounded-xl border-t border-emerald-500 text-white"><p class="text-[6px]">V. ${label}</p><p class="text-[9px] font-black">${t.vDia}</p></div><div class="glass p-1 rounded-xl border-t border-rose-500 text-white"><p class="text-[6px]">NQ ${label}</p><p class="text-[9px] font-black text-rose-400">${t.nqDia}</p></div><div class="glass p-1 rounded-xl border-t border-blue-300 text-white"><p class="text-[6px]">TICKET MÉD.</p><p class="text-[9px] font-black">${fBR(t.v?t.totV/t.v:0)}</p></div><div class="glass p-1 rounded-xl border-t border-cyan-500 text-white text-white"><p class="text-[6px]">PIX</p><p class="text-[9px] font-black">${fBR(t.pix)}</p></div><div class="glass p-1 rounded-xl border-t border-green-500 text-white text-white"><p class="text-[6px]">DINHEIRO</p><p class="text-[9px] font-black">${fBR(t.din)}</p></div><div class="glass p-1 rounded-xl border-t border-yellow-500 text-white text-white"><p class="text-[6px]">CRÉDITO</p><p class="text-[9px] font-black">${fBR(t.cre)}</p></div><div class="glass p-1 rounded-xl border-t border-orange-500 text-white text-white"><p class="text-[6px]">DÉBITO</p><p class="text-[9px] font-black">${fBR(t.deb)}</p></div><div class="glass p-1 rounded-xl border-t border-purple-500 text-white text-white"><p class="text-[6px]">BOLETO</p><p class="text-[9px] font-black">${fBR(t.bol)}</p></div><div class="bg-purple-600 p-1 rounded-xl shadow-lg text-white text-white text-white"><p class="text-[6px]">COMIS. ${label}</p><p class="text-[9px] font-black">${fBR(t.comDia)}</p></div><div class="bg-blue-600 p-1 rounded-xl shadow-lg text-white text-white text-white"><p class="text-[6px]">TOTAL VENDIDO</p><p class="text-[9px] font-black">${fBR(t.totV)}</p></div>`;
@@ -219,7 +234,7 @@
                 } else if(item.resultado === "NQ") nq++;
             });
             const dL = dF ? pDT(dF) : "ACUMULADO GERAL";
-            const txt = `*Relatório de Vendas*\n*Projeto:* ${projNome}\n*Data:* ${dL}\n\n✅ Vendas: ${v}\n❌ NQ: ${nq}\n\n💵 Dinheiro: ${f(din)}\n💎 Pix: ${f(pix)}\n💳 Débito: ${f(deb)}\n💳 Crédito: ${f(cre)}\n📄 Boleto: ${f(bol)}\n\n💰 *Total Vendido: ${f(totV)}*\n💸 *Vales: ${f(val)}*`;
+            const txt = `*Relatório de Vendas*\n*Projeto:* ${projNome}\n*Data:* ${dL}\n\n✅ Vendas: ${v}\n❌ NQ: ${nq}\n\n💵 Dinheiro: ${fBR(din)}\n💎 Pix: ${fBR(pix)}\n💳 Débito: ${fBR(deb)}\n💳 Crédito: ${fBR(cre)}\n📄 Boleto: ${fBR(bol)}\n\n💰 *Total Vendido: ${fBR(totV)}*\n💸 *Vales: ${fBR(val)}*`;
             const el = document.createElement('textarea'); el.value = txt; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
             alert("RELATÓRIO COPIADO!");
         };
@@ -244,13 +259,9 @@
             Object.keys(ag).forEach(id => { let hL = id.split('-').slice(0,2).join(':'); counts[hL] = (counts[hL]||0)+1; });
             elH.innerHTML = '<option value="">Escolha um Horário</option>';
             let cur = new Date(`${d}T09:00:00`);
-            
-            // --- CORREÇÃO SOLICITADA ---
-            // Verifica o dia da semana: 0 é Domingo, 6 é Sábado
             const diaSemana = new Date(d + 'T00:00:00').getDay();
             const eFinalDeSemana = (diaSemana === 0 || diaSemana === 6);
             let limStr = eFinalDeSemana ? "17:00" : ((new Date(d + 'T00:00:00').getDay() % 6 === 0) ? "15:00" : "20:30");
-            // ---------------------------
 
             while(cur <= new Date(`${d}T${limStr}:00`)){
                 let hF = cur.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -263,7 +274,6 @@
             const agora = new Date();
             document.querySelectorAll('.day-btn').forEach(btn => {
                 const [y, m, d] = btn.getAttribute("data-date").split("-");
-                // Garante que o limite de exibição dos botões também respeite o novo horário
                 const diaSemana = new Date(y, m-1, d).getDay();
                 const limiteH = (diaSemana === 0 || diaSemana === 6) ? 17 : 20;
                 if (agora > new Date(y, m-1, d, limiteH, 30)) btn.style.display = "none";
