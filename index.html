@@ -3,93 +3,113 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Dashboard PRO</title>
+    <title>Elite Sales PRO - v3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; color: #f1f5f9; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); transition: all 0.3s ease; }
-        #admin-modal { display: none; position: fixed; inset: 0; z-index: 50; padding: 20px; overflow-y: auto; background: rgba(2, 6, 23, 0.98); }
-        #modalGestao { display: none; position: fixed; inset: 0; z-index: 100; padding: 20px; overflow-y: auto; background: rgba(2, 6, 23, 0.95); align-items: center; justify-content: center; }
-        .day-btn { transition: all 0.2s; border-color: rgba(255,255,255,0.1); color: #94a3b8; background: rgba(255,255,255,0.03); cursor: pointer; }
-        .day-btn.active { background: #3b82f6 !important; color: white !important; border-color: #60a5fa !important; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: #f1f5f9; }
+        .glass { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+        .card-finance { background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border: 1px solid rgba(59, 130, 246, 0.2); }
+        #modalGestao { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(2, 6, 23, 0.98); align-items: center; justify-content: center; padding: 20px; }
+        .view-section { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .view-active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .day-btn { background: rgba(255,255,255,0.03); transition: all 0.2s; }
+        .day-btn.active { background: #3b82f6 !important; box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
     </style>
 </head>
-<body class="min-h-screen flex flex-col text-white">
+<body>
 
     <div id="modalGestao">
-        <div class="glass w-full max-w-xl rounded-[2.5rem] p-8 border border-white/20 shadow-2xl mx-auto mt-20 text-left">
-            <div class="flex justify-between items-center mb-8">
-                <h2 id="gestao-titulo" class="text-2xl font-black uppercase italic text-blue-400">Gerenciar</h2>
-                <button onclick="window.fecharModalGestao()" class="bg-slate-800 text-white w-10 h-10 rounded-full font-bold">✕</button>
+        <div class="glass w-full max-w-lg rounded-[2.5rem] p-8 border border-white/10 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="gestao-titulo" class="text-xl font-black uppercase text-blue-400">Atualizar Visita</h2>
+                <button onclick="window.fecharModalGestao()" class="bg-slate-800 w-10 h-10 rounded-full">✕</button>
             </div>
-            <div id="gestao-menu" class="grid grid-cols-2 gap-4 text-center">
-                <button onclick="window.fluxoResultado()" class="bg-emerald-600/20 border border-emerald-500/50 p-6 rounded-2xl hover:bg-emerald-600 transition group text-white"><span class="block text-emerald-400 group-hover:text-white font-black text-xs uppercase">1. Resultado</span></button>
-                <button onclick="window.confirmarExclusao()" class="bg-rose-600/20 border border-rose-500/50 p-6 rounded-2xl hover:bg-rose-600 transition group text-white"><span class="block text-rose-400 group-hover:text-white font-black text-xs uppercase">2. Excluir</span></button>
+            <div id="gestao-menu" class="grid grid-cols-1 gap-4">
+                <button onclick="window.fluxoResultado()" class="bg-emerald-600/20 border border-emerald-500/40 p-6 rounded-2xl text-emerald-400 font-bold uppercase hover:bg-emerald-600 hover:text-white transition">1. Registrar Resultado</button>
+                <button onclick="window.confirmarExclusao()" class="bg-rose-600/20 border border-rose-500/40 p-4 rounded-2xl text-rose-400 font-bold uppercase text-xs hover:bg-rose-600 hover:text-white transition">2. Excluir Agendamento</button>
             </div>
-            <div id="gestao-form" class="mt-8 hidden space-y-4"></div>
+            <div id="gestao-form" class="hidden space-y-4"></div>
         </div>
     </div>
 
-    <main id="admin-modal">
-        <div class="max-w-7xl mx-auto">
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
-                <div>
-                    <h1 class="text-3xl font-extrabold italic uppercase">Master <span class="text-blue-500 font-black">Dashboard PRO</span></h1>
-                    <select id="projeto-ativo" onchange="window.carregarRelatorio()" class="mt-2 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1 text-xs text-blue-400 font-bold outline-none cursor-pointer"></select>
+    <section id="view-agendamento" class="view-section view-active min-h-screen flex flex-col">
+        <header class="p-6 flex justify-between items-center">
+            <span class="text-xl font-black uppercase italic tracking-tighter">Elite <span class="text-blue-500">Sales</span></span>
+            <button onclick="window.acessoAdmin()" class="glass px-6 py-2 rounded-xl text-[10px] font-bold uppercase border-white/10">Área Restrita</button>
+        </header>
+        <main class="flex-grow flex items-center justify-center p-4">
+            <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl">
+                <div class="text-center mb-8">
+                    <h2 id="escola-titulo" class="text-2xl font-extrabold uppercase text-blue-400 italic">Guaratinguetá</h2>
+                    <h3 id="sub-escola" class="text-xs font-bold text-slate-400 uppercase tracking-widest">Dr. Guilherme Filippo</h3>
                 </div>
-                <div class="flex flex-wrap gap-3">
-                    <input type="date" id="filtro-data-admin" onchange="window.filtrarLista()" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none">
-                    <button onclick="window.abrirAvulso()" class="bg-blue-600 px-4 py-2 rounded-xl font-bold text-[10px] uppercase text-white shadow-lg">+ Avulso</button>
-                    <button onclick="window.copiarRelatorio()" class="bg-emerald-600 px-4 py-2 rounded-xl font-bold text-[10px] uppercase text-white shadow-lg">Copiar Relatório</button>
-                    <button onclick="window.fecharAdmin()" class="bg-rose-600/20 text-rose-500 px-4 py-2 rounded-xl font-bold text-[10px] uppercase">Sair</button>
-                </div>
-            </div>
-            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-11 gap-2 mb-6 text-center text-white text-[9px]"></div>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2"><div id="admin-content" class="glass rounded-[2rem] overflow-x-auto p-4 border-white/5"></div></div>
-                <div class="space-y-6">
-                    <div class="glass rounded-[2rem] p-6 border-white/5 text-center text-white">
-                        <h3 class="text-lg font-bold text-white uppercase italic mb-4">Detalhamento</h3>
-                        <div id="comissao-content" class="space-y-2 max-h-[400px] overflow-y-auto pr-2 text-left text-[10px]"></div>
-                        <div id="fechamento-final" class="mt-6 border-t border-white/10 pt-4 text-white text-right"></div>
+                <form id="form-agendamento" class="space-y-4">
+                    <div class="grid grid-cols-3 gap-2 mb-4" id="day-selector">
+                        <button type="button" data-date="2026-03-04" onclick="window.selecionarDia(this)" class="day-btn border border-white/5 rounded-2xl py-3 text-[10px] font-bold uppercase text-white">04/03</button>
+                        <button type="button" data-date="2026-03-05" onclick="window.selecionarDia(this)" class="day-btn border border-white/5 rounded-2xl py-3 text-[10px] font-bold uppercase text-white">05/03</button>
+                        <button type="button" data-date="2026-03-06" onclick="window.selecionarDia(this)" class="day-btn border border-white/5 rounded-2xl py-3 text-[10px] font-bold uppercase text-white">06/03</button>
                     </div>
+                    <input type="hidden" id="data-selecionada">
+                    <input type="text" id="nome" required placeholder="Nome do Formando" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-blue-500 transition">
+                    <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-blue-500 transition">
+                    <select id="horario" required class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none"><option value="">Selecione o Dia</option></select>
+                    <textarea id="endereco" required placeholder="Endereço de Visita" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none" rows="2"></textarea>
+                    <button type="submit" class="btn-primary w-full py-5 rounded-2xl font-black uppercase tracking-tighter shadow-lg shadow-blue-900/20">Confirmar Visita</button>
+                </form>
+            </div>
+        </main>
+    </section>
+
+    <section id="view-operacional" class="view-section min-h-screen p-4">
+        <div class="max-w-4xl mx-auto">
+            <nav class="flex justify-between items-center mb-8">
+                <button onclick="window.switchView('view-agendamento')" class="text-slate-400 text-xs font-bold uppercase">← Sair</button>
+                <div class="flex gap-2">
+                    <button class="bg-blue-600 px-4 py-2 rounded-lg text-[10px] font-black uppercase">Visitas</button>
+                    <button onclick="window.switchView('view-financeiro')" class="glass px-4 py-2 rounded-lg text-[10px] font-black uppercase">Resultados</button>
+                </div>
+            </nav>
+            <div class="flex flex-col md:flex-row justify-between gap-4 mb-6">
+                <h1 class="text-3xl font-black italic uppercase">Roteiro de <span class="text-blue-500">Visitas</span></h1>
+                <div class="flex gap-2">
+                    <input type="date" id="filtro-data-admin" onchange="window.filtrarLista()" class="bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs">
+                    <button onclick="window.abrirAvulso()" class="bg-white text-black px-4 py-2 rounded-xl text-[10px] font-black uppercase">+ Avulso</button>
+                </div>
+            </div>
+            <div id="lista-visitas" class="grid grid-cols-1 gap-4">
+                </div>
+        </div>
+    </section>
+
+    <section id="view-financeiro" class="view-section min-h-screen p-4">
+        <div class="max-w-6xl mx-auto">
+            <nav class="flex justify-between items-center mb-8">
+                <button onclick="window.switchView('view-operacional')" class="text-slate-400 text-xs font-bold uppercase">← Voltar Visitas</button>
+                <button onclick="window.copiarRelatorio()" class="bg-emerald-600 px-6 py-2 rounded-xl text-[10px] font-black uppercase">Copiar Relatório WhatsApp</button>
+            </nav>
+            
+            <h1 class="text-3xl font-black italic uppercase mb-8">Desempenho <span class="text-emerald-500">Comercial</span></h1>
+
+            <div id="resumo-financeiro" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+                </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 glass rounded-[2.5rem] p-8">
+                    <h3 class="font-bold uppercase text-xs mb-6 text-slate-400">Eficiência de Vendas</h3>
+                    <canvas id="chartEficiencia" style="max-height: 300px;"></canvas>
+                </div>
+                <div class="glass rounded-[2.5rem] p-8">
+                    <h3 class="font-bold uppercase text-xs mb-6 text-slate-400">Ganhos por Cliente</h3>
+                    <div id="comissao-content" class="space-y-3 max-h-[350px] overflow-y-auto pr-2"></div>
+                    <div id="fechamento-final" class="mt-8 pt-6 border-t border-white/10 text-right"></div>
                 </div>
             </div>
         </div>
-    </main>
-
-    <header class="p-6 flex justify-between items-center">
-        <span class="text-2xl font-black italic uppercase text-white">Portal <span class="text-blue-500">do formando</span></span>
-        <button onclick="window.acessoAdmin()" class="glass px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase text-white">Login ADM</button>
-    </header>
-
-    <main class="container mx-auto p-4 flex-grow flex items-center justify-center text-center">
-        <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl border-white/5">
-            <h2 id="escola-titulo" class="text-xl font-bold mb-2 uppercase text-blue-400 italic">Guaratinguetá</h2>
-            <h3 id="sub-escola" class="text-xs font-bold text-slate-400 mb-6 uppercase italic text-white">Dr. Guilherme Filippo</h3>
-            <h2 class="text-3xl font-black mb-10 uppercase italic text-white">Agendar Visita</h2>
-            <form id="form-agendamento" class="space-y-6 text-left">
-                <div class="grid grid-cols-3 gap-2" id="day-selector">
-                    <button type="button" data-date="2026-03-04" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase text-white">04/03<br>Qua</button>
-                    <button type="button" data-date="2026-03-05" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase text-white">05/03<br>Qui</button>
-                    <button type="button" data-date="2026-03-06" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase text-white">06/03<br>Sex</button>
-                    <button type="button" data-date="2026-03-07" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase text-white">07/03<br>Sab</button>
-                    <button type="button" data-date="2026-03-08" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase bg-blue-900/20 border-blue-500/30 text-blue-400">08/03<br>Dom</button>
-                </div>
-                <input type="hidden" id="data-selecionada">
-                <div class="space-y-4">
-                    <input type="text" id="nome" required placeholder="Nome do Formando" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none">
-                    <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none">
-                    <select id="horario" required class="w-full bg-slate-800 border border-slate-700 p-4 rounded-2xl text-white outline-none"><option value="">Selecione o Dia</option></select>
-                    <textarea id="endereco" required placeholder="Endereço de Visita" class="w-full bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-white outline-none" rows="2"></textarea>
-                </div>
-                <button type="submit" class="btn-primary w-full text-white font-black py-5 rounded-2xl uppercase">Finalizar Agendamento</button>
-            </form>
-        </div>
-    </main>
+    </section>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -106,24 +126,24 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        // --- SISTEMA DE NAVEGAÇÃO ---
+        window.switchView = (viewId) => {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active'));
+            document.getElementById(viewId).classList.add('view-active');
+            if(viewId === 'view-financeiro') window.carregarRelatorio();
+        };
+
+        // --- LOGICA GERAL ---
         const fBR = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
         const pDT = (s) => (s && s.includes('-')) ? s.split("-").reverse().join("/") : s;
 
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
-        window.fecharAdmin = () => document.getElementById('admin-modal').style.display = 'none';
-        window.acessoAdmin = async () => { if(prompt("Chave ADM:") === "2025") { document.getElementById('admin-modal').style.display = 'block'; await window.carregarProjetos(); await window.carregarRelatorio(); } };
-
-        window.carregarProjetos = async () => {
-            const snap = await get(ref(db, `config/projetos`));
-            const ativo = await get(ref(db, `config/projeto_ativo`));
-            const seletor = document.getElementById('projeto-ativo');
-            if(!seletor) return; seletor.innerHTML = '';
-            const lista = snap.val() || {};
-            for(let key in lista) {
-                let opt = document.createElement('option'); opt.value = key; opt.textContent = `${lista[key].cidade} - ${lista[key].escola}`;
-                if(key === ativo.val()) opt.selected = true;
-                seletor.appendChild(opt);
-            }
+        
+        window.acessoAdmin = async () => { 
+            if(prompt("Chave ADM:") === "2025") { 
+                window.switchView('view-operacional');
+                await window.carregarRelatorio(); 
+            } 
         };
 
         window.carregarRelatorio = async () => {
@@ -142,97 +162,133 @@
             const fData = document.getElementById('filtro-data-admin').value;
             let lista = fData ? window.dadosCompletos.filter(i => i.data === fData) : window.dadosCompletos;
             lista.sort((a,b) => new Date(`${a.data || '2026-01-01'}T${a.horario || "23:59"}`) - new Date(`${b.data || '2026-01-01'}T${b.horario || "23:59"}`));
-            renderizarLista(lista, fData);
+            renderizarOperacional(lista);
+            renderizarFinanceiro(lista, fData);
         };
 
-        function renderizarLista(listaVisivel, dataFiltro) {
-            let t = { v:0, totV:0, pix:0, din:0, deb:0, cre:0, bol:0, vale:0, nq:0, nqDia:0, comDia:0, comTot:0, vDia:0 };
-            let hT = '<table class="w-full text-[11px] text-left text-white"><thead class="bg-slate-700"><tr><th class="p-3">DATA/HORA</th><th class="p-3">CLIENTE</th><th class="p-3 text-center">STATUS</th><th class="p-3 text-center">AÇÃO</th></tr></thead><tbody class="divide-y divide-white/5">';
-            let hC = '';
-            listaVisivel.forEach(item => {
-                let comItem = 0, corS = "text-white";
-                if(item.resultado === "Venda") {
-                    corS = "text-emerald-400 font-bold"; const vV = Number(item.valor) || 0; t.v++; t.totV += vV;
-                    if(Array.isArray(item.pagamentos)) {
-                        item.pagamentos.forEach(p => {
-                            const v = Number(p.valor) || 0, ent = Number(p.entrada || 0);
-                            if(p.tipo === "Dinheiro" || p.tipo === "Pix" || p.tipo.includes("Cartão")) {
-                                if(p.tipo === "Pix") t.pix += v; else if(p.tipo === "Dinheiro") t.din += v; else if(p.tipo.includes("Débito")) t.deb += v; else t.cre += v;
-                                if(p.tipo === "Dinheiro" || p.tipo === "Pix") t.vale += v; comItem += v * 0.12; 
-                            } else if(p.tipo === "Boleto") {
-                                t.bol += (v - ent); comItem += (ent * 0.12) + ((v - ent) * 0.08);
-                                if(p.forma_entrada === "Dinheiro" || p.forma_entrada === "Pix") { if(p.forma_entrada === "Pix") t.pix += ent; else t.din += ent; t.vale += ent; }
-                            }
-                        });
-                    } else { comItem = vV * 0.12; }
-                    t.comTot += comItem; if(!dataFiltro || item.data === dataFiltro) { t.vDia++; t.comDia += comItem; }
-                    hC += `<tr><td class="py-1 uppercase font-bold text-slate-300">${item.nome_formando}</td><td class="py-1 text-right text-emerald-400 font-black">${fBR(comItem)}</td></tr>`;
-                } else if(item.resultado === "NQ") { corS = "text-rose-500 font-bold"; t.nq++; if(!dataFiltro || item.data === dataFiltro) t.nqDia++; }
-                hT += `<tr class="hover:bg-slate-800/40"><td class="p-3 text-white"><b>${pDT(item.data)}</b><br><span class="text-blue-400 font-bold">${item.horario||'DIR'}</span></td><td class="p-3"><span class="uppercase font-black text-white text-[10px]">${item.nome_formando}</span><br><span class="text-slate-400 text-[9px] block">📍 ${item.endereco || 'Sem endereço'}</span></td><td class="p-3 text-center ${corS}">${item.resultado||'Pendente'}</td><td class="p-3 text-center text-white"><button onclick="window.gerenciarItem('${item.path}')" class="bg-blue-600 px-2 py-1 rounded text-[9px] font-bold">GERENCIAR</button></td></tr>`;
+        // --- RENDERIZAR PÁGINA 2 (OPERACIONAL) ---
+        function renderizarOperacional(lista) {
+            const container = document.getElementById('lista-visitas');
+            container.innerHTML = '';
+            lista.forEach(item => {
+                const cor = item.resultado === "Venda" ? "border-emerald-500/30 bg-emerald-500/5" : (item.resultado === "NQ" ? "border-rose-500/30 bg-rose-500/5" : "border-white/5");
+                const wz = `https://www.waze.com/ul?q=${encodeURIComponent(item.endereco)}&navigate=yes`;
+                const wa = `https://wa.me/55${(item.telefone||'').replace(/\D/g,'')}`;
+
+                container.innerHTML += `
+                    <div class="glass ${cor} p-6 rounded-[2rem] flex flex-col md:flex-row justify-between items-center gap-6">
+                        <div class="flex-grow text-center md:text-left">
+                            <div class="flex items-center gap-3 justify-center md:justify-start mb-2">
+                                <span class="bg-blue-600 px-3 py-1 rounded-lg font-black text-xs">${item.horario || 'DIR'}</span>
+                                <span class="text-slate-400 font-bold text-xs uppercase">${pDT(item.data)}</span>
+                            </div>
+                            <h3 class="text-xl font-black uppercase text-white mb-1">${item.nome_formando}</h3>
+                            <p class="text-slate-300 text-sm leading-tight mb-4">📍 ${item.endereco || 'Sem endereço'}</p>
+                            <div class="flex gap-2 justify-center md:justify-start">
+                                <a href="${wz}" target="_blank" class="bg-blue-500/20 text-blue-400 px-6 py-3 rounded-2xl text-[10px] font-black uppercase">Waze</a>
+                                <a href="${wa}" target="_blank" class="bg-emerald-500/20 text-emerald-400 px-6 py-3 rounded-2xl text-[10px] font-black uppercase">WhatsApp</a>
+                            </div>
+                        </div>
+                        <button onclick="window.gerenciarItem('${item.path}')" class="btn-primary px-10 py-5 rounded-2xl font-black uppercase text-xs shadow-xl">Gerenciar</button>
+                    </div>
+                `;
             });
-            const label = dataFiltro ? 'DIA' : 'TOT';
-            document.getElementById('resumo-financeiro').innerHTML = `<div class="glass p-1 rounded-xl border-t border-blue-500"><p class="text-[6px]">EFICIÊNCIA</p><p class="text-[9px] font-black">${((t.v+t.nq)>0?((t.v/(t.v+t.nq))*100):0).toFixed(0)}%</p></div><div class="glass p-1 rounded-xl border-t border-emerald-500"><p class="text-[6px]">V. ${label}</p><p class="text-[9px] font-black">${t.vDia}</p></div><div class="glass p-1 rounded-xl border-t border-rose-500"><p class="text-[6px]">NQ ${label}</p><p class="text-[9px] font-black text-rose-400">${t.nqDia}</p></div><div class="glass p-1 rounded-xl border-t border-blue-300"><p class="text-[6px]">TICKET MÉD.</p><p class="text-[9px] font-black">${fBR(t.v?t.totV/t.v:0)}</p></div><div class="glass p-1 rounded-xl border-t border-cyan-500 text-white"><p class="text-[6px]">PIX</p><p class="text-[9px] font-black">${fBR(t.pix)}</p></div><div class="glass p-1 rounded-xl border-t border-green-500 text-white"><p class="text-[6px]">DINHEIRO</p><p class="text-[9px] font-black">${fBR(t.din)}</p></div><div class="glass p-1 rounded-xl border-t border-yellow-500 text-white"><p class="text-[6px]">CRÉDITO</p><p class="text-[9px] font-black">${fBR(t.cre)}</p></div><div class="glass p-1 rounded-xl border-t border-orange-500 text-white"><p class="text-[6px]">DÉBITO</p><p class="text-[9px] font-black">${fBR(t.deb)}</p></div><div class="glass p-1 rounded-xl border-t border-purple-500 text-white"><p class="text-[6px]">BOLETO</p><p class="text-[9px] font-black">${fBR(t.bol)}</p></div><div class="bg-purple-600 p-1 rounded-xl shadow-lg"><p class="text-[6px]">COMIS. ${label}</p><p class="text-[9px] font-black">${fBR(t.comDia)}</p></div><div class="bg-blue-600 p-1 rounded-xl shadow-lg"><p class="text-[6px]">TOTAL VENDIDO</p><p class="text-[9px] font-black">${fBR(t.totV)}</p></div>`;
-            document.getElementById('comissao-content').innerHTML = `<table class="w-full text-white"><tbody>${hC}</tbody></table>`;
-            document.getElementById('fechamento-final').innerHTML = `<div class="space-y-1"><p class="text-[8px] uppercase text-slate-400">Bruta: ${fBR(t.comTot)}</p><p class="text-[8px] uppercase text-rose-400">Vales: - ${fBR(t.vale)}</p><div class="pt-2 border-t border-white/10 mt-2"><p class="text-[10px] font-black uppercase text-blue-400">A Receber</p><p class="text-2xl font-black italic text-emerald-400">${fBR(t.comTot - t.vale)}</p></div></div>`;
-            document.getElementById('admin-content').innerHTML = hT + '</tbody></table>';
         }
 
+        // --- RENDERIZAR PÁGINA 3 (FINANCEIRO) ---
+        let myChart = null;
+        function renderizarFinanceiro(lista, dataFiltro) {
+            let t = { v:0, nq:0, totV:0, val:0, com:0, pix:0, din:0, cre:0, deb:0, bol:0 };
+            let hC = '';
+
+            lista.forEach(item => {
+                if(item.resultado === "Venda") {
+                    t.v++; const valV = Number(item.valor) || 0; t.totV += valV;
+                    let comItem = 0;
+                    if(Array.isArray(item.pagamentos)){
+                        item.pagamentos.forEach(p => {
+                            const v = Number(p.valor)||0, ent = Number(p.entrada)||0;
+                            if(p.tipo === "Boleto"){ t.bol += (v-ent); comItem += (ent*0.12)+((v-ent)*0.08); if(ent>0) { t.val += ent; if(p.forma_entrada === "Pix") t.pix += ent; else t.din += ent; } }
+                            else { t[p.tipo === "Pix" ? "pix" : (p.tipo === "Dinheiro" ? "din" : (p.tipo.includes("Débito") ? "deb" : "cre"))] += v; if(p.tipo === "Dinheiro" || p.tipo === "Pix") t.val += v; comItem += v * 0.12; }
+                        });
+                    } else { comItem = valV * 0.12; }
+                    t.com += comItem;
+                    hC += `<div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl"><span class="uppercase font-bold text-xs text-slate-300">${item.nome_formando}</span><span class="text-emerald-400 font-black">${fBR(comItem)}</span></div>`;
+                } else if(item.resultado === "NQ") t.nq++;
+            });
+
+            const label = dataFiltro ? 'DIA' : 'TOTAL';
+            document.getElementById('resumo-financeiro').innerHTML = `
+                <div class="card-finance p-6 rounded-[2rem]"><p class="text-[10px] font-bold text-slate-500 uppercase">Vendas ${label}</p><p class="text-3xl font-black text-white">${t.v}</p></div>
+                <div class="card-finance p-6 rounded-[2rem]"><p class="text-[10px] font-bold text-slate-500 uppercase">Total Vendido</p><p class="text-3xl font-black text-emerald-400">${fBR(t.totV)}</p></div>
+                <div class="card-finance p-6 rounded-[2rem]"><p class="text-[10px] font-bold text-slate-500 uppercase">NQ ${label}</p><p class="text-3xl font-black text-rose-500">${t.nq}</p></div>
+                <div class="card-finance p-6 rounded-[2rem] bg-blue-600/10"><p class="text-[10px] font-bold text-blue-400 uppercase">Ticket Médio</p><p class="text-3xl font-black text-white">${fBR(t.v ? t.totV/t.v : 0)}</p></div>
+            `;
+
+            document.getElementById('comissao-content').innerHTML = hC || '<p class="text-center text-slate-500 py-10">Nenhuma venda registrada.</p>';
+            document.getElementById('fechamento-final').innerHTML = `
+                <p class="text-xs text-slate-400 uppercase">Comissão Bruta: ${fBR(t.com)}</p>
+                <p class="text-xs text-rose-400 uppercase mb-2">Vales: - ${fBR(t.val)}</p>
+                <p class="text-[10px] font-black uppercase text-blue-400">Saldo a Receber</p>
+                <p class="text-4xl font-black italic text-emerald-400">${fBR(t.com - t.val)}</p>
+            `;
+
+            // Gráfico
+            if(myChart) myChart.destroy();
+            const ctx = document.getElementById('chartEficiencia').getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: ['Vendas', 'NQ'], datasets: [{ data: [t.v, t.nq], backgroundColor: ['#10b981', '#f43f5e'], borderWidth: 0, hoverOffset: 20 }] },
+                options: { plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { weight: 'bold' } } } }, cutout: '70%' }
+            });
+        }
+
+        // --- FUNÇÕES DE BOTÃO ---
         window.gerenciarItem = (p) => { window.itemPath = p; document.getElementById('modalGestao').style.display = 'flex'; };
         window.confirmarExclusao = async () => { if(confirm("Apagar?")) { await remove(ref(db, window.itemPath)); window.fecharModalGestao(); await window.carregarRelatorio(); } };
         window.abrirAvulso = () => {
-            document.getElementById('modalGestao').style.display = 'flex';
+            const m = document.getElementById('modalGestao'); m.style.display = 'flex';
             document.getElementById('gestao-menu').classList.add('hidden');
             const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
-            f.innerHTML = `<h3 class="text-white font-bold mb-4 uppercase text-xs">Novo Avulso</h3><input type="text" id="av-nome" placeholder="NOME" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white text-sm outline-none"><input type="tel" id="av-tel" placeholder="TEL" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white text-sm outline-none"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white text-sm outline-none"><input type="date" id="av-data" class="w-full bg-slate-800 p-3 rounded-xl mb-4 text-white text-sm outline-none"><button onclick="window.salvarNovoAvulso()" class="w-full p-4 bg-blue-600 rounded-xl font-black text-white uppercase text-xs">Informar Valores</button>`;
+            f.innerHTML = `<h3 class="text-white font-bold mb-4 uppercase text-xs">Novo Avulso</h3><input type="text" id="av-nome" placeholder="NOME" class="w-full bg-slate-800 p-4 rounded-2xl mb-2 text-white outline-none"><input type="date" id="av-data" class="w-full bg-slate-800 p-4 rounded-2xl mb-4 text-white outline-none"><button onclick="window.salvarNovoAvulso()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase text-xs">Avançar</button>`;
             document.getElementById('av-data').value = new Date().toLocaleDateString('en-CA');
         };
         window.salvarNovoAvulso = async () => {
-            const n = document.getElementById('av-nome').value, d = document.getElementById('av-data').value; if(!n || !d) return alert("Nome/Data!");
+            const n = document.getElementById('av-nome').value, d = document.getElementById('av-data').value;
             const sP = await get(ref(db, "config/projeto_ativo")); const p = sP.val() || "guaratingueta-guilherme";
             window.itemPath = `dados/${p}/avulsos/AV-${Date.now()}`;
-            await set(ref(db, window.itemPath), { nome_formando: n, telefone: document.getElementById('av-tel').value, endereco: document.getElementById('av-end').value, data: d, resultado: "Pendente" });
+            await set(ref(db, window.itemPath), { nome_formando: n, data: d, resultado: "Pendente" });
             window.fluxoResultado();
         };
 
         window.copiarRelatorio = () => {
             const f = fBR; const dF = document.getElementById('filtro-data-admin').value;
-            const seletor = document.getElementById('projeto-ativo');
-            const nomeEscolaRel = document.getElementById('escola-titulo').innerText;
-            const nomeSubRel = document.getElementById('sub-escola').innerText;
-            const projNome = (seletor && seletor.selectedIndex !== -1) ? seletor.options[seletor.selectedIndex].text : `${nomeEscolaRel} - ${nomeSubRel}`;
-            
+            const nomeProj = document.getElementById('escola-titulo').innerText;
             let v=0, nq=0, totV=0, pix=0, din=0, cre=0, deb=0, bol=0, val=0;
-            const listaBase = dF ? window.dadosCompletos.filter(i => i.data === dF) : window.dadosCompletos;
-            
-            listaBase.forEach(item => {
+            const lista = dF ? window.dadosCompletos.filter(i => i.data === dF) : window.dadosCompletos;
+            lista.forEach(item => {
                 if(item.resultado === "Venda") {
                     v++; totV += Number(item.valor) || 0;
                     if(Array.isArray(item.pagamentos)) {
                         item.pagamentos.forEach(p => {
-                            const valP = Number(p.valor) || 0, ent = Number(p.entrada || 0);
-                            if(p.tipo === "Dinheiro" || p.tipo === "Pix" || p.tipo.includes("Cartão")) {
-                                if(p.tipo === "Pix") pix += valP; else if(p.tipo === "Dinheiro") din += valP; else if(p.tipo.includes("Débito")) deb += valP; else cre += valP;
-                                if(p.tipo === "Dinheiro" || p.tipo === "Pix") val += valP;
-                            } else if(p.tipo === "Boleto") {
-                                bol += (valP - ent); if(p.forma_entrada === "Pix") pix += ent; else if(p.forma_entrada === "Dinheiro") din += ent; if(ent > 0) val += ent;
-                            }
+                            const valP = Number(p.valor)||0, ent = Number(p.entrada)||0;
+                            if(p.tipo === "Boleto") { bol += (valP-ent); if(ent>0) { val+=ent; if(p.forma_entrada === "Pix") pix+=ent; else din+=ent; } }
+                            else { if(p.tipo==="Pix") pix+=valP; else if(p.tipo==="Dinheiro") din+=valP; else if(p.tipo.includes("Débito")) deb+=valP; else cre+=valP; if(p.tipo==="Dinheiro"||p.tipo==="Pix") val+=valP; }
                         });
                     }
                 } else if(item.resultado === "NQ") nq++;
             });
-            const dL = dF ? pDT(dF) : "ACUMULADO GERAL";
-            const txt = `*Relatório de Vendas*\n*Projeto:* ${projNome}\n*Data:* ${dL}\n\n✅ Vendas: ${v}\n❌ NQ: ${nq}\n\n💵 Dinheiro: ${f(din)}\n💎 Pix: ${f(pix)}\n💳 Débito: ${f(deb)}\n💳 Crédito: ${f(cre)}\n📄 Boleto: ${f(bol)}\n\n💰 *Total Vendido: ${f(totV)}*\n💸 *Vales: ${f(val)}*`;
-            const el = document.createElement('textarea'); el.value = txt; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-            alert("RELATÓRIO COPIADO!");
+            const txt = `*Relatório de Vendas*\n*Projeto:* ${nomeProj}\n*Data:* ${dF ? pDT(dF) : 'ACUMULADO'}\n\n✅ Vendas: ${v}\n❌ NQ: ${nq}\n\n💵 Dinheiro: ${f(din)}\n💎 Pix: ${f(pix)}\n💳 Débito: ${f(deb)}\n💳 Crédito: ${f(cre)}\n📄 Boleto: ${f(bol)}\n\n💰 *Total Vendido: ${f(totV)}*\n💸 *Vales: ${f(val)}*`;
+            navigator.clipboard.writeText(txt); alert("COPIADO!");
         };
 
         window.fluxoResultado = () => { 
             document.getElementById('gestao-menu').classList.add('hidden'); 
             const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
-            f.innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-800 p-4 rounded-xl text-center mb-4 text-white outline-none"><div class="grid grid-cols-2 gap-2 mb-4"><button onclick="window.addPg('Dinheiro')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Dinheiro</button><button onclick="window.addPg('Pix')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Pix</button><button onclick="window.addPg('Cartão Débito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Débito</button><button onclick="window.addPg('Cartão Crédito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Crédito</button><button onclick="window.addPg('Boleto')" class="p-2 bg-blue-900 rounded-lg text-[9px] col-span-2">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4"></div><button onclick="window.finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white">CONFIRMAR VENDA</button><button onclick="window.salvarStatusSimples('NQ')" class="w-full p-2 bg-rose-600 rounded-xl mt-4 text-[10px]">SALVAR NQ</button>`;
+            f.innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-900 p-5 rounded-2xl text-center mb-4 text-white font-black text-2xl outline-none border border-white/10"><div class="grid grid-cols-2 gap-2 mb-4"><button onclick="window.addPg('Dinheiro')" class="p-3 bg-slate-800 rounded-xl text-[10px] uppercase font-bold">+ Dinheiro</button><button onclick="window.addPg('Pix')" class="p-3 bg-slate-800 rounded-xl text-[10px] uppercase font-bold">+ Pix</button><button onclick="window.addPg('Cartão Débito')" class="p-3 bg-slate-800 rounded-xl text-[10px] uppercase font-bold">+ Débito</button><button onclick="window.addPg('Cartão Crédito')" class="p-3 bg-slate-800 rounded-xl text-[10px] uppercase font-bold">+ Crédito</button><button onclick="window.addPg('Boleto')" class="p-3 bg-blue-900/40 border border-blue-500/50 rounded-xl text-[10px] uppercase font-bold col-span-2">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4"></div><button onclick="window.finalizarVenda()" class="w-full p-5 bg-emerald-600 rounded-2xl font-black text-white uppercase shadow-xl">Confirmar Venda</button><button onclick="window.salvarStatusSimples('NQ')" class="w-full p-2 bg-rose-600/20 text-rose-500 rounded-xl mt-4 text-[10px] font-bold uppercase">Marcar como NQ</button>`;
             window.tempPgs = [];
         };
-        window.addPg = (tipo) => { const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0); if(v <= 0) return; let pg = { tipo, valor: v }; if(tipo === 'Boleto') { const ent = prompt("Entrada? 1-Sim 2-Não"); if(ent === "1") { pg.entrada = parseFloat(prompt("Valor Entrada:")?.replace(',','.') || 0); const fE = prompt("Forma: 1-Dinheiro 2-Pix"); pg.forma_entrada = fE === "1" ? "Dinheiro" : "Pix"; } } window.tempPgs.push(pg); document.getElementById('lista-p').innerHTML = window.tempPgs.map(p => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]"><span>${p.tipo}</span><span class="text-emerald-400">${fBR(p.valor)}</span></div>`).join(''); };
+        window.addPg = (tipo) => { const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0); if(v <= 0) return; let pg = { tipo, valor: v }; if(tipo === 'Boleto') { const ent = prompt("Entrada? 1-Sim 2-Não"); if(ent === "1") { pg.entrada = parseFloat(prompt("Valor Entrada:")?.replace(',','.') || 0); const fE = prompt("Forma: 1-Dinheiro 2-Pix"); pg.forma_entrada = fE === "1" ? "Dinheiro" : "Pix"; } } window.tempPgs.push(pg); document.getElementById('lista-p').innerHTML = window.tempPgs.map(p => `<div class="flex justify-between bg-white/5 p-3 rounded-xl text-[10px]"><span>${p.tipo}</span><span class="text-emerald-400 font-bold">${fBR(p.valor)}</span></div>`).join(''); };
         window.finalizarVenda = async () => { const tot = parseFloat(document.getElementById('vTotal').value); if(!tot) return alert("Valor!"); await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, pagamentos: window.tempPgs }); window.fecharModalGestao(); await window.carregarRelatorio(); };
         window.salvarStatusSimples = async (s) => { await update(ref(db, window.itemPath), { resultado: s, valor: 0 }); window.fecharModalGestao(); await window.carregarRelatorio(); };
 
@@ -253,7 +309,6 @@
             }
         };
 
-        // --- INICIALIZAÇÃO ---
         (async () => {
             const agora = new Date();
             document.querySelectorAll('.day-btn').forEach(btn => {
@@ -262,12 +317,10 @@
             });
             document.getElementById("form-agendamento").addEventListener("submit", async function(e){
                 e.preventDefault(); const n = document.getElementById("nome").value, t = document.getElementById("telefone").value, en = document.getElementById("endereco").value, h = document.getElementById("horario").value, d = document.getElementById("data-selecionada").value;
-                try{
-                    const sP = await get(ref(db, "config/projeto_ativo")); const p = sP.val() || "guaratingueta-guilherme";
-                    await set(ref(db, `dados/${p}/agendamentos/${d}/${h.replace(":","-")}-${Date.now()}`), { nome_formando: n, telefone: t, endereco: en, horario: h, data: d, resultado: "Pendente", criado_em: new Date().toISOString() });
-                    window.open(`https://wa.me/5516993291674?text=${encodeURIComponent("*NOVO AGENDAMENTO*\n\n👤 Formando: "+n+"\n📅 Data: "+pDT(d)+"\n⏰ Horário: "+h+"\n📍 Endereço:\n"+en)}`, "_blank");
-                    alert("Sucesso!"); location.reload();
-                }catch(e){ alert("Erro!"); }
+                const sP = await get(ref(db, "config/projeto_ativo")); const p = sP.val() || "guaratingueta-guilherme";
+                await set(ref(db, `dados/${p}/agendamentos/${d}/${h.replace(":","-")}-${Date.now()}`), { nome_formando: n, telefone: t, endereco: en, horario: h, data: d, resultado: "Pendente", criado_em: new Date().toISOString() });
+                window.open(`https://wa.me/5516993291674?text=${encodeURIComponent("*NOVO AGENDAMENTO*\n\n👤 Formando: "+n+"\n📅 Data: "+pDT(d)+"\n⏰ Horário: "+h+"\n📍 Endereço:\n"+en)}`, "_blank");
+                location.reload();
             });
             try {
                 const sAt = await get(ref(db, "config/projeto_ativo")); const sl = sAt.val() || "guaratingueta-guilherme";
