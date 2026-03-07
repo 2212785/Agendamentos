@@ -61,8 +61,8 @@
         </div>
     </main>
 
-    <header class="p-6 flex justify-between items-center">
-        <span class="text-2xl font-black italic uppercase text-white text-white">Portal <span class="text-blue-500">do formando</span></span>
+    <header class="p-6 flex justify-between items-center text-white">
+        <span class="text-2xl font-black italic uppercase">Portal <span class="text-blue-500">do formando</span></span>
         <button onclick="window.acessoAdmin()" class="glass px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase text-white">Login ADM</button>
     </header>
 
@@ -72,12 +72,9 @@
             <h3 id="sub-escola" class="text-xs font-bold text-slate-400 mb-6 uppercase italic text-white">Dr. Guilherme Filippo</h3>
             <h2 class="text-3xl font-black mb-10 uppercase italic text-white">Agendar Visita</h2>
             <form id="form-agendamento" class="space-y-6 text-left">
-                <div class="grid grid-cols-3 gap-2" id="day-selector">
-                    <button type="button" data-date="2026-03-04" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase text-white">04/03<br>Qua</button>
-                    <button type="button" data-date="2026-03-05" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase text-white">05/03<br>Qui</button>
-                    <button type="button" data-date="2026-03-06" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase text-white">06/03<br>Sex</button>
-                    <button type="button" data-date="2026-03-07" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase text-white">07/03<br>Sab</button>
-                    <button type="button" data-date="2026-03-08" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase bg-blue-900/20 border-blue-500/30 text-blue-400">08/03<br>Dom</button>
+                <div class="grid grid-cols-2 gap-2" id="day-selector">
+                    <button type="button" data-date="2026-03-07" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase text-white">07/03 - Sab</button>
+                    <button type="button" data-date="2026-03-08" onclick="window.selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase text-white">08/03 - Dom</button>
                 </div>
                 <input type="hidden" id="data-selecionada">
                 <div class="space-y-4">
@@ -169,7 +166,6 @@
                     hC += `<tr><td class="py-1 uppercase font-bold text-slate-300 text-white">${item.nome_formando}</td><td class="py-1 text-right text-emerald-400 font-black text-white">${fBR(comItem)}</td></tr>`;
                 } else if(item.resultado === "NQ") { corS = "text-rose-500 font-bold"; t.nq++; if(!dataFiltro || item.data === dataFiltro) t.nqDia++; }
                 
-                // CORREÇÃO DOS LINKS WAZE E WHATSAPP NA LISTA ADM
                 const waNum = (item.telefone || '').replace(/\D/g, '');
                 const waLink = waNum ? `https://wa.me/55${waNum}` : '#';
                 const wazeLink = `https://www.waze.com/ul?q=${encodeURIComponent(item.endereco || '')}&navigate=yes`;
@@ -234,7 +230,7 @@
                 } else if(item.resultado === "NQ") nq++;
             });
             const dL = dF ? pDT(dF) : "ACUMULADO GERAL";
-            const txt = `*Relatório de Vendas*\n*Projeto:* ${projNome}\n*Data:* ${dL}\n\n✅ Vendas: ${v}\n❌ NQ: ${nq}\n\n💵 Dinheiro: ${fBR(din)}\n💎 Pix: ${fBR(pix)}\n💳 Débito: ${fBR(deb)}\n💳 Crédito: ${fBR(cre)}\n📄 Boleto: ${fBR(bol)}\n\n💰 *Total Vendido: ${fBR(totV)}*\n💸 *Vales: ${fBR(val)}*`;
+            const txt = `*Relatório de Vendas*\n*Projeto:* ${projNome}\n*Data:* ${dL}\n\n✅ Vendas: ${v}\n❌ NQ: ${nq}\n\n💵 Dinheiro: ${f(din)}\n💎 Pix: ${f(pix)}\n💳 Débito: ${f(deb)}\n💳 Crédito: ${f(cre)}\n📄 Boleto: ${f(bol)}\n\n💰 *Total Vendido: ${f(totV)}*\n💸 *Vales: ${f(val)}*`;
             const el = document.createElement('textarea'); el.value = txt; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
             alert("RELATÓRIO COPIADO!");
         };
@@ -265,7 +261,18 @@
 
             while(cur <= new Date(`${d}T${limStr}:00`)){
                 let hF = cur.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-                if((2 - (counts[hF]||0)) > 0){ let opt=document.createElement('option'); opt.value=hF; opt.textContent=`${hF} (${2 - (counts[hF]||0)} vagas)`; elH.appendChild(opt); }
+                
+                // REGRA DAS 3 HORAS CORRIGIDA
+                let permitir = true;
+                const agora = new Date();
+                const hojeISO = agora.toLocaleDateString('en-CA');
+                if(d === hojeISO) {
+                    const diffMilis = cur - agora;
+                    const diffHoras = diffMilis / (1000 * 60 * 60);
+                    if(diffHoras < 3) permitir = false;
+                }
+
+                if(permitir && (2 - (counts[hF]||0)) > 0){ let opt=document.createElement('option'); opt.value=hF; opt.textContent=`${hF} (${2 - (counts[hF]||0)} vagas)`; elH.appendChild(opt); }
                 cur.setMinutes(cur.getMinutes()+30);
             }
         };
