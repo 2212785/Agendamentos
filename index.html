@@ -112,7 +112,7 @@
         const fBR = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
         const pDT = (s) => (s && s.includes('-')) ? s.split("-").reverse().join("/") : s;
 
-        // --- ATRIBUIÇÃO AO WINDOW PARA ACESSO PELO HTML ---
+        // --- BINDING ---
         window.formatBRL = fBR;
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
         window.fecharAdmin = () => document.getElementById('admin-modal').style.display = 'none';
@@ -129,8 +129,7 @@
             const snap = await get(ref(db, `config/projetos`));
             const ativo = await get(ref(db, `config/projeto_ativo`));
             const seletor = document.getElementById('projeto-ativo');
-            if(!seletor) return;
-            seletor.innerHTML = '';
+            if(!seletor) return; seletor.innerHTML = '';
             const lista = snap.val() || {};
             for(let key in lista) {
                 let opt = document.createElement('option'); opt.value = key; opt.textContent = `${lista[key].cidade} - ${lista[key].escola}`;
@@ -184,7 +183,7 @@
                 hT += `<tr class="hover:bg-slate-800/40"><td class="p-3"><b>${pDT(item.data)}</b><br><span class="text-blue-400 font-bold">${item.horario||'DIR'}</span></td><td class="p-3"><span class="uppercase font-black text-white text-[10px]">${item.nome_formando}</span><br><span class="text-slate-400 text-[9px] block">📍 ${item.endereco || 'Sem endereço'}</span></td><td class="p-3 text-center ${corS}">${item.resultado||'Pendente'}</td><td class="p-3 text-center"><button onclick="window.gerenciarItem('${item.path}')" class="bg-blue-600 px-2 py-1 rounded text-[9px] font-bold">GERENCIAR</button></td></tr>`;
             });
             const label = dataFiltro ? 'DIA' : 'TOT';
-            document.getElementById('resumo-financeiro').innerHTML = `<div class="glass p-1 rounded-xl border-t border-blue-500"><p class="text-[6px]">EFICIÊNCIA</p><p class="text-[9px] font-black">${(t.v+t.nq)>0?((t.v/(t.v+t.nq))*100).toFixed(0):0}%</p></div><div class="glass p-1 rounded-xl border-t border-emerald-500"><p class="text-[6px]">V. ${label}</p><p class="text-[9px] font-black">${t.vDia}</p></div><div class="glass p-1 rounded-xl border-t border-rose-500"><p class="text-[6px]">NQ ${label}</p><p class="text-[9px] font-black text-rose-400">${t.nqDia}</p></div><div class="glass p-1 rounded-xl border-t border-blue-300"><p class="text-[6px]">TICKET MÉD.</p><p class="text-[9px] font-black">${fBR(t.v?t.totV/t.v:0)}</p></div><div class="glass p-1 rounded-xl border-t border-cyan-500"><p class="text-[6px]">PIX</p><p class="text-[9px] font-black">${fBR(t.pix)}</p></div><div class="glass p-1 rounded-xl border-t border-green-500"><p class="text-[6px]">DINHEIRO</p><p class="text-[9px] font-black">${fBR(t.din)}</p></div><div class="glass p-1 rounded-xl border-t border-yellow-500"><p class="text-[6px]">CRÉDITO</p><p class="text-[9px] font-black">${fBR(t.cre)}</p></div><div class="glass p-1 rounded-xl border-t border-orange-500"><p class="text-[6px]">DÉBITO</p><p class="text-[9px] font-black">${fBR(t.deb)}</p></div><div class="glass p-1 rounded-xl border-t border-purple-500"><p class="text-[6px]">BOLETO</p><p class="text-[9px] font-black">${fBR(t.bol)}</p></div><div class="bg-purple-600 p-1 rounded-xl shadow-lg"><p class="text-[6px]">COMIS. ${label}</p><p class="text-[9px] font-black">${fBR(t.comDia)}</p></div><div class="bg-blue-600 p-1 rounded-xl shadow-lg"><p class="text-[6px]">TOTAL VENDIDO</p><p class="text-[9px] font-black">${fBR(t.totV)}</p></div>`;
+            document.getElementById('resumo-financeiro').innerHTML = `<div class="glass p-1 rounded-xl border-t border-blue-500"><p class="text-[6px]">EFICIÊNCIA</p><p class="text-[9px] font-black">${((t.v+t.nq)>0?((t.v/(t.v+t.nq))*100):0).toFixed(0)}%</p></div><div class="glass p-1 rounded-xl border-t border-emerald-500"><p class="text-[6px]">V. ${label}</p><p class="text-[9px] font-black">${t.vDia}</p></div><div class="glass p-1 rounded-xl border-t border-rose-500"><p class="text-[6px]">NQ ${label}</p><p class="text-[9px] font-black text-rose-400">${t.nqDia}</p></div><div class="glass p-1 rounded-xl border-t border-blue-300"><p class="text-[6px]">TICKET MÉD.</p><p class="text-[9px] font-black">${fBR(t.v?t.totV/t.v:0)}</p></div><div class="glass p-1 rounded-xl border-t border-cyan-500 text-white"><p class="text-[6px]">PIX</p><p class="text-[9px] font-black">${fBR(t.pix)}</p></div><div class="glass p-1 rounded-xl border-t border-green-500 text-white"><p class="text-[6px]">DINHEIRO</p><p class="text-[9px] font-black">${fBR(t.din)}</p></div><div class="glass p-1 rounded-xl border-t border-yellow-500 text-white"><p class="text-[6px]">CRÉDITO</p><p class="text-[9px] font-black">${fBR(t.cre)}</p></div><div class="glass p-1 rounded-xl border-t border-orange-500 text-white"><p class="text-[6px]">DÉBITO</p><p class="text-[9px] font-black">${fBR(t.deb)}</p></div><div class="glass p-1 rounded-xl border-t border-purple-500 text-white"><p class="text-[6px]">BOLETO</p><p class="text-[9px] font-black">${fBR(t.bol)}</p></div><div class="bg-purple-600 p-1 rounded-xl shadow-lg"><p class="text-[6px]">COMIS. ${label}</p><p class="text-[9px] font-black">${fBR(t.comDia)}</p></div><div class="bg-blue-600 p-1 rounded-xl shadow-lg"><p class="text-[6px]">TOTAL VENDIDO</p><p class="text-[9px] font-black">${fBR(t.totV)}</p></div>`;
             document.getElementById('comissao-content').innerHTML = `<table class="w-full text-white"><tbody>${hC}</tbody></table>`;
             document.getElementById('fechamento-final').innerHTML = `<div class="space-y-1"><p class="text-[8px] uppercase text-slate-400">Bruta: ${fBR(t.comTot)}</p><p class="text-[8px] uppercase text-rose-400">Vales: - ${fBR(t.vale)}</p><div class="pt-2 border-t border-white/10 mt-2"><p class="text-[10px] font-black uppercase text-blue-400">A Receber</p><p class="text-2xl font-black italic text-emerald-400">${fBR(t.comTot - t.vale)}</p></div></div>`;
             document.getElementById('admin-content').innerHTML = hT + '</tbody></table>';
@@ -193,7 +192,7 @@
         window.gerenciarItem = (p) => { window.itemPath = p; document.getElementById('modalGestao').style.display = 'flex'; };
         window.confirmarExclusao = async () => { if(confirm("Apagar?")) { await remove(ref(db, window.itemPath)); window.fecharModalGestao(); await window.carregarRelatorio(); } };
         window.abrirAvulso = () => {
-            const m = document.getElementById('modalGestao'); m.style.display = 'flex';
+            document.getElementById('modalGestao').style.display = 'flex';
             document.getElementById('gestao-menu').classList.add('hidden');
             const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
             f.innerHTML = `<h3 class="text-white font-bold mb-4 uppercase text-xs">Novo Avulso</h3><input type="text" id="av-nome" placeholder="NOME" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white text-sm outline-none"><input type="tel" id="av-tel" placeholder="TEL" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white text-sm outline-none"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white text-sm outline-none"><input type="date" id="av-data" class="w-full bg-slate-800 p-3 rounded-xl mb-4 text-white text-sm outline-none"><button onclick="window.salvarNovoAvulso()" class="w-full p-4 bg-blue-600 rounded-xl font-black text-white uppercase text-xs">Informar Valores</button>`;
@@ -207,28 +206,40 @@
             window.fluxoResultado();
         };
 
+        // --- WHATSAPP: ACUMULADO OU FILTRADO ---
         window.copiarRelatorio = () => {
-            const f = fBR; const dF = document.getElementById('filtro-data-admin').value || new Date().toLocaleDateString('en-CA');
-            const sel = document.getElementById('projeto-ativo');
-            const projNome = (sel && sel.selectedIndex !== -1) ? sel.options[sel.selectedIndex].text : "Relatório de Vendas";
-            let v=0, nq=0, tot=0, pix=0, din=0, cre=0, deb=0, bol=0, val=0, com=0;
-            window.dadosCompletos.filter(i => i.data === dF).forEach(item => {
+            const f = fBR; 
+            const fData = document.getElementById('filtro-data-admin').value;
+            const seletor = document.getElementById('projeto-ativo');
+            const projNome = (seletor && seletor.selectedIndex !== -1) ? seletor.options[seletor.selectedIndex].text : "Projeto Atual";
+            
+            let v=0, nq=0, totV=0, pix=0, din=0, cre=0, deb=0, bol=0, val=0;
+            
+            // Se tiver data, filtra. Se não, usa window.dadosCompletos (Acumulado)
+            const listaBase = fData ? window.dadosCompletos.filter(i => i.data === fData) : window.dadosCompletos;
+            
+            listaBase.forEach(item => {
                 if(item.resultado === "Venda") {
-                    v++; tot += Number(item.valor) || 0;
+                    v++; totV += Number(item.valor) || 0;
                     if(Array.isArray(item.pagamentos)) {
                         item.pagamentos.forEach(p => {
                             const valP = Number(p.valor) || 0, ent = Number(p.entrada || 0);
                             if(p.tipo === "Dinheiro" || p.tipo === "Pix" || p.tipo.includes("Cartão")) {
                                 if(p.tipo === "Pix") pix += valP; else if(p.tipo === "Dinheiro") din += valP; else if(p.tipo.includes("Débito")) deb += valP; else cre += valP;
-                                if(p.tipo === "Dinheiro" || p.tipo === "Pix") val += valP; com += valP * 0.12;
-                            } else if(p.tipo === "Boleto") { bol += (valP - ent); com += (ent * 0.12) + ((valP - ent) * 0.08); if(p.forma_entrada === "Pix") pix += ent; else if(p.forma_entrada === "Dinheiro") din += ent; if(ent > 0) val += ent; }
+                                if(p.tipo === "Dinheiro" || p.tipo === "Pix") val += valP;
+                            } else if(p.tipo === "Boleto") {
+                                bol += (valP - ent); if(p.forma_entrada === "Pix") pix += ent; else if(p.forma_entrada === "Dinheiro") din += ent; if(ent > 0) val += ent;
+                            }
                         });
-                    } else com += (Number(item.valor)||0) * 0.12;
+                    }
                 } else if(item.resultado === "NQ") nq++;
             });
-            const txt = `*${projNome}*\n*Data:* ${pDT(dF)}\n\n✅ Vendas: ${v}\n❌ NQ: ${nq}\n\n💵 Dinheiro: ${f(din)}\n💎 Pix: ${f(pix)}\n💳 Débito: ${f(deb)}\n💳 Crédito: ${f(cre)}\n📄 Boleto: ${f(bol)}\n\n💰 *Total Vendido: ${f(tot)}*\n💸 *Vales: ${f(val)}*\n🎁 *Comissão: ${f(com)}*`;
-            const el = document.createElement('textarea'); el.value = txt; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
-            alert("COPIADO!");
+
+            const dataLabel = fData ? pDT(fData) : "ACUMULADO GERAL";
+            const texto = `*Relatório de Vendas*\n*Projeto:* ${projNome}\n*Data:* ${dataLabel}\n\n✅ Vendas: ${v}\n❌ NQ: ${nq}\n\n💵 Dinheiro: ${f(din)}\n💎 Pix: ${f(pix)}\n💳 Débito: ${f(deb)}\n💳 Crédito: ${f(cre)}\n📄 Boleto: ${f(bol)}\n\n💰 *Total Vendido: ${f(totV)}*\n💸 *Vales: ${f(val)}*`;
+
+            const el = document.createElement('textarea'); el.value = texto; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
+            alert("RELATÓRIO " + (fData ? "DO DIA" : "ACUMULADO") + " COPIADO!");
         };
 
         window.fluxoResultado = () => { 
@@ -249,12 +260,11 @@
             const snap = await get(ref(db, `dados/${p}/agendamentos/${d}`));
             const counts = {}; const ag = snap.val() || {};
             Object.keys(ag).forEach(id => { let hL = id.split('-').slice(0,2).join(':'); counts[hL] = (counts[hL]||0)+1; });
-            const agora = new Date(); const limite3h = new Date(agora.getTime() + (3 * 60 * 60 * 1000)); const hojeISO = agora.toLocaleDateString('en-CA');
             elH.innerHTML = '<option value="">Escolha um Horário</option>';
             let cur = new Date(`${d}T09:00:00`), lim = (new Date(d + 'T00:00:00').getDay() % 6 === 0) ? "15:00" : "20:30";
             while(cur <= new Date(`${d}T${lim}:00`)){
                 let hF = cur.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-                if(!(d === hojeISO && cur < limite3h) && (2 - (counts[hF]||0)) > 0){ let opt=document.createElement('option'); opt.value=hF; opt.textContent=`${hF} (${2 - (counts[hF]||0)} vagas)`; elH.appendChild(opt); }
+                if((2 - (counts[hF]||0)) > 0){ let opt=document.createElement('option'); opt.value=hF; opt.textContent=`${hF} (${2 - (counts[hF]||0)} vagas)`; elH.appendChild(opt); }
                 cur.setMinutes(cur.getMinutes()+30);
             }
         };
