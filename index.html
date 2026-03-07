@@ -23,39 +23,39 @@
         <div class="glass w-full max-w-xl rounded-[2.5rem] p-8 border border-white/20 shadow-2xl mx-auto mt-20 text-left">
             <div class="flex justify-between items-center mb-8">
                 <h2 id="gestao-titulo" class="text-2xl font-black uppercase italic text-blue-400 text-white">Gerenciar</h2>
-                <button onclick="fecharModalGestao()" class="bg-slate-800 text-white w-10 h-10 rounded-full font-bold text-white">✕</button>
+                <button onclick="fecharModalGestao()" class="bg-slate-800 text-white w-10 h-10 rounded-full font-bold">✕</button>
             </div>
             <div id="gestao-menu" class="grid grid-cols-2 gap-4 text-center">
-                <button onclick="fluxoResultado()" class="bg-emerald-600/20 border border-emerald-500/50 p-6 rounded-2xl hover:bg-emerald-600 transition group"><span class="block text-emerald-400 group-hover:text-white font-black text-xs uppercase">1. Resultado</span></button>
-                <button onclick="confirmarExclusao()" class="bg-rose-600/20 border border-rose-500/50 p-6 rounded-2xl hover:bg-rose-600 transition group"><span class="block text-rose-400 group-hover:text-white font-black text-xs uppercase">2. Excluir</span></button>
+                <button onclick="fluxoResultado()" class="bg-emerald-600/20 border border-emerald-500/50 p-6 rounded-2xl hover:bg-emerald-600 transition group text-white"><span class="block text-emerald-400 group-hover:text-white font-black text-xs uppercase">1. Resultado</span></button>
+                <button onclick="confirmarExclusao()" class="bg-rose-600/20 border border-rose-500/50 p-6 rounded-2xl hover:bg-rose-600 transition group text-white"><span class="block text-rose-400 group-hover:text-white font-black text-xs uppercase">2. Excluir</span></button>
             </div>
             <div id="gestao-form" class="mt-8 hidden space-y-4"></div>
         </div>
     </div>
 
     <main id="admin-modal">
-        <div class="max-w-7xl mx-auto">
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4 text-white">
+        <div class="max-w-7xl mx-auto text-white">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
                 <div>
-                    <h1 class="text-3xl font-extrabold italic uppercase text-white">Master <span class="text-blue-500 font-black">Dashboard PRO</span></h1>
+                    <h1 class="text-3xl font-extrabold italic uppercase">Master <span class="text-blue-500 font-black">Dashboard PRO</span></h1>
                     <select id="projeto-ativo" onchange="carregarRelatorio()" class="mt-2 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1 text-xs text-blue-400 font-bold outline-none cursor-pointer"></select>
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <input type="date" id="filtro-data-admin" onchange="filtrarLista()" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none">
                     <button onclick="copiarRelatorio()" class="bg-emerald-600 px-4 py-2 rounded-xl font-bold text-[10px] uppercase text-white shadow-lg">Copiar Relatório</button>
-                    <button onclick="fecharAdmin()" class="bg-rose-600/20 text-rose-500 px-4 py-2 rounded-xl font-bold text-[10px] uppercase font-black">Sair</button>
+                    <button onclick="fecharAdmin()" class="bg-rose-600/20 text-rose-500 px-4 py-2 rounded-xl font-bold text-[10px] uppercase">Sair</button>
                 </div>
             </div>
-            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-11 gap-2 mb-6 text-center text-white text-[9px]"></div>
+            <div id="resumo-financeiro" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-11 gap-2 mb-6 text-center text-[9px]"></div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2">
-                    <div id="admin-content" class="glass rounded-[2rem] overflow-x-auto p-4 border-white/5 text-white"></div>
+                    <div id="admin-content" class="glass rounded-[2rem] overflow-x-auto p-4 border-white/5"></div>
                 </div>
                 <div class="space-y-6">
-                    <div class="glass rounded-[2rem] p-6 border-white/5 text-center text-white">
-                        <h3 class="text-lg font-bold text-white uppercase italic mb-4">Comissões</h3>
+                    <div class="glass rounded-[2rem] p-6 border-white/5 text-center">
+                        <h3 class="text-lg font-bold text-white uppercase italic mb-4 text-white">Comissões</h3>
                         <div id="comissao-content" class="space-y-2 max-h-[400px] overflow-y-auto pr-2 text-left text-[10px]"></div>
-                        <div id="fechamento-final" class="mt-6 border-t border-white/10 pt-4 text-white text-right"></div>
+                        <div id="fechamento-final" class="mt-6 border-t border-white/10 pt-4 text-right"></div>
                     </div>
                 </div>
             </div>
@@ -64,14 +64,14 @@
 
     <header class="p-6 flex justify-between items-center text-white">
         <span class="text-2xl font-black italic uppercase">Portal <span class="text-blue-500">do formando</span></span>
-        <button onclick="acessoAdmin()" class="glass px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase text-white">Login ADM</button>
+        <button onclick="acessoAdmin()" class="glass px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase">Login ADM</button>
     </header>
 
     <main class="container mx-auto p-4 flex-grow flex items-center justify-center text-center">
         <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl border-white/5">
-            <h2 id="escola-titulo" class="text-xl font-bold mb-2 uppercase text-blue-400 italic text-white">CARREGANDO...</h2>
+            <h2 id="escola-titulo" class="text-xl font-bold mb-2 uppercase text-blue-400 italic">CARREGANDO...</h2>
             <h3 id="sub-escola" class="text-xs font-bold text-slate-400 mb-6 uppercase italic">AGUARDE</h3>
-            <h2 class="text-3xl font-black mb-10 uppercase italic text-white text-white">Agendar Visita</h2>
+            <h2 class="text-3xl font-black mb-10 uppercase italic text-white">Agendar Visita</h2>
             <form id="form-agendamento" class="space-y-6 text-left">
                 <div class="grid grid-cols-3 gap-2" id="day-selector">
                     <button type="button" data-date="2026-03-04" onclick="selecionarDia(this)" class="day-btn border rounded-2xl py-4 text-[9px] font-black uppercase text-white">04/03<br>Qua</button>
@@ -94,7 +94,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, get, set, remove, update, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        import { getDatabase, ref, get, set, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU", 
@@ -131,25 +131,28 @@
             const snapProjeto = await get(ref(db,"config/projeto_ativo"));
             const projeto = snapProjeto.val() || "guaratingueta-guilherme";
             const snap = await get(ref(db, `dados/${projeto}/agendamentos`));
+            
             window.dadosCompletos = [];
-            const dados = snap.val() || {};
-            for(let data in dados){
-                for(let id in dados[data]){
+            const dadosDoFirebase = snap.val() || {};
+            
+            // Correção: Percorre cada data e cada agendamento individualmente para evitar perdas
+            Object.keys(dadosDoFirebase).forEach(dataKey => {
+                Object.keys(dadosDoFirebase[dataKey]).forEach(idKey => {
                     window.dadosCompletos.push({
-                        ...dados[data][id],
-                        id: id,
-                        data: data,
-                        path: `dados/${projeto}/agendamentos/${data}/${id}`
+                        ...dadosDoFirebase[dataKey][idKey],
+                        id: idKey,
+                        data: dataKey,
+                        path: `dados/${projeto}/agendamentos/${dataKey}/${idKey}`
                     });
-                }
-            }
+                });
+            });
+            
             filtrarLista();
         }
         window.carregarRelatorio = carregarRelatorio;
 
         window.filtrarLista = () => {
             const fData = document.getElementById('filtro-data-admin').value;
-            // Se fData estiver vazio, mostra TUDO (Acumulado)
             let listaFiltrada = fData ? window.dadosCompletos.filter(i => i.data === fData) : window.dadosCompletos;
             
             listaFiltrada.sort((a,b) => {
@@ -161,17 +164,18 @@
             renderizarLista(listaFiltrada, fData);
         };
 
-        function renderizarLista(lista, dataFiltro) {
+        function renderizarLista(listaVisivel, dataFiltro) {
             let t = { v:0, totV:0, pix:0, din:0, deb:0, cre:0, bol:0, vale:0, nq:0, nqDia:0, comDia:0, comTot:0, vDia:0 };
             let hT = '<table class="w-full text-[11px] text-left text-white"><thead class="bg-slate-700"><tr><th class="p-3 text-white">DATA/HORA</th><th class="p-3 text-white">CLIENTE / INFO</th><th class="p-3 text-center text-white">STATUS</th><th class="p-3 text-center text-white">AÇÃO</th></tr></thead><tbody class="divide-y divide-white/5">';
             let hC = '';
 
-            lista.forEach(item => {
+            // Processamos a lista VISÍVEL (acumulada ou filtrada) para as métricas
+            listaVisivel.forEach(item => {
                 let comItem = 0;
                 if(item.resultado === "Venda") {
-                    t.v++; // Contador de Vendas (Agora conta tudo o que está na lista filtrada ou total)
-                    const valVenda = Number(item.valor) || 0;
-                    t.totV += valVenda;
+                    const valorVenda = Number(item.valor) || 0;
+                    t.v++; 
+                    t.totV += valorVenda;
 
                     if(Array.isArray(item.pagamentos)) {
                         item.pagamentos.forEach(p => {
@@ -181,10 +185,9 @@
                             else if(p.tipo === "Boleto") { t.bol += (v - ent); if(p.forma_entrada === "Dinheiro" || p.forma_entrada === "Pix") { t[p.forma_entrada === "Pix"?"pix":"din"] += ent; t.vale += ent; } }
                         });
                     }
-                    comItem = valVenda * 0.12;
+                    comItem = valorVenda * 0.12;
                     t.comTot += comItem; 
                     
-                    // Se não houver filtro, COM DIA vira o TOTAL
                     if(!dataFiltro || item.data === dataFiltro) {
                         t.vDia++;
                         t.comDia += comItem;
@@ -195,49 +198,50 @@
                     if(!dataFiltro || item.data === dataFiltro) t.nqDia++;
                 }
 
+                // Linha da tabela
                 const wz = item.endereco ? `https://www.waze.com/ul?q=${encodeURIComponent(item.endereco)}&navigate=yes` : '#';
                 const wa = item.telefone ? `https://wa.me/55${item.telefone.replace(/\D/g,'')}` : '#';
-                
-                hT += `<tr class="hover:bg-slate-800/40 text-white">
-                    <td class="p-3"><b>${paraDataBR(item.data)}</b><br><span class="text-blue-400 font-bold">${item.horario||'DIR'}</span></td>
+                hT += `<tr class="hover:bg-slate-800/40">
+                    <td class="p-3 text-white"><b>${paraDataBR(item.data)}</b><br><span class="text-blue-400 font-bold">${item.horario||'DIR'}</span></td>
                     <td class="p-3 text-white">
-                        <span class="uppercase font-black text-white text-[10px]">${item.nome_formando}</span><br>
-                        <span class="text-slate-300 text-[10px] block leading-tight mt-1">📍 ${item.endereco || 'Sem endereço'}</span>
+                        <span class="uppercase font-black text-white text-[10px] text-white">${item.nome_formando}</span><br>
+                        <span class="text-slate-300 text-[10px] block leading-tight mt-1 text-white">📍 ${item.endereco || 'Sem endereço'}</span>
                         <span class="text-emerald-400 text-[10px] block mt-1">📱 WhatsApp: ${item.telefone || 'Sem número'}</span>
                         <div class="flex gap-4 mt-2">
-                            <a href="${wz}" target="_blank" class="text-blue-400 text-[9px] hover:underline uppercase italic text-white">Waze</a>
-                            <a href="${wa}" target="_blank" class="text-emerald-400 text-[9px] hover:underline uppercase italic text-white">Zap</a>
+                            <a href="${wz}" target="_blank" class="text-blue-400 text-[9px] hover:underline uppercase italic">Waze</a>
+                            <a href="${wa}" target="_blank" class="text-emerald-400 text-[9px] hover:underline uppercase italic">Zap</a>
                         </div>
                     </td>
-                    <td class="p-3 text-center text-white text-white">${item.resultado||'Pendente'}</td>
-                    <td class="p-3 text-center"><button onclick="gerenciarItem('${item.path}')" class="bg-blue-600 px-2 py-1 rounded text-[9px] font-bold text-white text-white">GERENCIAR</button></td>
+                    <td class="p-3 text-center text-white">${item.resultado||'Pendente'}</td>
+                    <td class="p-3 text-center text-white"><button onclick="gerenciarItem('${item.path}')" class="bg-blue-600 px-2 py-1 rounded text-[9px] font-bold">GERENCIAR</button></td>
                 </tr>`;
             });
 
-            const eficiencia = (t.v + t.nq) > 0 ? ((t.v / (t.v + t.nq)) * 100).toFixed(0) : 0;
+            const totalAtendidos = t.v + t.nq;
+            const eficiencia = totalAtendidos > 0 ? ((t.v / totalAtendidos) * 100).toFixed(0) : 0;
             const label = dataFiltro ? 'DIA' : 'TOT';
 
             document.getElementById('resumo-financeiro').innerHTML = `
-                <div class="glass p-1 rounded-xl border-t border-blue-500"><p class="text-[6px]">EFICIÊNCIA</p><p class="text-[9px] font-black text-white">${eficiencia}%</p></div>
-                <div class="glass p-1 rounded-xl border-t border-emerald-500"><p class="text-[6px]">V. ${label}</p><p class="text-[9px] font-black text-white text-white">${t.vDia}</p></div>
-                <div class="glass p-1 rounded-xl border-t border-rose-500"><p class="text-[6px]">NQ ${label}</p><p class="text-[9px] font-black text-rose-400 text-white">${t.nqDia}</p></div>
-                <div class="glass p-1 rounded-xl border-t border-blue-300"><p class="text-[6px]">TICKET MÉD.</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.v ? t.totV/t.v : 0)}</p></div>
-                <div class="glass p-1 rounded-xl border-t border-cyan-500"><p class="text-[6px]">PIX</p><p class="text-[9px] font-black text-white text-white">${window.formatBRL(t.pix)}</p></div>
-                <div class="glass p-1 rounded-xl border-t border-green-500"><p class="text-[6px]">DINHEIRO</p><p class="text-[9px] font-black text-white text-white">${window.formatBRL(t.din)}</p></div>
-                <div class="glass p-1 rounded-xl border-t border-yellow-500"><p class="text-[6px]">CRÉDITO</p><p class="text-[9px] font-black text-white text-white">${window.formatBRL(t.cre)}</p></div>
-                <div class="glass p-1 rounded-xl border-t border-orange-500"><p class="text-[6px]">DÉBITO</p><p class="text-[9px] font-black text-white text-white">${window.formatBRL(t.deb)}</p></div>
-                <div class="glass p-1 rounded-xl border-t border-purple-500"><p class="text-[6px]">BOLETO</p><p class="text-[9px] font-black text-white text-white">${window.formatBRL(t.bol)}</p></div>
-                <div class="bg-purple-600 p-1 rounded-xl shadow-lg text-white"><p class="text-[6px]">COMIS. ${label}</p><p class="text-[9px] font-black text-white text-white">${window.formatBRL(t.comDia)}</p></div>
-                <div class="bg-blue-600 p-1 rounded-xl shadow-lg text-white"><p class="text-[6px]">TOTAL VENDIDO</p><p class="text-[9px] font-black text-white text-white">${window.formatBRL(t.totV)}</p></div>
+                <div class="glass p-1 rounded-xl border-t border-blue-500 text-white"><p class="text-[6px]">EFICIÊNCIA</p><p class="text-[9px] font-black">${eficiencia}%</p></div>
+                <div class="glass p-1 rounded-xl border-t border-emerald-500 text-white"><p class="text-[6px]">V. ${label}</p><p class="text-[9px] font-black text-white">${t.vDia}</p></div>
+                <div class="glass p-1 rounded-xl border-t border-rose-500 text-white"><p class="text-[6px]">NQ ${label}</p><p class="text-[9px] font-black text-rose-400">${t.nqDia}</p></div>
+                <div class="glass p-1 rounded-xl border-t border-blue-300 text-white"><p class="text-[6px]">TICKET MÉD.</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.v ? t.totV/t.v : 0)}</p></div>
+                <div class="glass p-1 rounded-xl border-t border-cyan-500 text-white"><p class="text-[6px]">PIX</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.pix)}</p></div>
+                <div class="glass p-1 rounded-xl border-t border-green-500 text-white"><p class="text-[6px]">DINHEIRO</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.din)}</p></div>
+                <div class="glass p-1 rounded-xl border-t border-yellow-500 text-white"><p class="text-[6px]">CRÉDITO</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.cre)}</p></div>
+                <div class="glass p-1 rounded-xl border-t border-orange-500 text-white"><p class="text-[6px]">DÉBITO</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.deb)}</p></div>
+                <div class="glass p-1 rounded-xl border-t border-purple-500 text-white"><p class="text-[6px]">BOLETO</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.bol)}</p></div>
+                <div class="bg-purple-600 p-1 rounded-xl shadow-lg text-white"><p class="text-[6px]">COMIS. ${label}</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.comDia)}</p></div>
+                <div class="bg-blue-600 p-1 rounded-xl shadow-lg text-white"><p class="text-[6px]">TOTAL VENDIDO</p><p class="text-[9px] font-black text-white">${window.formatBRL(t.totV)}</p></div>
             `;
             document.getElementById('admin-content').innerHTML = hT + '</tbody></table>';
-            document.getElementById('comissao-content').innerHTML = `<table class="w-full text-white text-white"><tbody>${hC}</tbody></table>`;
-            document.getElementById('fechamento-final').innerHTML = `<div class="space-y-1 text-white text-white"><p class="text-[8px] uppercase text-slate-400 text-white">Total Comissões: ${window.formatBRL(t.comTot)}</p><p class="text-[8px] uppercase text-rose-400 text-white">Total Vales: - ${window.formatBRL(t.vale)}</p><div class="pt-2 border-t border-white/10 mt-2 text-white"><p class="text-[10px] font-black uppercase text-blue-400 text-white">Saldo a Receber</p><p class="text-2xl font-black italic text-emerald-400 text-white text-white">${window.formatBRL(t.comTot - t.vale)}</p></div></div>`;
+            document.getElementById('comissao-content').innerHTML = `<table class="w-full text-white"><tbody>${hC}</tbody></table>`;
+            document.getElementById('fechamento-final').innerHTML = `<div class="space-y-1 text-white"><p class="text-[8px] uppercase text-slate-400">Total Comissões: ${window.formatBRL(t.comTot)}</p><p class="text-[8px] uppercase text-rose-400">Total Vales: - ${window.formatBRL(t.vale)}</p><div class="pt-2 border-t border-white/10 mt-2"><p class="text-[10px] font-black uppercase text-blue-400 text-white text-white">Saldo a Receber</p><p class="text-2xl font-black italic text-emerald-400 text-white text-white">${window.formatBRL(t.comTot - t.vale)}</p></div></div>`;
         }
 
         window.gerenciarItem = (p) => { window.itemPath = p; document.getElementById('modalGestao').style.display = 'flex'; };
         window.confirmarExclusao = async () => { if(confirm("Apagar?")) { await remove(ref(db, window.itemPath)); fecharModalGestao(); await carregarRelatorio(); } };
-        window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); document.getElementById('gestao-form').classList.remove('hidden'); document.getElementById('gestao-form').innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-800 p-4 rounded-xl text-center mb-4 text-white outline-none"><div class="grid grid-cols-2 gap-2 mb-4 text-white text-white"><button onclick="addPg('Dinheiro')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Dinheiro</button><button onclick="addPg('Pix')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Pix</button><button onclick="addPg('Cartão Débito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Débito</button><button onclick="addPg('Cartão Crédito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Crédito</button><button onclick="addPg('Boleto')" class="p-2 bg-blue-900 rounded-lg text-[9px] col-span-2">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4 text-white text-white"></div><button onclick="finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white text-white text-white text-white">CONFIRMAR VENDA</button><button onclick="salvarStatusSimples('NQ')" class="w-full p-2 bg-rose-600 rounded-xl mt-4 text-[10px] text-white text-white text-white">SALVAR COMO NQ</button>`; window.tempPgs = []; };
+        window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); document.getElementById('gestao-form').classList.remove('hidden'); document.getElementById('gestao-form').innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-800 p-4 rounded-xl text-center mb-4 text-white outline-none"><div class="grid grid-cols-2 gap-2 mb-4 text-white text-white"><button onclick="addPg('Dinheiro')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Dinheiro</button><button onclick="addPg('Pix')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Pix</button><button onclick="addPg('Cartão Débito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Débito</button><button onclick="addPg('Cartão Crédito')" class="p-2 bg-slate-700 rounded-lg text-[9px]">+ Crédito</button><button onclick="addPg('Boleto')" class="p-2 bg-blue-900 rounded-lg text-[9px] col-span-2">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4 text-white text-white"></div><button onclick="finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white text-white">CONFIRMAR VENDA</button><button onclick="salvarStatusSimples('NQ')" class="w-full p-2 bg-rose-600 rounded-xl mt-4 text-[10px] text-white">SALVAR COMO NQ</button>`; window.tempPgs = []; };
         window.addPg = (tipo) => { const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0); if(v <= 0) return; let pg = { tipo, valor: v }; if(tipo === 'Boleto') { const ent = prompt("Entrada? 1-Sim 2-Não"); if(ent === "1") { pg.entrada = parseFloat(prompt("Valor Entrada:")?.replace(',','.') || 0); const fE = prompt("Forma: 1-Dinheiro 2-Pix"); pg.forma_entrada = fE === "1" ? "Dinheiro" : "Pix"; } } window.tempPgs.push(pg); renderTemp(); };
         function renderTemp() { document.getElementById('lista-p').innerHTML = window.tempPgs.map((p, i) => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]"><span>${p.tipo}</span><span class="text-emerald-400">${window.formatBRL(p.valor)}</span></div>`).join(''); }
         window.finalizarVenda = async () => { const tot = parseFloat(document.getElementById('vTotal').value); if(!tot) return alert("Informe o valor!"); await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, pagamentos: window.tempPgs }); fecharModalGestao(); await carregarRelatorio(); };
@@ -292,7 +296,7 @@
                 if (agora > new Date(y, m-1, d, (d == "08" || d == "07") ? 15 : 20, 30)) btn.style.display = "none";
             });
             try {
-                const snapAtivo = await get(ref(db, `config/projeto_ativo`));
+                const snapAtivo = await get(ref(db, "config/projeto_ativo"));
                 const slug = snapAtivo.val() || "guaratingueta-guilherme";
                 const info = await get(ref(db, `config/projetos/${slug}`));
                 if(info.exists()){
