@@ -221,10 +221,11 @@
                     rows += `<tr class="border-b border-white/5 hover:bg-white/5 text-white"><td>${i.nome_formando}</td><td>${fBR(i.valor)}</td><td>${pgsI.join('+')}</td><td class="font-black text-emerald-400">${fBR(comI)}</td></tr>`;
                 } else if(i.resultado === "NQ") m.nq++;
             });
+            const tx = (m.v + m.nq) > 0 ? ((m.v / (m.v + m.nq)) * 100).toFixed(0) : 0;
             const perc = (v) => m.tot > 0 ? ((v / m.tot) * 100).toFixed(0) + '%' : '0%';
             
             document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10"><p class="text-[9px] text-emerald-500 font-black mb-1 uppercase">Faturamento Bruto</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase">Vendas / NQ</p><p class="text-3xl font-black">${m.v} / ${m.nq}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase text-white text-white text-white">Eficiência</p><p class="text-3xl font-black text-white text-white text-white">${tx}%</p></div><div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10"><p class="text-[9px] text-cyan-500 font-black mb-1 uppercase text-white text-white text-white">Ticket Médio</p><p class="text-3xl font-black text-white text-white text-white">${fBR(m.v?m.tot/m.v:0)}</p></div>`;
-            document.getElementById('finance-grid').innerHTML = `<div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Pix (${perc(m.pix)})</p><p class="text-lg font-black">${fBR(m.pix)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Dinheiro (${perc(m.din)})</p><p class="text-lg font-black">${fBR(m.din)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white text-white">Crédito (${perc(m.cre)})</p><p class="text-lg font-black text-white text-white">${fBR(m.cre)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white text-white">Débito (${perc(m.deb)})</p><p class="text-lg font-black text-white text-white">${fBR(m.deb)}</p></div><div class="card-bi p-4 rounded-2xl text-white text-white text-white"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white text-white text-white">Boleto (${perc(m.bol)})</p><p class="text-lg font-black text-white text-white text-white">${fBR(m.bol)}</p></div>`;
+            document.getElementById('finance-grid').innerHTML = `<div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Pix (${perc(m.pix)})</p><p class="text-lg font-black">${fBR(m.pix)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Dinheiro (${perc(m.din)})</p><p class="text-lg font-black">${fBR(m.din)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white">Crédito (${perc(m.cre)})</p><p class="text-lg font-black text-white text-white">${fBR(m.cre)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white">Débito (${perc(m.deb)})</p><p class="text-lg font-black text-white text-white">${fBR(m.deb)}</p></div><div class="card-bi p-4 rounded-2xl text-white text-white text-white"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white text-white text-white">Boleto (${perc(m.bol)})</p><p class="text-lg font-black text-white text-white text-white">${fBR(m.bol)}</p></div>`;
             document.getElementById('saldo-card').innerHTML = `<p class="text-[10px] font-black uppercase text-slate-500 mb-4 italic text-white text-white text-white">Consolidado</p><div class="space-y-2 text-white"><div class="flex justify-between text-sm"><span>Comissão Bruta</span><span class="font-black text-white text-white">${fBR(m.com)}</span></div><div class="flex justify-between text-rose-400 text-sm"><span>Vales Retirados</span><span class="font-black text-white text-white">- ${fBR(m.vales)}</span></div><div class="border-t border-white/10 mt-6 pt-6 text-center text-white"><p class="text-[8px] font-black text-emerald-400 uppercase">Saldo a Receber</p><p class="text-5xl font-black text-white italic text-white text-white">${fBR(m.com - m.vales)}</p></div></div>`;
             document.getElementById('extrato-tabela').innerHTML = rows || '<tr><td colspan="4" class="p-10 text-center text-slate-500 uppercase text-white text-white text-white">Sem dados</td></tr>';
             if(chartWeekly) chartWeekly.destroy();
@@ -276,20 +277,31 @@
         window.selecionarDia = async (btn) => {
             document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
             const d = btn.getAttribute('data-date'); document.getElementById('data-selecionada').value = d;
-            const elH = document.getElementById('horario'); elH.innerHTML = '<option>Sincronizando vagas...</option>';
+            const elH = document.getElementById('horario'); elH.innerHTML = '<option>Buscando horários...</option>';
             
             const snap = await get(ref(db, `dados/${projetoAtualId}/agendamentos/${d}`));
             const ag = snap.val() || {};
             
             const counts = {};
-            // LOGICA REFORMULADA: Percorre todos os objetos e chaves para identificar o horário
-            Object.keys(ag).forEach(key => {
-                const item = ag[key];
-                let h = item.horario || "";
-                if(!h && key.includes("-")) { h = key.split("-").slice(0,2).join(":"); }
-                if(h && h.length >= 4) {
-                    const hPadrao = h.replace("-", ":").substring(0, 5);
-                    counts[hPadrao] = (counts[hPadrao] || 0) + 1;
+
+            // CORREÇÃO SEGURA: Bloque sugerido pelo GPT para enxergar agendamentos no Firebase
+            Object.entries(ag).forEach(([key, item]) => {
+                let horario = "";
+
+                // PRIORIDADE 1: usar horario salvo no objeto
+                if(item.horario){
+                    horario = item.horario.trim().substring(0,5);
+                }
+                // PRIORIDADE 2: extrair da chave
+                else if(key.includes("-")){
+                    const partes = key.split("-");
+                    if(partes.length >= 2){
+                        horario = `${partes[0]}:${partes[1]}`;
+                    }
+                }
+
+                if(horario){
+                    counts[horario] = (counts[horario] || 0) + 1;
                 }
             });
 
@@ -334,4 +346,5 @@
     </script>
 </body>
 </html>
+
 
