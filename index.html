@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.5</title>
+    <title>Elite Sales Intelligence - BI v12.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -176,7 +176,7 @@
                 const waLink = waNum ? `https://wa.me/55${waNum}` : '#';
                 const mapLink = `https://www.waze.com/ul?q=${encodeURIComponent(i.endereco||'')}&navigate=yes`;
                 container.innerHTML += `
-                    <div class="glass p-6 rounded-[2.5rem] border-l-8 ${cor} flex justify-between items-center text-white">
+                    <div class="glass p-6 rounded-[2.5rem] border-l-8 ${cor} flex justify-between items-center text-white mb-4">
                         <div>
                             <div class="mb-2 text-white text-white"><span class="text-3xl font-black block">${pDT(i.data)}</span><span class="text-xl font-bold text-blue-400 uppercase">${i.horario || 'DIR'}</span></div>
                             <h3 class="text-2xl font-black uppercase mt-2">${i.nome_formando}</h3>
@@ -223,8 +223,8 @@
             });
             const perc = (v) => m.tot > 0 ? ((v / m.tot) * 100).toFixed(0) + '%' : '0%';
             
-            document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10"><p class="text-[9px] text-emerald-500 font-black mb-1 uppercase">Faturamento Bruto</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase">Vendas / NQ</p><p class="text-3xl font-black">${m.v} / ${m.nq}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase text-white text-white text-white">Eficiência</p><p class="text-3xl font-black text-white text-white text-white">${(m.v+m.nq)>0 ? ((m.v/(m.v+m.nq))*100).toFixed(0) : 0}%</p></div><div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10"><p class="text-[9px] text-cyan-500 font-black mb-1 uppercase text-white text-white text-white">Ticket Médio</p><p class="text-3xl font-black text-white text-white text-white">${fBR(m.v?m.tot/m.v:0)}</p></div>`;
-            document.getElementById('finance-grid').innerHTML = `<div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Pix (${perc(m.pix)})</p><p class="text-lg font-black">${fBR(m.pix)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Dinheiro (${perc(m.din)})</p><p class="text-lg font-black">${fBR(m.din)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white">Crédito (${perc(m.cre)})</p><p class="text-lg font-black text-white text-white">${fBR(m.cre)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white">Débito (${perc(m.deb)})</p><p class="text-lg font-black text-white text-white">${fBR(m.deb)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white">Boleto (${perc(m.bol)})</p><p class="text-lg font-black text-white text-white">${fBR(m.bol)}</p></div>`;
+            document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10"><p class="text-[9px] text-emerald-500 font-black mb-1 uppercase">Faturamento Bruto</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase">Vendas / NQ</p><p class="text-3xl font-black">${m.v} / ${m.nq}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase text-white text-white text-white">Eficiência</p><p class="text-3xl font-black text-white text-white text-white">${tx}%</p></div><div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10"><p class="text-[9px] text-cyan-500 font-black mb-1 uppercase text-white text-white text-white">Ticket Médio</p><p class="text-3xl font-black text-white text-white text-white">${fBR(m.v?m.tot/m.v:0)}</p></div>`;
+            document.getElementById('finance-grid').innerHTML = `<div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Pix (${perc(m.pix)})</p><p class="text-lg font-black">${fBR(m.pix)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Dinheiro (${perc(m.din)})</p><p class="text-lg font-black">${fBR(m.din)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white text-white">Crédito (${perc(m.cre)})</p><p class="text-lg font-black text-white text-white">${fBR(m.cre)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white text-white">Débito (${perc(m.deb)})</p><p class="text-lg font-black text-white text-white">${fBR(m.deb)}</p></div><div class="card-bi p-4 rounded-2xl text-white text-white text-white"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white text-white text-white">Boleto (${perc(m.bol)})</p><p class="text-lg font-black text-white text-white text-white">${fBR(m.bol)}</p></div>`;
             document.getElementById('saldo-card').innerHTML = `<p class="text-[10px] font-black uppercase text-slate-500 mb-4 italic text-white text-white text-white">Consolidado</p><div class="space-y-2 text-white"><div class="flex justify-between text-sm"><span>Comissão Bruta</span><span class="font-black text-white text-white">${fBR(m.com)}</span></div><div class="flex justify-between text-rose-400 text-sm"><span>Vales Retirados</span><span class="font-black text-white text-white">- ${fBR(m.vales)}</span></div><div class="border-t border-white/10 mt-6 pt-6 text-center text-white"><p class="text-[8px] font-black text-emerald-400 uppercase">Saldo a Receber</p><p class="text-5xl font-black text-white italic text-white text-white">${fBR(m.com - m.vales)}</p></div></div>`;
             document.getElementById('extrato-tabela').innerHTML = rows || '<tr><td colspan="4" class="p-10 text-center text-slate-500 uppercase text-white text-white text-white">Sem dados</td></tr>';
             if(chartWeekly) chartWeekly.destroy();
@@ -258,6 +258,7 @@
                     }
                 } else if(item.resultado === "NQ") nq++;
             });
+
             const txt = `Relatório de Vendas\nProjeto: ${pNome}\nData: ${dF ? pDT(dF) : 'ACUMULADO GERAL'}\n\n✅ Vendas: ${v}\n❌ NQ: ${nq}\n\n💵 Dinheiro: ${f(din)}\n💎 Pix: ${f(pix)}\n💳 Débito: ${f(deb)}\n💳 Crédito: ${f(cre)}\n📄 Boleto: ${f(bol)}\n\n💰 Total Vendido: ${f(totV)}\n💸 Vales: ${f(val)}`;
             const el = document.createElement('textarea'); el.value = txt; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); 
             alert("Relatório Copiado com Sucesso!");
@@ -275,36 +276,36 @@
         window.selecionarDia = async (btn) => {
             document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
             const d = btn.getAttribute('data-date'); document.getElementById('data-selecionada').value = d;
-            const elH = document.getElementById('horario'); elH.innerHTML = '<option>Buscando horários...</option>';
+            const elH = document.getElementById('horario'); elH.innerHTML = '<option>Sincronizando vagas...</option>';
             
             const snap = await get(ref(db, `dados/${projetoAtualId}/agendamentos/${d}`));
             const ag = snap.val() || {};
             
             const counts = {};
-            // CORREÇÃO DEFINITIVA: Itera sobre todos os objetos para contar pelo valor do campo 'horario'
-            Object.values(ag).forEach(item => {
-                const h = item.horario || "";
-                if(h) counts[h] = (counts[h] || 0) + 1;
+            // LOGICA REFORMULADA: Percorre todos os objetos e chaves para identificar o horário
+            Object.keys(ag).forEach(key => {
+                const item = ag[key];
+                let h = item.horario || "";
+                if(!h && key.includes("-")) { h = key.split("-").slice(0,2).join(":"); }
+                if(h && h.length >= 4) {
+                    const hPadrao = h.replace("-", ":").substring(0, 5);
+                    counts[hPadrao] = (counts[hPadrao] || 0) + 1;
+                }
             });
 
             elH.innerHTML = '<option value="">Escolha o Horário</option>';
             const diaHoje = new Date().toLocaleDateString('en-CA');
             let cur = new Date(`${d}T09:00:00`);
-            // Extensão para hoje até 19:30 conforme solicitado
             let lim = (d === diaHoje) ? "19:30" : "20:30";
+            const agoraTs = new Date().getTime();
             
             while(cur <= new Date(`${d}T${lim}:00`)){
-                let hF = cur.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+                const hF = cur.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+                const ocupados = counts[hF] || 0;
                 let permitido = true;
                 
-                // REGRA DAS 3 HORAS (IMPLACÁVEL)
-                if(d === diaHoje){
-                    const agora = new Date().getTime();
-                    const horaVaga = cur.getTime();
-                    if((horaVaga - agora) < (3 * 60 * 60 * 1000)) permitido = false;
-                }
+                if(d === diaHoje && (cur.getTime() - agoraTs) < (3 * 60 * 60 * 1000)) permitido = false;
 
-                const ocupados = counts[hF] || 0;
                 if(permitido && ocupados < 2){ 
                     let opt=document.createElement('option'); opt.value=hF; 
                     opt.textContent=`${hF} (${2 - ocupados} ${ (2-ocupados) === 1 ? 'vaga' : 'vagas' })`; 
@@ -312,7 +313,6 @@
                 }
                 cur.setMinutes(cur.getMinutes()+30);
             }
-            if(elH.options.length <= 1) elH.innerHTML = '<option value="">Sem horários disponíveis</option>';
         };
 
         (async () => {
@@ -320,15 +320,11 @@
             document.querySelectorAll('.day-btn').forEach(btn => {
                 const dataBtn = btn.getAttribute("data-date");
                 if (dataBtn < dHoje) return;
-                if (dataBtn === dHoje) {
-                    // Hoje estendido até 19:30, mas precisa sobrar 3h para agendar
-                    if (agora.getHours() >= (19.5 - 3)) return; 
-                }
+                if (dataBtn === dHoje && agora.getHours() >= (19.5 - 3)) return; 
                 btn.style.display = "block";
             });
             document.getElementById("form-agendamento").addEventListener("submit", async function(e){
                 e.preventDefault(); const n = document.getElementById("nome").value, t = document.getElementById("telefone").value, en = document.getElementById("endereco").value, h = document.getElementById("horario").value, d = document.getElementById("data-selecionada").value;
-                // Registro salvo com campo 'horario' explícito para a contagem funcionar
                 await set(ref(db, `dados/${projetoAtualId}/agendamentos/${d}/${h.replace(":","-")}-${Date.now()}`), { nome_formando: n, telefone: t, endereco: en, horario: h, data: d, resultado: "Pendente" });
                 const msg = `NOVO AGENDAMENTO\n\n\uD83D\uDC64 Formando: ${n}\n\uD83D\uDCC5 Data: ${pDT(d)}\n\u23F0 Horário: ${h}\n\uD83D\uDCCD Endereço:\n${en}`;
                 window.open(`https://wa.me/5516993291674?text=${encodeURIComponent(msg)}`, "_blank");
