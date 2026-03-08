@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.6</title>
+    <title>Elite Sales Intelligence - BI v12.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -176,7 +176,7 @@
                 const waLink = waNum ? `https://wa.me/55${waNum}` : '#';
                 const mapLink = `https://www.waze.com/ul?q=${encodeURIComponent(i.endereco||'')}&navigate=yes`;
                 container.innerHTML += `
-                    <div class="glass p-6 rounded-[2.5rem] border-l-8 ${cor} flex justify-between items-center text-white mb-4">
+                    <div class="glass p-6 rounded-[2.5rem] border-l-8 ${cor} flex justify-between items-center text-white">
                         <div>
                             <div class="mb-2 text-white text-white"><span class="text-3xl font-black block">${pDT(i.data)}</span><span class="text-xl font-bold text-blue-400 uppercase">${i.horario || 'DIR'}</span></div>
                             <h3 class="text-2xl font-black uppercase mt-2">${i.nome_formando}</h3>
@@ -209,11 +209,7 @@
                             if(t.includes("pix")) m.pix += val; else if(t.includes("dinheiro")) m.din += val;
                             else if(t.includes("crédito") || t.includes("credito")) m.cre += val;
                             else if(t.includes("débito") || t.includes("debito")) m.deb += val;
-                            else if(t.includes("boleto")) {
-                                m.bol += (val - ent); comI += (ent * 0.12) + ((val - ent) * 0.08);
-                                if(p.forma_entrada === "Pix") m.pix += ent; else if(p.forma_entrada === "Dinheiro") m.din += ent;
-                                if(p.forma_entrada === "Pix" || p.forma_entrada === "Dinheiro") m.vales += ent;
-                            }
+                            else if(t.includes("boleto")) { m.bol += (val - ent); comI += (ent * 0.12) + ((val - ent) * 0.08); if(p.forma_entrada === "Pix") m.pix += ent; else if(p.forma_entrada === "Dinheiro") m.din += ent; if(p.forma_entrada === "Pix" || p.forma_entrada === "Dinheiro") m.vales += ent; }
                             if(!t.includes("boleto")) { comI += val * 0.12; if(t.includes("pix") || t.includes("dinheiro")) m.vales += val; }
                         });
                     } else { comI = vV * 0.12; }
@@ -225,7 +221,7 @@
             const perc = (v) => m.tot > 0 ? ((v / m.tot) * 100).toFixed(0) + '%' : '0%';
             
             document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10"><p class="text-[9px] text-emerald-500 font-black mb-1 uppercase">Faturamento Bruto</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase">Vendas / NQ</p><p class="text-3xl font-black">${m.v} / ${m.nq}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase text-white text-white text-white">Eficiência</p><p class="text-3xl font-black text-white text-white text-white">${tx}%</p></div><div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10"><p class="text-[9px] text-cyan-500 font-black mb-1 uppercase text-white text-white text-white">Ticket Médio</p><p class="text-3xl font-black text-white text-white text-white">${fBR(m.v?m.tot/m.v:0)}</p></div>`;
-            document.getElementById('finance-grid').innerHTML = `<div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Pix (${perc(m.pix)})</p><p class="text-lg font-black">${fBR(m.pix)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Dinheiro (${perc(m.din)})</p><p class="text-lg font-black">${fBR(m.din)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white">Crédito (${perc(m.cre)})</p><p class="text-lg font-black text-white text-white">${fBR(m.cre)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white">Débito (${perc(m.deb)})</p><p class="text-lg font-black text-white text-white">${fBR(m.deb)}</p></div><div class="card-bi p-4 rounded-2xl text-white text-white text-white"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white text-white text-white">Boleto (${perc(m.bol)})</p><p class="text-lg font-black text-white text-white text-white">${fBR(m.bol)}</p></div>`;
+            document.getElementById('finance-grid').innerHTML = `<div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Pix (${perc(m.pix)})</p><p class="text-lg font-black">${fBR(m.pix)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Dinheiro (${perc(m.din)})</p><p class="text-lg font-black">${fBR(m.din)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white">Crédito (${perc(m.cre)})</p><p class="text-lg font-black text-white text-white">${fBR(m.cre)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white">Débito (${perc(m.deb)})</p><p class="text-lg font-black text-white text-white">${fBR(m.deb)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white">Boleto (${perc(m.bol)})</p><p class="text-lg font-black text-white text-white">${fBR(m.bol)}</p></div>`;
             document.getElementById('saldo-card').innerHTML = `<p class="text-[10px] font-black uppercase text-slate-500 mb-4 italic text-white text-white text-white">Consolidado</p><div class="space-y-2 text-white"><div class="flex justify-between text-sm"><span>Comissão Bruta</span><span class="font-black text-white text-white">${fBR(m.com)}</span></div><div class="flex justify-between text-rose-400 text-sm"><span>Vales Retirados</span><span class="font-black text-white text-white">- ${fBR(m.vales)}</span></div><div class="border-t border-white/10 mt-6 pt-6 text-center text-white"><p class="text-[8px] font-black text-emerald-400 uppercase">Saldo a Receber</p><p class="text-5xl font-black text-white italic text-white text-white">${fBR(m.com - m.vales)}</p></div></div>`;
             document.getElementById('extrato-tabela').innerHTML = rows || '<tr><td colspan="4" class="p-10 text-center text-slate-500 uppercase text-white text-white text-white">Sem dados</td></tr>';
             if(chartWeekly) chartWeekly.destroy();
@@ -284,10 +280,9 @@
             
             const counts = {};
 
-            // CORREÇÃO SEGURA: Bloque sugerido pelo GPT para enxergar agendamentos no Firebase
+            // CORREÇÃO SEGURA: Bloco Sugerido para enxergar agendamentos no Firebase
             Object.entries(ag).forEach(([key, item]) => {
                 let horario = "";
-
                 // PRIORIDADE 1: usar horario salvo no objeto
                 if(item.horario){
                     horario = item.horario.trim().substring(0,5);
@@ -299,7 +294,6 @@
                         horario = `${partes[0]}:${partes[1]}`;
                     }
                 }
-
                 if(horario){
                     counts[horario] = (counts[horario] || 0) + 1;
                 }
@@ -346,5 +340,3 @@
     </script>
 </body>
 </html>
-
-
