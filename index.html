@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v10.0</title>
+    <title>Elite Sales Intelligence - BI v10.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -26,14 +26,13 @@
     <div id="modalGestao">
         <div class="glass w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl text-white">
             <div class="flex justify-between items-center mb-8">
-                <h2 class="text-xl font-black uppercase text-blue-400">Gerenciar Visita</h2>
-                <button onclick="window.fecharModalGestao()" class="bg-slate-800 text-white w-10 h-10 rounded-full font-bold">✕</button>
+                <h2 class="text-xl font-black uppercase text-blue-400">Gerenciar</h2>
+                <button onclick="window.fecharModalGestao()" class="bg-slate-800 text-white w-10 h-10 rounded-full font-bold text-white">✕</button>
             </div>
             <div id="gestao-menu" class="grid grid-cols-1 gap-4">
                 <button onclick="window.fluxoResultado()" class="bg-emerald-600/20 border border-emerald-500/30 p-8 rounded-3xl text-emerald-400 font-black uppercase hover:bg-emerald-600 transition">1. Registrar Venda</button>
                 <button onclick="window.salvarStatusSimples('NQ')" class="bg-rose-600/10 border border-rose-500/30 p-4 rounded-2xl text-rose-500 font-black uppercase text-xs">2. Marcar NQ</button>
                 <button onclick="window.fluxoEditar()" class="bg-blue-600/10 border border-blue-500/30 p-4 rounded-2xl text-blue-400 font-black uppercase text-xs">3. Editar Cadastro</button>
-                <button onclick="window.confirmarExclusao()" class="text-slate-600 text-[10px] uppercase font-bold mt-4 text-center">Excluir Registro</button>
             </div>
             <div id="gestao-form" class="hidden space-y-4"></div>
         </div>
@@ -48,66 +47,57 @@
             <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl text-center border border-white/5">
                 <h2 id="escola-titulo" class="text-2xl font-extrabold uppercase text-blue-400 italic">Guaratinguetá</h2>
                 <h3 id="sub-escola" class="text-xs font-bold text-slate-400 uppercase tracking-widest italic mb-8">Dr. Guilherme Filippo</h3>
-                
                 <form id="form-agendamento" class="space-y-4">
                     <div class="grid grid-cols-2 gap-2 mb-4" id="day-selector">
                         <button type="button" data-date="2026-03-07" onclick="window.selecionarDia(this)" class="day-btn rounded-2xl py-4 text-[10px] font-black uppercase">Sab 07/03</button>
                         <button type="button" data-date="2026-03-08" onclick="window.selecionarDia(this)" class="day-btn rounded-2xl py-4 text-[10px] font-black uppercase">Dom 08/03</button>
                     </div>
                     <input type="hidden" id="data-selecionada">
-                    <input type="text" id="nome" required placeholder="Nome do Formando" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-blue-500">
-                    <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none">
+                    <input type="text" id="nome" required placeholder="Nome do Formando" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-blue-500 text-white">
+                    <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none text-white">
                     <select id="horario" required class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none text-white"><option value="">Selecione o Dia</option></select>
-                    <textarea id="endereco" required placeholder="Endereço Completo" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none" rows="2"></textarea>
-                    <button type="submit" class="btn-primary w-full py-5 rounded-2xl font-black uppercase shadow-lg text-white">Finalizar Agendamento</button>
+                    <textarea id="endereco" required placeholder="Endereço de Visita" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none text-white" rows="2"></textarea>
+                    <button type="submit" class="btn-primary w-full py-5 rounded-2xl font-black uppercase text-white">Finalizar Agendamento</button>
                 </form>
             </div>
         </main>
     </section>
 
-    <section id="view-logistica" class="view-section p-6 text-white">
+    <section id="view-logistica" class="view-section p-6 text-white text-white">
         <div class="max-w-4xl mx-auto w-full">
-            <nav class="flex justify-between items-center mb-10">
+            <nav class="flex justify-between items-center mb-10 text-white">
                 <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase">← Sair</button>
                 <div class="flex gap-2 p-1 bg-slate-900 rounded-2xl border border-white/5">
-                    <button class="bg-blue-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg text-white">Visitas</button>
+                    <button class="bg-blue-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg">Visitas</button>
                     <button onclick="window.switchView('view-financeiro')" class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-slate-400">BI Dashboard</button>
                     <button onclick="window.switchView('view-config')" class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-slate-400">⚙️</button>
                 </div>
             </nav>
-            <div class="flex justify-between items-center mb-8">
-                <h1 class="text-3xl font-black italic uppercase">Roteiro <span class="text-blue-500">Operacional</span></h1>
-                <button onclick="window.abrirAvulso()" class="bg-white text-black px-6 py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-blue-50 transition">+ Avulso</button>
-            </div>
-            <input type="date" id="filtro-data-logistica" onchange="window.filtrarLogistica()" class="w-full mb-6 bg-slate-900 border border-white/10 rounded-2xl px-4 py-4 text-sm font-bold outline-none text-white">
+            <input type="date" id="filtro-data-logistica" onchange="window.filtrarLogistica()" class="w-full mb-6 bg-slate-900 border border-white/10 rounded-2xl px-4 py-4 text-sm font-bold outline-none">
             <div id="lista-visitas" class="space-y-4"></div>
         </div>
     </section>
 
-    <section id="view-financeiro" class="view-section p-6 text-white text-white">
+    <section id="view-financeiro" class="view-section p-6 text-white">
         <div class="max-w-7xl mx-auto w-full">
-            <nav class="flex justify-between items-center mb-10 text-white">
-                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white">← Roteiro</button>
-                <div class="flex gap-4">
-                    <input type="date" id="filtro-bi" onchange="window.filtrarBI()" class="bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white">
-                    <button onclick="window.copiarRelatorio()" class="bg-emerald-600 px-6 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg text-white text-white">Copiar Zap</button>
-                </div>
+            <nav class="flex justify-between items-center mb-10">
+                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white text-white">← Roteiro</button>
+                <input type="date" id="filtro-bi" onchange="window.filtrarBI()" class="bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none">
             </nav>
 
             <div id="kpi-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"></div>
             <div id="finance-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8"></div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10 text-white">
                 <div class="lg:col-span-2 glass rounded-[3rem] p-8 border border-white/5">
-                    <h3 class="font-black uppercase text-[10px] mb-8 text-slate-400 tracking-widest">Vendas por Dia da Semana</h3>
-                    <canvas id="chartWeekly" style="max-height: 300px;"></canvas>
+                    <canvas id="chartWeekly" style="max-height: 250px;"></canvas>
                 </div>
-                <div id="saldo-card" class="glass rounded-[3rem] p-8 border-l-8 border-emerald-500 flex flex-col justify-center"></div>
+                <div id="saldo-card" class="glass rounded-[3rem] p-8 border-l-8 border-emerald-500 flex flex-col justify-center text-white"></div>
             </div>
 
             <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5">
-                <table class="w-full text-left min-w-[800px]">
-                    <thead><tr class="border-b border-white/5 text-[10px] text-slate-500 font-black uppercase"><th class="p-4">Formando</th><th class="p-4">Venda Bruta</th><th class="p-4">Pagamento</th><th class="p-4 text-emerald-400">Minha Comissão</th></tr></thead>
+                <table class="w-full text-left min-w-[800px] text-white">
+                    <thead><tr class="border-b border-white/5 text-[10px] text-slate-500 font-black uppercase"><th class="p-4">Cliente</th><th class="p-4">Venda Bruta</th><th class="p-4">Pagamento</th><th class="p-4 text-emerald-400">Comissão (R$)</th></tr></thead>
                     <tbody id="extrato-tabela"></tbody>
                 </table>
             </div>
@@ -116,30 +106,26 @@
 
     <section id="view-config" class="view-section p-6 text-white text-white">
         <div class="max-w-4xl mx-auto w-full">
-            <nav class="flex justify-between items-center mb-10 text-white text-white">
-                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white">← Voltar</button>
-                <h1 class="text-xl font-black uppercase italic text-white text-white">Central <span class="text-blue-500">Config</span></h1>
+            <nav class="flex justify-between items-center mb-10">
+                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white text-white">← Voltar</button>
+                <h1 class="text-xl font-black uppercase italic">Configuração</h1>
             </nav>
             <div class="glass p-6 rounded-3xl mb-8 border-l-8 border-blue-500 text-white">
-                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-white text-white">Projeto no Ar:</p>
-                <h2 id="status-projeto-ativo" class="text-2xl font-black text-white mt-1 text-white">Guaratinguetá</h2>
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-white">Projeto Ativo:</p>
+                <h2 id="status-projeto-ativo" class="text-2xl font-black text-white mt-1 text-white">...</h2>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-white">
-                <div class="glass p-8 rounded-[2.5rem] text-white">
-                    <h3 class="font-black uppercase text-xs mb-6 text-blue-400 text-white">Cadastrar Novo</h3>
-                    <div class="space-y-4 text-white">
-                        <input type="text" id="new-proj-id" placeholder="ID técnico" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-sm text-white">
-                        <input type="text" id="new-proj-cidade" placeholder="Cidade" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-sm text-white">
-                        <input type="text" id="new-proj-escola" placeholder="Escola" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-sm text-white text-white">
-                        <button onclick="window.criarProjeto()" class="btn-primary w-full py-4 rounded-xl font-bold uppercase text-xs text-white">Salvar</button>
-                    </div>
+                <div class="glass p-8 rounded-[2.5rem]">
+                    <h3 class="font-black uppercase text-xs mb-6 text-blue-400">Novo Projeto</h3>
+                    <input type="text" id="new-proj-id" placeholder="ID (ex: franca-2026)" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-sm mb-4">
+                    <input type="text" id="new-proj-cidade" placeholder="Cidade" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-sm mb-4 text-white">
+                    <input type="text" id="new-proj-escola" placeholder="Escola" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-sm mb-4 text-white">
+                    <button onclick="window.criarProjeto()" class="btn-primary w-full py-4 rounded-xl font-bold uppercase text-xs text-white">Salvar</button>
                 </div>
-                <div class="glass p-8 rounded-[2.5rem] text-white">
-                    <h3 class="font-black uppercase text-xs mb-6 text-emerald-400 text-white">Trocar Ativo</h3>
-                    <div class="space-y-4 text-white">
-                        <select id="config-projeto-ativo" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-sm font-bold text-blue-400 mb-4 text-white"></select>
-                        <button onclick="window.ativarProjeto()" class="bg-emerald-600 w-full py-4 rounded-xl font-bold uppercase text-xs text-white">Ativar</button>
-                    </div>
+                <div class="glass p-8 rounded-[2.5rem]">
+                    <h3 class="font-black uppercase text-xs mb-6 text-emerald-400">Mudar Ativo</h3>
+                    <select id="config-projeto-ativo" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl text-sm font-bold text-blue-400 mb-4"></select>
+                    <button onclick="window.ativarProjeto()" class="bg-emerald-600 w-full py-4 rounded-xl font-bold uppercase text-xs text-white">Ativar</button>
                 </div>
             </div>
         </div>
@@ -166,22 +152,16 @@
         let projetoAtualId = "guaratingueta-guilherme";
         let chartWeekly = null;
 
-        // --- BLINDAGEM DE CARREGAMENTO (ESCUTA CONTÍNUA) ---
         onValue(ref(db, "config/projeto_ativo"), async (snap) => {
-            const id = snap.val();
-            if(id) {
-                projetoAtualId = id;
-                const projSnap = await get(ref(db, `config/projetos/${projetoAtualId}`));
-                if(projSnap.exists()){
-                    const d = projSnap.val();
-                    document.getElementById('escola-titulo').innerText = d.cidade;
-                    document.getElementById('sub-escola').innerText = d.escola;
-                    const statusEl = document.getElementById('status-projeto-ativo');
-                    if(statusEl) statusEl.innerText = `${d.cidade} - ${d.escola}`;
-                    
-                    // Dispara refresh se não estiver no agendamento
-                    if(document.querySelector('.view-active').id !== 'view-agendamento') window.carregarRelatorio();
-                }
+            projetoAtualId = snap.val() || "guaratingueta-guilherme";
+            const projSnap = await get(ref(db, `config/projetos/${projetoAtualId}`));
+            if(projSnap.exists()){
+                const d = projSnap.val();
+                document.getElementById('escola-titulo').innerText = d.cidade;
+                document.getElementById('sub-escola').innerText = d.escola;
+                const st = document.getElementById('status-projeto-ativo');
+                if(st) st.innerText = `${d.cidade} - ${d.escola}`;
+                window.carregarRelatorio();
             }
         });
 
@@ -202,7 +182,7 @@
             const ags = sA.val() || {};
             Object.keys(ags).forEach(d => { if(ags[d]) Object.keys(ags[d]).forEach(id => window.dadosCompletos.push({...ags[d][id], id, data: d, path: `dados/${projetoAtualId}/agendamentos/${d}/${id}`})); });
             const avs = sV.val() || {};
-            Object.keys(avs).forEach(id => window.dadosCompletos.push({...avs[id], id, path: `dados/${projetoAtualId}/avulsos/${id}`, data: avs[id].data || '2026-03-07'}));
+            Object.keys(avs).forEach(id => window.dadosCompletos.push({...avs[id], id, path: `dados/${projetoAtualId}/avulsos/${id}`, data: avs[id].data}));
             window.filtrarLogistica();
             window.filtrarBI();
         };
@@ -216,8 +196,8 @@
             container.innerHTML = '';
             lista.forEach(i => {
                 const cor = i.resultado === "Venda" ? "border-emerald-500/40 bg-emerald-500/5" : (i.resultado === "NQ" ? "border-rose-500/40 bg-rose-500/5" : "border-white/10");
-                const label = i.resultado === "Venda" ? `<span class="text-emerald-400 font-black text-xs block mb-2 uppercase italic text-white text-white">✓ VENDA REALIZADA</span>` : (i.resultado === "NQ" ? `<span class="text-rose-500 font-black text-xs block mb-2 uppercase tracking-widest italic text-white text-white">✗ NQ - PERDIDO</span>` : "");
-                container.innerHTML += `<div class="glass p-6 rounded-[2.5rem] border-l-8 ${cor} flex flex-col md:flex-row justify-between items-center gap-4 text-white text-white text-white text-white text-white"><div class="flex-grow text-center md:text-left">${label}<div class="mb-2"><span class="text-3xl font-black block text-white text-white">${pDT(i.data)}</span><span class="text-xl font-bold text-blue-400 uppercase text-white">${i.horario || 'DIR'}</span></div><h3 class="text-2xl font-black uppercase mt-2 text-white">${i.nome_formando}</h3><div class="mt-4 flex flex-col gap-2 text-white"><a href="https://wa.me/55${(i.telefone||'').replace(/\D/g,'')}" target="_blank" class="text-emerald-400 font-bold text-base hover:underline italic text-white">📱 WhatsApp: ${i.telefone || 'N/A'}</a><a href="https://www.waze.com/ul?q=${encodeURIComponent(i.endereco||'')}&navigate=yes" target="_blank" class="text-slate-400 text-sm leading-relaxed hover:text-blue-400 transition italic text-white">📍 ${i.endereco || 'Endereço não informado'}</a></div></div><button onclick="window.gerenciarItem('${i.path}', '${i.nome_formando}', '${i.endereco}')" class="btn-primary px-12 py-6 rounded-3xl font-black uppercase text-xs shadow-xl shadow-blue-900/30 text-white">Gerenciar</button></div>`;
+                const label = i.resultado === "Venda" ? `<span class="text-emerald-400 font-black text-xs block mb-2 uppercase italic">✓ VENDA REALIZADA</span>` : (i.resultado === "NQ" ? `<span class="text-rose-500 font-black text-xs block mb-2 uppercase tracking-widest italic">✗ NQ - PERDIDO</span>` : "");
+                container.innerHTML += `<div class="glass p-6 rounded-[2.5rem] border-l-8 ${cor} flex flex-col md:flex-row justify-between items-center gap-4 text-white"><div class="flex-grow text-center md:text-left">${label}<div class="mb-2"><span class="text-3xl font-black block">${pDT(i.data)}</span><span class="text-xl font-bold text-blue-400 uppercase">${i.horario || 'DIR'}</span></div><h3 class="text-2xl font-black uppercase mt-2">${i.nome_formando}</h3><div class="mt-4 flex flex-col gap-2 text-white"><a href="https://wa.me/55${(i.telefone||'').replace(/\D/g,'')}" target="_blank" class="text-emerald-400 font-bold text-base hover:underline italic">📱 WhatsApp: ${i.telefone}</a><a href="https://www.waze.com/ul?q=${encodeURIComponent(i.endereco||'')}&navigate=yes" target="_blank" class="text-slate-400 text-sm leading-relaxed hover:text-blue-400 transition italic">📍 ${i.endereco}</a></div></div><button onclick="window.gerenciarItem('${i.path}', '${i.nome_formando}', '${i.endereco}')" class="btn-primary px-12 py-6 rounded-3xl font-black uppercase text-xs shadow-xl shadow-blue-900/30 text-white">Gerenciar</button></div>`;
             });
         };
 
@@ -233,57 +213,69 @@
                     m.v++; const vV = Number(i.valor)||0; m.tot += vV;
                     const dIdx = new Date(i.data + "T00:00:00").getDay(); dailySales[dIdx]++;
                     let comI = 0, pgsI = [];
+                    
+                    // --- Lógica de soma corrigida para arrays de pagamento ---
                     if(Array.isArray(i.pagamentos)) {
                         i.pagamentos.forEach(p => {
-                            const vp = Number(p.valor)||0, ent = Number(p.entrada)||0; pgsI.push(p.tipo);
-                            if(p.tipo === "Pix") m.pix += vp; else if(p.tipo === "Dinheiro") m.din += vp; else if(p.tipo.includes("Débito")) m.deb += vp; else if(p.tipo.includes("Crédito")) m.cre += vp;
-                            else if(p.tipo === "Boleto") { m.bol += (vp-ent); comI += (ent*0.12)+((vp-ent)*0.08); if(p.forma_entrada === "Pix" || p.forma_entrada === "Dinheiro") m.vales += ent; }
-                            if(p.tipo !== "Boleto") { if(p.tipo === "Pix" || p.tipo === "Dinheiro") m.vales += vp; comI += vp * 0.12; }
+                            const val = Number(p.valor)||0;
+                            const ent = Number(p.entrada)||0;
+                            pgsI.push(p.tipo);
+                            
+                            if(p.tipo === "Pix") m.pix += val; 
+                            else if(p.tipo === "Dinheiro") m.din += val;
+                            else if(p.tipo.includes("Crédito")) m.cre += val;
+                            else if(p.tipo.includes("Débito")) m.deb += val;
+                            else if(p.tipo === "Boleto") {
+                                m.bol += (val - ent);
+                                comI += (ent * 0.12) + ((val - ent) * 0.08);
+                                if(p.forma_entrada === "Pix") m.pix += ent; else if(p.forma_entrada === "Dinheiro") m.din += ent;
+                                if(p.forma_entrada === "Pix" || p.forma_entrada === "Dinheiro") m.vales += ent;
+                            }
+                            
+                            if(p.tipo !== "Boleto") {
+                                comI += val * 0.12;
+                                if(p.tipo === "Pix" || p.tipo === "Dinheiro") m.vales += val;
+                            }
                         });
                     } else { comI = vV * 0.12; }
                     m.com += comI;
-                    rows += `<tr class="border-b border-white/5 hover:bg-white/5"><td class="p-4 font-bold uppercase text-white">${i.nome_formando}</td><td class="p-4 text-emerald-400 font-bold">${fBR(i.valor)}</td><td class="p-4"><span class="bg-blue-600/30 text-blue-300 px-3 py-1 rounded-lg font-black uppercase text-[9px] tracking-widest">${pgsI.join(' + ')}</span></td><td class="p-4 font-black text-emerald-400">${fBR(comI)}</td></tr>`;
+                    rows += `<tr class="border-b border-white/5 hover:bg-white/5"><td class="p-4 font-bold uppercase">${i.nome_formando}</td><td class="p-4 text-emerald-400 font-bold">${fBR(i.valor)}</td><td class="p-4"><span class="bg-blue-600/30 text-blue-300 px-3 py-1 rounded-lg font-black uppercase text-[9px] tracking-widest">${pgsI.join(' + ')}</span></td><td class="p-4 font-black text-emerald-400">${fBR(comI)}</td></tr>`;
                 } else if(i.resultado === "NQ") m.nq++;
             });
 
             const tx = (m.v + m.nq) > 0 ? ((m.v / (m.v + m.nq)) * 100).toFixed(0) : 0;
-            const avg = m.v > 0 ? m.tot / m.v : 0;
             const perc = (v) => m.tot > 0 ? ((v / m.tot) * 100).toFixed(0) + '%' : '0%';
 
-            // KPI Performance
             document.getElementById('kpi-grid').innerHTML = `
-                <div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10"><p class="text-[9px] text-emerald-500 font-black mb-1 uppercase">Total Vendas</p><p class="text-3xl font-black">${m.v}</p></div>
-                <div class="card-bi p-6 rounded-[2rem] border-rose-500 bg-rose-950/10"><p class="text-[9px] text-rose-500 font-black mb-1 uppercase">Total NQ</p><p class="text-3xl font-black">${m.nq}</p></div>
-                <div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase">Eficiência (%)</p><p class="text-3xl font-black">${tx}%</p></div>
-                <div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10"><p class="text-[9px] text-cyan-500 font-black mb-1 uppercase">Ticket Médio</p><p class="text-3xl font-black">${fBR(avg)}</p></div>
+                <div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10"><p class="text-[9px] text-emerald-500 font-black mb-1 uppercase">Vendas</p><p class="text-3xl font-black">${m.v}</p></div>
+                <div class="card-bi p-6 rounded-[2rem] border-rose-500 bg-rose-950/10"><p class="text-[9px] text-rose-500 font-black mb-1 uppercase">NQ</p><p class="text-3xl font-black">${m.nq}</p></div>
+                <div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase">Conversão</p><p class="text-3xl font-black">${tx}%</p></div>
+                <div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10"><p class="text-[9px] text-cyan-500 font-black mb-1 uppercase">Ticket Médio</p><p class="text-3xl font-black">${fBR(m.v?m.tot/m.v:0)}</p></div>
             `;
 
-            // Financeiro Canais
             document.getElementById('finance-grid').innerHTML = `
-                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 uppercase font-black">Pix (${perc(m.pix)})</p><p class="text-lg font-black">${fBR(m.pix)}</p></div>
-                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 uppercase font-black">Dinheiro (${perc(m.din)})</p><p class="text-lg font-black">${fBR(m.din)}</p></div>
-                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 uppercase font-black">Crédito (${perc(m.cre)})</p><p class="text-lg font-black">${fBR(m.cre)}</p></div>
-                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 uppercase font-black">Débito (${perc(m.deb)})</p><p class="text-lg font-black">${fBR(m.deb)}</p></div>
-                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 uppercase font-black">Boleto (${perc(m.bol)})</p><p class="text-lg font-black">${fBR(m.bol)}</p></div>
+                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Pix (${perc(m.pix)})</p><p class="text-lg font-black">${fBR(m.pix)}</p></div>
+                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Dinheiro (${perc(m.din)})</p><p class="text-lg font-black">${fBR(m.din)}</p></div>
+                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Crédito (${perc(m.cre)})</p><p class="text-lg font-black">${fBR(m.cre)}</p></div>
+                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Débito (${perc(m.deb)})</p><p class="text-lg font-black">${fBR(m.deb)}</p></div>
+                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Boleto (${perc(m.bol)})</p><p class="text-lg font-black">${fBR(m.bol)}</p></div>
             `;
 
-            // Saldo Resumo
             document.getElementById('saldo-card').innerHTML = `
-                <p class="text-[10px] font-black uppercase text-slate-500 mb-4 italic">Resumo de Ganhos</p>
-                <div class="space-y-2">
-                    <div class="flex justify-between text-white text-sm"><span>Faturamento Bruto</span><span class="font-black">${fBR(m.tot)}</span></div>
+                <p class="text-[10px] font-black uppercase text-slate-500 mb-4 italic text-white text-white">Consolidado</p>
+                <div class="space-y-2 text-white">
+                    <div class="flex justify-between text-sm"><span>Faturamento Bruto</span><span class="font-black">${fBR(m.tot)}</span></div>
                     <div class="flex justify-between text-blue-300 text-sm"><span>Comissão Bruta</span><span class="font-black">${fBR(m.com)}</span></div>
                     <div class="flex justify-between text-rose-400 text-sm"><span>Vales Retirados</span><span class="font-black">- ${fBR(m.vales)}</span></div>
-                    <div class="border-t border-white/10 mt-6 pt-6 text-center">
-                        <p class="text-[8px] font-black uppercase text-emerald-400 tracking-widest mb-1">Líquido Real a Receber</p>
+                    <div class="border-t border-white/10 mt-6 pt-6 text-center text-white">
+                        <p class="text-[8px] font-black uppercase text-emerald-400 tracking-widest mb-1">Saldo a Receber</p>
                         <p class="text-5xl font-black text-white italic">${fBR(m.com - m.vales)}</p>
                     </div>
                 </div>
             `;
 
-            document.getElementById('extrato-tabela').innerHTML = rows || '<tr><td colspan="4" class="p-8 text-center text-slate-500 uppercase">Aguardando dados...</td></tr>';
+            document.getElementById('extrato-tabela').innerHTML = rows || '<tr><td colspan="4" class="p-10 text-center text-slate-500 uppercase">Sem dados</td></tr>';
 
-            // Gráfico Semanal
             if(chartWeekly) chartWeekly.destroy();
             chartWeekly = new Chart(document.getElementById('chartWeekly'), {
                 type: 'bar',
@@ -292,35 +284,27 @@
             });
         };
 
-        // --- GESTÃO E EDIÇÃO ---
+        // --- GESTÃO ---
         window.gerenciarItem = (p, n, e) => { window.itemPath = p; window.currentName = n; window.currentEnd = e; document.getElementById('modalGestao').style.display = 'flex'; };
-        window.fluxoEditar = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Corrigir Registro</h3><input type="text" id="edit-nome" value="${window.currentName}" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><textarea id="edit-end" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none" rows="3">${window.currentEnd}</textarea><button onclick="window.salvarEdicao()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar</button>`; };
+        window.fluxoEditar = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Editar</h3><input type="text" id="edit-nome" value="${window.currentName}" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white outline-none border border-white/10"><textarea id="edit-end" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white outline-none border border-white/10" rows="3">${window.currentEnd}</textarea><button onclick="window.salvarEdicao()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar</button>`; };
         window.salvarEdicao = async () => { const n = document.getElementById('edit-nome').value, e = document.getElementById('edit-end').value; await update(ref(db, window.itemPath), { nome_formando: n, endereco: e }); window.fecharModalGestao(); await window.carregarRelatorio(); };
         window.salvarStatusSimples = async (s) => { await update(ref(db, window.itemPath), { resultado: s, valor: 0 }); window.fecharModalGestao(); await window.carregarRelatorio(); };
-        window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-900 p-6 rounded-3xl text-center mb-4 text-white font-black text-3xl border border-white/10 outline-none"><div class="grid grid-cols-2 gap-2 mb-4 text-white text-white"><button onclick="window.addPg('Dinheiro')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Dinheiro</button><button onclick="window.addPg('Pix')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Pix</button><button onclick="window.addPg('Cartão Débito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Débito</button><button onclick="window.addPg('Cartão Crédito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Crédito</button><button onclick="window.addPg('Boleto')" class="p-4 bg-blue-900/30 border border-blue-500/40 rounded-2xl text-[10px] font-black uppercase col-span-2 text-white">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4 text-white"></div><button onclick="window.finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white shadow-xl">SALVAR</button>`; window.tempPgs = []; };
-        window.addPg = (tipo) => { const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0); if(v <= 0) return; let pg = { tipo, valor: v }; if(tipo === 'Boleto') { const ent = prompt("Entrada? 1-Sim 2-Não"); if(ent === "1") { pg.entrada = parseFloat(prompt("Valor Entrada:")?.replace(',','.') || 0); const fE = prompt("Forma: 1-Dinheiro 2-Pix"); pg.forma_entrada = fE === "1" ? "Dinheiro" : "Pix"; } } window.tempPgs.push(pg); document.getElementById('lista-p').innerHTML = window.tempPgs.map(p => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px] text-white"><span>${p.tipo}</span><span class="text-emerald-400 font-bold">${fBR(p.valor)}</span></div>`).join(''); };
+        window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<input type="number" id="vTotal" placeholder="TOTAL" class="w-full bg-slate-900 p-6 rounded-3xl text-center mb-4 text-white font-black text-3xl outline-none border border-white/10"><div class="grid grid-cols-2 gap-2 mb-4 text-white text-white text-white"><button onclick="window.addPg('Dinheiro')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white text-white">+ Dinheiro</button><button onclick="window.addPg('Pix')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white text-white text-white">+ Pix</button><button onclick="window.addPg('Cartão Débito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white text-white text-white text-white">+ Débito</button><button onclick="window.addPg('Cartão Crédito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white text-white text-white text-white text-white">+ Crédito</button><button onclick="window.addPg('Boleto')" class="p-4 bg-blue-900/30 border border-blue-500/40 rounded-2xl text-[10px] font-black uppercase col-span-2 text-white text-white text-white text-white text-white text-white text-white">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4 text-white text-white text-white text-white text-white text-white text-white text-white"></div><button onclick="window.finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white text-white text-white text-white text-white text-white text-white text-white text-white shadow-xl">SALVAR</button>`; window.tempPgs = []; };
+        window.addPg = (tipo) => { const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0); if(v <= 0) return; let pg = { tipo, valor: v }; if(tipo === 'Boleto') { const ent = prompt("Entrada? 1-Sim 2-Não"); if(ent === "1") { pg.entrada = parseFloat(prompt("Valor Entrada:")?.replace(',','.') || 0); const fE = prompt("Forma: 1-Dinheiro 2-Pix"); pg.forma_entrada = fE === "1" ? "Dinheiro" : "Pix"; } } window.tempPgs.push(pg); document.getElementById('lista-p').innerHTML = window.tempPgs.map(p => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]"><span>${p.tipo}</span><span class="text-emerald-400 font-bold">${fBR(p.valor)}</span></div>`).join(''); };
         window.finalizarVenda = async () => { const tot = parseFloat(document.getElementById('vTotal').value); if(!tot) return alert("Valor!"); await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, pagamentos: window.tempPgs }); window.fecharModalGestao(); await window.carregarRelatorio(); };
-        window.confirmarExclusao = async () => { if(confirm("Apagar Registro?")) { await remove(ref(db, window.itemPath)); window.fecharModalGestao(); await window.carregarRelatorio(); } };
 
         window.carregarConfiguracoes = async () => {
             const snap = await get(ref(db, `config/projetos`));
             const lista = snap.val() || {};
             const sel = document.getElementById('config-projeto-ativo');
-            if(sel) {
-                sel.innerHTML = '';
-                for(let k in lista) {
-                    let o = document.createElement('option'); o.value = k; o.textContent = `${lista[k].cidade} - ${lista[k].escola}`;
-                    if(k === projetoAtualId) o.selected = true;
-                    sel.appendChild(o);
-                }
-            }
+            if(sel) { sel.innerHTML = ''; for(let k in lista) { let o = document.createElement('option'); o.value = k; o.textContent = `${lista[k].cidade} - ${lista[k].escola}`; if(k === projetoAtualId) o.selected = true; sel.appendChild(o); } }
         };
 
         window.criarProjeto = async () => {
             const id = document.getElementById('new-proj-id').value, cid = document.getElementById('new-proj-cidade').value, esc = document.getElementById('new-proj-escola').value;
             if(!id || !cid || !esc) return alert("Erro!");
             await set(ref(db, `config/projetos/${id}`), { cidade: cid, escola: esc });
-            alert("Criado!"); window.carregarConfiguracoes();
+            alert("Salvo!"); window.carregarConfiguracoes();
         };
 
         window.ativarProjeto = async () => {
@@ -329,54 +313,30 @@
             location.reload();
         };
 
-        window.abrirAvulso = () => { document.getElementById('modalGestao').style.display = 'flex'; document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Novo Avulso</h3><input type="text" id="av-nome" placeholder="NOME" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white"><input type="tel" id="av-tel" placeholder="TEL" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-3 rounded-xl mb-2 text-white"><input type="date" id="av-data" class="w-full bg-slate-800 p-3 rounded-xl mb-4 text-white"><button onclick="window.salvarNovoAvulso()" class="w-full p-4 bg-blue-600 rounded-xl font-black text-white uppercase text-xs">Salvar</button>`; document.getElementById('av-data').value = new Date().toLocaleDateString('en-CA'); };
-        window.salvarNovoAvulso = async () => { const n = document.getElementById('av-nome').value, d = document.getElementById('av-data').value; if(!n || !d) return alert("Erro!"); await set(ref(db, `dados/${projetoAtualId}/avulsos/AV-${Date.now()}`), { nome_formando: n, telefone: document.getElementById('av-tel').value, endereco: document.getElementById('av-end').value, data: d, resultado: "Pendente" }); window.fluxoResultado(); };
-
-        window.copiarRelatorio = () => {
-            const f = fBR; const dF = document.getElementById('filtro-bi').value;
-            let v=0, nq=0, totV=0, com=0, val=0;
-            window.dadosCompletos.filter(i => !dF || i.data === dF).forEach(item => {
-                if(item.resultado === "Venda") { v++; totV += Number(item.valor)||0; if(Array.isArray(item.pagamentos)) { item.pagamentos.forEach(p => { const vp = Number(p.valor)||0, ent = Number(p.entrada)||0; if(p.tipo === 'Boleto') { com += (ent*0.12)+((vp-ent)*0.08); val += ent; } else { com += vp*0.12; if(p.tipo==='Pix'||p.tipo==='Dinheiro') val+=vp; } }); } }
-                else if(item.resultado === "NQ") nq++;
-            });
-            const txt = `*RELATÓRIO*\n✅ Vendas: ${v}\n❌ NQ: ${nq}\n💰 Total: ${f(totV)}\n💵 Líquido: ${f(com-val)}`;
-            const el = document.createElement('textarea'); el.value = txt; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); alert("Copiado!");
-        };
-
         window.selecionarDia = async (btn) => {
             document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
             const d = btn.getAttribute('data-date'); document.getElementById('data-selecionada').value = d;
             const elH = document.getElementById('horario'); elH.innerHTML = '<option>Buscando...</option>';
             const snap = await get(ref(db, `dados/${projetoAtualId}/agendamentos/${d}`));
-            const counts = {}; const ag = snap.val() || {};
+            const ag = snap.val() || {}; const counts = {};
             Object.keys(ag).forEach(id => { if(id.includes('-')){ let hL = id.split('-').slice(0,2).join(':'); counts[hL] = (counts[hL]||0)+1; } });
-            elH.innerHTML = '<option value="">Escolha um Horário</option>';
+            elH.innerHTML = '<option value="">Horário</option>';
             let cur = new Date(`${d}T09:00:00`), lim = (new Date(d + 'T00:00:00').getDay() % 6 === 0) ? "17:00" : "20:30";
             while(cur <= new Date(`${d}T${lim}:00`)){
                 let hF = cur.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-                let prm = true; if(d === new Date().toLocaleDateString('en-CA') && (cur - new Date()) / 3600000 < 3) prm = false;
-                if(prm && (2 - (counts[hF]||0)) > 0){ let opt=document.createElement('option'); opt.value=hF; opt.textContent=`${hF} (${2 - (counts[hF]||0)} vagas)`; elH.appendChild(opt); }
+                if((2 - (counts[hF]||0)) > 0){ let opt=document.createElement('option'); opt.value=hF; opt.textContent=`${hF} (${2 - (counts[hF]||0)} vagas)`; elH.appendChild(opt); }
                 cur.setMinutes(cur.getMinutes()+30);
             }
         };
 
-        // --- INICIALIZAÇÃO ---
         (async () => {
             const agora = new Date(), dHoje = agora.toLocaleDateString('en-CA');
             document.querySelectorAll('.day-btn').forEach(btn => {
-                const dBtn = btn.getAttribute("data-date");
-                if (dBtn < dHoje) return;
-                if (dBtn === dHoje) {
-                    const lim = (agora.getDay() % 6 === 0) ? 17 : 20;
-                    if (agora.getHours() >= (lim - 3)) return; 
-                }
-                btn.style.display = "block";
+                if (btn.getAttribute("data-date") >= dHoje) btn.style.display = "block";
             });
-
             document.getElementById("form-agendamento").addEventListener("submit", async function(e){
                 e.preventDefault(); const n = document.getElementById("nome").value, t = document.getElementById("telefone").value, en = document.getElementById("endereco").value, h = document.getElementById("horario").value, d = document.getElementById("data-selecionada").value;
                 await set(ref(db, `dados/${projetoAtualId}/agendamentos/${d}/${h.replace(":","-")}-${Date.now()}`), { nome_formando: n, telefone: t, endereco: en, horario: h, data: d, resultado: "Pendente" });
-                window.open(`https://wa.me/5516993291674?text=${encodeURIComponent("*AGENDAMENTO*\n👤: "+n+"\n📅: "+pDT(d)+"\n⏰: "+h+"\n📍: "+en)}`, "_blank");
                 location.reload();
             });
         })();
