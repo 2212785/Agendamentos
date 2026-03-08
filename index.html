@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.1</title>
+    <title>Elite Sales Intelligence - BI v12.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -134,7 +134,6 @@
         let projetoAtualId = "";
         let chartWeekly = null;
 
-        // --- GESTÃO REATIVA ---
         onValue(ref(db, "config/projeto_ativo"), async (snap) => {
             projetoAtualId = snap.val() || "guaratingueta-guilherme";
             const projSnap = await get(ref(db, `config/projetos/${projetoAtualId}`));
@@ -221,52 +220,65 @@
                     rows += `<tr class="border-b border-white/5 hover:bg-white/5 text-white"><td>${i.nome_formando}</td><td>${fBR(i.valor)}</td><td>${pgsI.join('+')}</td><td class="font-black text-emerald-400">${fBR(comI)}</td></tr>`;
                 } else if(i.resultado === "NQ") m.nq++;
             });
-            
             const perc = (v) => m.tot > 0 ? ((v / m.tot) * 100).toFixed(0) + '%' : '0%';
-
-            // KPI Performance - TOTAL DE VENDAS EVIDENCIADO À ESQUERDA
-            document.getElementById('kpi-grid').innerHTML = `
-                <div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10"><p class="text-[9px] text-emerald-500 font-black mb-1 uppercase">Faturamento Bruto</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div>
-                <div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase">Vendas / NQ</p><p class="text-3xl font-black">${m.v} / ${m.nq}</p></div>
-                <div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase text-white">Eficiência</p><p class="text-3xl font-black text-white">${(m.v+m.nq)>0 ? ((m.v/(m.v+m.nq))*100).toFixed(0) : 0}%</p></div>
-                <div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10"><p class="text-[9px] text-cyan-500 font-black mb-1 uppercase text-white">Ticket Médio</p><p class="text-3xl font-black text-white">${fBR(m.v?m.tot/m.v:0)}</p></div>`;
-
-            // Financeiro Canais - TODOS COM PORCENTAGEM
-            document.getElementById('finance-grid').innerHTML = `
-                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Pix (${perc(m.pix)})</p><p class="text-lg font-black">${fBR(m.pix)}</p></div>
-                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Dinheiro (${perc(m.din)})</p><p class="text-lg font-black">${fBR(m.din)}</p></div>
-                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Crédito (${perc(m.cre)})</p><p class="text-lg font-black">${fBR(m.cre)}</p></div>
-                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase text-white">Débito (${perc(m.deb)})</p><p class="text-lg font-black">${fBR(m.deb)}</p></div>
-                <div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white">Boleto (${perc(m.bol)})</p><p class="text-lg font-black text-white">${fBR(m.bol)}</p></div>`;
             
-            document.getElementById('saldo-card').innerHTML = `<p class="text-[10px] font-black uppercase text-slate-500 mb-4 italic text-white text-white">Resumo</p><div class="space-y-2 text-white"><div class="flex justify-between text-sm"><span>Comissão Bruta</span><span class="font-black text-white">${fBR(m.com)}</span></div><div class="flex justify-between text-rose-400 text-sm"><span>Vales Retirados</span><span class="font-black text-white">- ${fBR(m.vales)}</span></div><div class="border-t border-white/10 mt-6 pt-6 text-center text-white"><p class="text-[8px] font-black text-emerald-400 uppercase">Saldo a Receber</p><p class="text-5xl font-black text-white italic text-white">${fBR(m.com - m.vales)}</p></div></div>`;
-            document.getElementById('extrato-tabela').innerHTML = rows || '<tr><td colspan="4" class="p-10 text-center text-slate-500 uppercase text-white text-white">Sem dados</td></tr>';
+            document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10"><p class="text-[9px] text-emerald-500 font-black mb-1 uppercase">Faturamento Bruto</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase">Vendas / NQ</p><p class="text-3xl font-black">${m.v} / ${m.nq}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase text-white text-white text-white">Eficiência</p><p class="text-3xl font-black text-white text-white text-white">${(m.v+m.nq)>0 ? ((m.v/(m.v+m.nq))*100).toFixed(0) : 0}%</p></div><div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10"><p class="text-[9px] text-cyan-500 font-black mb-1 uppercase text-white text-white text-white">Ticket Médio</p><p class="text-3xl font-black text-white text-white text-white">${fBR(m.v?m.tot/m.v:0)}</p></div>`;
+            document.getElementById('finance-grid').innerHTML = `<div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Pix (${perc(m.pix)})</p><p class="text-lg font-black">${fBR(m.pix)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase">Dinheiro (${perc(m.din)})</p><p class="text-lg font-black">${fBR(m.din)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white">Crédito (${perc(m.cre)})</p><p class="text-lg font-black text-white text-white">${fBR(m.cre)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white">Débito (${perc(m.deb)})</p><p class="text-lg font-black text-white text-white">${fBR(m.deb)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] text-slate-500 font-black uppercase text-white text-white">Boleto (${perc(m.bol)})</p><p class="text-lg font-black text-white text-white">${fBR(m.bol)}</p></div>`;
+            document.getElementById('saldo-card').innerHTML = `<p class="text-[10px] font-black uppercase text-slate-500 mb-4 italic text-white text-white text-white">Consolidado</p><div class="space-y-2 text-white"><div class="flex justify-between text-sm"><span>Comissão Bruta</span><span class="font-black text-white text-white">${fBR(m.com)}</span></div><div class="flex justify-between text-rose-400 text-sm"><span>Vales Retirados</span><span class="font-black text-white text-white">- ${fBR(m.vales)}</span></div><div class="border-t border-white/10 mt-6 pt-6 text-center text-white"><p class="text-[8px] font-black text-emerald-400 uppercase">Saldo a Receber</p><p class="text-5xl font-black text-white italic text-white text-white">${fBR(m.com - m.vales)}</p></div></div>`;
+            document.getElementById('extrato-tabela').innerHTML = rows || '<tr><td colspan="4" class="p-10 text-center text-slate-500 uppercase text-white text-white text-white">Sem dados</td></tr>';
             if(chartWeekly) chartWeekly.destroy();
             chartWeekly = new Chart(document.getElementById('chartWeekly'), { type: 'bar', data: { labels: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'], datasets: [{ data: daily, backgroundColor: '#3b82f6', borderRadius: 8 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { ticks: { color: '#64748b' }, grid: { display: false } } } } });
         };
 
+        window.copiarRelatorio = () => {
+            const f = fBR; const dF = document.getElementById('filtro-bi').value;
+            const pNome = document.getElementById('escola-titulo').innerText + " - " + document.getElementById('sub-escola').innerText;
+            let v=0, nq=0, totV=0, pix=0, din=0, cre=0, deb=0, bol=0, val=0;
+            const listaBase = dF ? window.dadosCompletos.filter(i => i.data === dF) : window.dadosCompletos;
+
+            listaBase.forEach(item => {
+                if(item.resultado === "Venda") {
+                    v++; totV += Number(item.valor)||0;
+                    if(Array.isArray(item.pagamentos)) {
+                        item.pagamentos.forEach(p => {
+                            const vp = Number(p.valor)||0; const ent = Number(p.entrada)||0;
+                            const t = p.tipo.toLowerCase();
+                            if(t.includes("pix")) pix += vp;
+                            else if(t.includes("dinheiro")) din += vp;
+                            else if(t.includes("crédito") || t.includes("credito")) cre += vp;
+                            else if(t.includes("débito") || t.includes("debito")) deb += vp;
+                            else if(t.includes("boleto")) {
+                                bol += (vp - ent);
+                                if(p.forma_entrada === "Pix") pix += ent; else if(p.forma_entrada === "Dinheiro") din += ent;
+                                if(p.forma_entrada === "Pix" || p.forma_entrada === "Dinheiro") val += ent;
+                            }
+                            if(!t.includes("boleto") && (t.includes("pix") || t.includes("dinheiro"))) val += vp;
+                        });
+                    }
+                } else if(item.resultado === "NQ") nq++;
+            });
+
+            const txt = `Relatório de Vendas\nProjeto: ${pNome}\nData: ${dF ? pDT(dF) : 'ACUMULADO GERAL'}\n\n✅ Vendas: ${v}\n❌ NQ: ${nq}\n\n💵 Dinheiro: ${f(din)}\n💎 Pix: ${f(pix)}\n💳 Débito: ${f(deb)}\n💳 Crédito: ${f(cre)}\n📄 Boleto: ${f(bol)}\n\n💰 Total Vendido: ${f(totV)}\n💸 Vales: ${f(val)}`;
+            
+            const el = document.createElement('textarea'); el.value = txt; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); 
+            alert("Relatório Copiado com Sucesso!");
+        };
+
         window.gerenciarItem = (p, n, e) => { window.itemPath = p; window.currentName = n; window.currentEnd = e; document.getElementById('modalGestao').style.display = 'flex'; };
-        window.fluxoEditar = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs text-white">Editar</h3><input type="text" id="edit-nome" value="${window.currentName}" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white outline-none border border-white/10"><textarea id="edit-end" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white outline-none border border-white/10 text-white" rows="3">${window.currentEnd}</textarea><button onclick="window.salvarEdicao()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase text-white">Salvar</button>`; };
+        window.fluxoEditar = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs text-white text-white">Editar</h3><input type="text" id="edit-nome" value="${window.currentName}" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white outline-none border border-white/10 text-white text-white"><textarea id="edit-end" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white outline-none border border-white/10 text-white text-white text-white text-white" rows="3">${window.currentEnd}</textarea><button onclick="window.salvarEdicao()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase text-white text-white">Salvar</button>`; };
         window.salvarEdicao = async () => { const n = document.getElementById('edit-nome').value, e = document.getElementById('edit-end').value; await update(ref(db, window.itemPath), { nome_formando: n, endereco: e }); window.fecharModalGestao(); await window.carregarRelatorio(); };
         window.salvarStatusSimples = async (s) => { await update(ref(db, window.itemPath), { resultado: s, valor: 0 }); window.fecharModalGestao(); await window.carregarRelatorio(); };
-        window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<input type="number" id="vTotal" placeholder="TOTAL" class="w-full bg-slate-900 p-6 rounded-3xl text-center mb-4 text-white font-black text-3xl border border-white/10 outline-none"><div class="grid grid-cols-2 gap-2 mb-4 text-white"><button onclick="window.addPg('Dinheiro')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Dinheiro</button><button onclick="window.addPg('Pix')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Pix</button><button onclick="window.addPg('Cartão Débito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white text-white">+ Débito</button><button onclick="window.addPg('Cartão Crédito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white text-white">+ Crédito</button><button onclick="window.addPg('Boleto')" class="p-4 bg-blue-900/30 border border-blue-500/40 rounded-2xl text-[10px] font-black uppercase col-span-2 text-white">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4 text-white text-white"></div><button onclick="window.finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white shadow-xl shadow-emerald-900/20 text-white">SALVAR</button>`; window.tempPgs = []; };
+        window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-900 p-6 rounded-3xl text-center mb-4 text-white font-black text-3xl border border-white/10 outline-none"><div class="grid grid-cols-2 gap-2 mb-4 text-white text-white text-white text-white text-white text-white"><button onclick="window.addPg('Dinheiro')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Dinheiro</button><button onclick="window.addPg('Pix')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Pix</button><button onclick="window.addPg('Cartão Débito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white text-white text-white">+ Débito</button><button onclick="window.addPg('Cartão Crédito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white text-white text-white">+ Crédito</button><button onclick="window.addPg('Boleto')" class="p-4 bg-blue-900/30 border border-blue-500/40 rounded-2xl text-[10px] font-black uppercase col-span-2 text-white">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4 text-white text-white text-white text-white text-white text-white"></div><button onclick="window.finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white shadow-xl shadow-emerald-900/20 text-white text-white text-white text-white">SALVAR</button>`; window.tempPgs = []; };
         window.addPg = (tipo) => { const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',','.') || 0); if(v <= 0) return; let pg = { tipo, valor: v }; if(tipo === 'Boleto') { const ent = prompt("Entrada? 1-Sim 2-Não"); if(ent === "1") { pg.entrada = parseFloat(prompt("Valor Entrada:")?.replace(',','.') || 0); const fE = prompt("Forma: 1-Dinheiro 2-Pix"); pg.forma_entrada = fE === "1" ? "Dinheiro" : "Pix"; } } window.tempPgs.push(pg); document.getElementById('lista-p').innerHTML = window.tempPgs.map(p => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]"><span>${p.tipo}</span><span class="text-emerald-400 font-bold">${fBR(p.valor)}</span></div>`).join(''); };
         window.finalizarVenda = async () => { const tot = parseFloat(document.getElementById('vTotal').value); if(!tot) return alert("Valor!"); await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, pagamentos: window.tempPgs }); window.fecharModalGestao(); await window.carregarRelatorio(); };
         window.confirmarExclusao = async () => { if(confirm("Apagar Registro?")) { await remove(ref(db, window.itemPath)); window.fecharModalGestao(); await window.carregarRelatorio(); } };
-
-        window.carregarConfiguracoes = async () => {
-            const snap = await get(ref(db, `config/projetos`));
-            const lista = snap.val() || {};
-            const sel = document.getElementById('config-projeto-ativo');
-            if(sel) { sel.innerHTML = ''; for(let k in lista) { let o = document.createElement('option'); o.value = k; o.textContent = `${lista[k].cidade} - ${lista[k].escola}`; if(k === projetoAtualId) o.selected = true; sel.appendChild(o); } }
-        };
 
         window.selecionarDia = async (btn) => {
             document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
             const d = btn.getAttribute('data-date'); document.getElementById('data-selecionada').value = d;
             const elH = document.getElementById('horario'); elH.innerHTML = '<option>Buscando...</option>';
             const snap = await get(ref(db, `dados/${projetoAtualId}/agendamentos/${d}`));
-            const ag = snap.val() || {}; const counts = {};
+            const counts = {}; const ag = snap.val() || {};
             Object.keys(ag).forEach(id => { if(id.includes('-')){ let hL = id.split('-').slice(0,2).join(':'); counts[hL] = (counts[hL]||0)+1; } });
             elH.innerHTML = '<option value="">Horário</option>';
             let cur = new Date(`${d}T09:00:00`), lim = (new Date(d + 'T00:00:00').getDay() % 6 === 0) ? "17:00" : "20:30";
