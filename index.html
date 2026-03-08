@@ -84,14 +84,6 @@
         </div>
     </section>
 
-    <section id="view-financeiro" class="view-section p-6 text-white text-white">
-        <div class="max-w-7xl mx-auto w-full text-white text-white">
-            <div id="kpi-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"></div>
-            <div id="finance-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8 text-[10px]"></div>
-            <div id="saldo-card" class="glass rounded-[3rem] p-8 border-l-8 border-emerald-500 flex flex-col justify-center text-white"></div>
-        </div>
-    </section>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getDatabase, ref, get, set, remove, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
@@ -127,9 +119,6 @@
             window.carregarRelatorio();
         };
 
-        window.acessoAdmin = () => { if(prompt("Senha:") === "2025") window.switchView('view-logistica'); };
-        window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
-
         window.carregarRelatorio = async () => {
             if(!projetoAtualId) return;
             const [sA, sV] = await Promise.all([get(ref(db, `dados/${projetoAtualId}/agendamentos`)), get(ref(db, `dados/${projetoAtualId}/avulsos`))]);
@@ -139,7 +128,6 @@
             const avs = sV.val() || {};
             Object.keys(avs).forEach(id => window.dadosCompletos.push({...avs[id], id, path: `dados/${projetoAtualId}/avulsos/${id}`, data: avs[id].data}));
             window.filtrarLogistica();
-            window.filtrarBI();
         };
 
         window.filtrarLogistica = () => {
@@ -150,8 +138,8 @@
             lista.sort((a,b) => new Date(`${a.data}T${a.horario||'23:59'}`) - new Date(`${b.data}T${b.horario||'23:59'}`));
             container.innerHTML = '';
             lista.forEach(i => {
-                let cor = "border-slate-500 bg-slate-500/5"; // PENDENTE POR PADRÃO
-                let statusLabel = `<span class="block text-slate-400 font-black text-2xl uppercase mt-1">○ PENDENTE</span>`;
+                let cor = "border-slate-500/40 bg-slate-500/5"; // CINZA PADRÃO
+                let statusLabel = `<span class="block text-slate-500 font-black text-2xl uppercase mt-1">○ PENDENTE</span>`;
                 
                 if(i.resultado === "Venda") { cor = "border-emerald-500/40 bg-emerald-500/5"; statusLabel = `<span class="block text-emerald-500 font-black text-2xl uppercase mt-1">✓ VENDA</span>`; }
                 else if(i.resultado === "NQ") { cor = "border-rose-500/40 bg-rose-500/5"; statusLabel = `<span class="block text-rose-500 font-black text-2xl uppercase mt-1">✕ NQ</span>`; }
@@ -234,12 +222,9 @@
         window.confirmarExclusao = async () => { if(confirm("Deseja EXCLUIR permanentemente este registro?")) { await remove(ref(db, window.itemPath)); window.fecharModalGestao(); await window.carregarRelatorio(); } };
         window.salvarStatusSimples = async (s) => { await update(ref(db, window.itemPath), { resultado: s, valor: 0 }); window.fecharModalGestao(); await window.carregarRelatorio(); };
         window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-900 p-6 rounded-3xl text-center mb-4 text-white font-black text-3xl border border-white/10 outline-none"><div class="grid grid-cols-2 gap-2 mb-4 text-white"><button onclick="window.addPg('Dinheiro')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Dinheiro</button><button onclick="window.addPg('Pix')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Pix</button><button onclick="window.addPg('Cartão Débito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Débito</button><button onclick="window.addPg('Cartão Crédito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Crédito</button><button onclick="window.addPg('Boleto')" class="p-4 bg-blue-900/30 border border-blue-500/40 rounded-2xl text-[10px] font-black uppercase col-span-2 text-white">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4 text-white"></div><button onclick="window.finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white shadow-xl shadow-emerald-900/20">SALVAR</button>`; window.tempPgs = []; };
-        window.carregarRelatorio = async () => { /* Logica mantida */ };
-        window.filtrarBI = () => { /* Logica mantida */ };
-        window.copiarRelatorio = () => { /* Logica mantida */ };
-        window.fluxoEditar = () => { /* Logica mantida */ };
-        window.salvarEdicao = async () => { /* Logica mantida */ };
-
+        window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; };
+        window.acessoAdmin = () => { if(prompt("Senha:") === "2025") window.switchView('view-logistica'); };
+        
         (async () => {
             const agora = new Date(), dHoje = agora.toLocaleDateString('en-CA');
             document.querySelectorAll('.day-btn').forEach(btn => {
