@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.20</title>
+    <title>Elite Sales Intelligence - BI v12.21</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -197,20 +197,24 @@
                     let comVenda = 0;
                     (i.pagamentos || []).forEach(p => {
                         const vP = Number(p.valor)||0;
-                        if(p.tipo.includes("Boleto (Restante)")) { 
-                            comVenda += vP * 0.08; m.bol += vP; 
-                        } 
-                        else if(p.tipo.includes("Entrada")) { 
-                            comVenda += vP * 0.12; m.vales += vP; // TODA ENTRADA ABATE COMO VALE
-                            if(p.tipo.includes("Pix")) m.pix += vP; else if(p.tipo.includes("Dinheiro")) m.din += vP;
+                        const t = p.tipo.toLowerCase();
+                        
+                        // LÓGICA DE VALES: Tudo que é Pix ou Dinheiro (Entrada ou Direto) abate como vale
+                        if(t.includes("pix") || t.includes("dinheiro")) {
+                            m.vales += vP;
+                            if(t.includes("pix")) m.pix += vP; else m.din += vP;
+                        }
+
+                        // LÓGICA DE COMISSÃO
+                        if(t.includes("entrada")) { 
+                            comVenda += vP * 0.12;
+                        } else if(t.includes("boleto")) {
+                            comVenda += vP * 0.08; m.bol += vP;
                         } else {
-                            // OUTROS PAGAMENTOS À VISTA
+                            // PIX, DINHEIRO, CRÉDITO, DÉBITO FORA DA ENTRADA
                             comVenda += vP * 0.08; 
-                            if(p.tipo.includes("Pix")) { m.pix += vP; m.vales += vP; } // PIX ABATE COMO VALE
-                            else if(p.tipo.includes("Dinheiro")) { m.din += vP; m.vales += vP; } // DINHEIRO ABATE COMO VALE
-                            else if(p.tipo.includes("Crédito")) m.cre += vP;
-                            else if(p.tipo.includes("Débito")) m.deb += vP;
-                            else m.bol += vP;
+                            if(t.includes("crédito") || t.includes("credito")) m.cre += vP;
+                            else if(t.includes("débito") || t.includes("debito")) m.deb += vP;
                         }
                     });
                     m.com += comVenda;
@@ -246,7 +250,7 @@
         window.abrirAvulso = () => { 
             document.getElementById('modalGestao').style.display = 'flex'; document.getElementById('gestao-menu').classList.add('hidden'); 
             const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); 
-            f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Novo Atendimento Avulso</h3><input type="text" id="av-nome" placeholder="NOME DO CLIENTE" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="tel" id="av-tel" placeholder="WHATSAPP" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="date" id="av-data" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none"><button onclick="window.salvarNovoAvulso()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar e Continuar</button>`;
+            f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Novo Cadastro Avulso</h3><input type="text" id="av-nome" placeholder="NOME DO CLIENTE" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="tel" id="av-tel" placeholder="WHATSAPP" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="date" id="av-data" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none"><button onclick="window.salvarNovoAvulso()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar e Continuar</button>`;
             document.getElementById('av-data').value = new Date().toISOString().split('T')[0];
         };
 
@@ -311,4 +315,3 @@
     </script>
 </body>
 </html>
-
