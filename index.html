@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.35</title>
+    <title>Elite Sales Intelligence - BI v12.36</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -140,15 +140,15 @@
         const pDT = (s) => (s && s.includes('-')) ? s.split("-").reverse().join("/") : s;
 
         let projetoAtualId = "", chartWeekly = null;
-        let labelsGlobais = { cidade: "Franca", escola: "Escola" };
+        let labelsGlobais = { cidade: "Carregando...", escola: "Aguarde..." };
 
         onValue(ref(db, "config/projeto_ativo"), async (snap) => {
             projetoAtualId = snap.val() || "guaratingueta-guilherme";
             const projSnap = await get(ref(db, `config/projetos/${projetoAtualId}`));
             if(projSnap.exists()){
                 const d = projSnap.val();
-                labelsGlobais.cidade = d.cidade || "Franca";
-                labelsGlobais.escola = d.escola || "Escola";
+                labelsGlobais.cidade = d.cidade || "...";
+                labelsGlobais.escola = d.escola || "...";
                 document.getElementById('escola-titulo').innerText = labelsGlobais.cidade;
                 document.getElementById('sub-escola').innerText = labelsGlobais.escola;
                 window.carregarRelatorio();
@@ -226,7 +226,7 @@
             document.getElementById('saldo-card').innerHTML = `<p class="text-[10px] uppercase mb-4 text-white font-black italic text-slate-500">Consolidado</p><div class="flex justify-between text-sm text-white"><span>Bruta</span><span class="font-black">${fBR(m.com)}</span></div><div class="flex justify-between text-rose-400 text-sm"><span>Vales (Pix/Din)</span><span class="font-black">- ${fBR(m.vales)}</span></div><div class="border-t border-white/10 mt-6 pt-6 text-center text-emerald-400"><p class="text-[8px] uppercase font-black">Saldo Líquido</p><p class="text-5xl font-black italic text-white">${fBR(m.com - m.vales)}</p></div>`;
             document.getElementById('extrato-tabela').innerHTML = rowsVenda || '<tr><td colspan="3" class="p-10 text-center">Sem vendas</td></tr>';
             listaNQ.sort((a, b) => a.localeCompare(b));
-            document.getElementById('nq-tabela').innerHTML = listaNQ.map(n => `<tr class="border-b border-white/5 text-white"><td class="p-4">${n}</td><td class="p-4 text-rose-500 font-bold uppercase text-xs">NQ</td></tr>`).join('') || '<tr><td colspan="2" class="p-10 text-center">Sem NQs</td></tr>';
+            document.getElementById('nq-tabela').innerHTML = listaNQ.map(n => `<tr class="border-b border-white/5 text-white"><td class="p-4 text-white">${n}</td><td class="p-4 text-rose-500 font-bold uppercase text-xs">NQ</td></tr>`).join('') || '<tr><td colspan="2" class="p-10 text-center text-white">Sem NQs</td></tr>';
             if(chartWeekly) chartWeekly.destroy();
             chartWeekly = new Chart(document.getElementById('chartWeekly'), { type: 'bar', data: { labels: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], datasets: [{ data: daily, backgroundColor: '#3b82f6', borderRadius: 8 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } } });
         };
@@ -253,19 +253,7 @@
         window.copiarRelatorio = () => {
             const { m, fD } = window.dadosAtuaisRelatorio;
             const tk = m.v ? (m.tot / m.v) : 0;
-            let txt = `Relatório de Vendas\n`;
-            txt += `Projeto: ${labelsGlobais.cidade} - ${labelsGlobais.escola}\n`;
-            txt += `Data: ${fD ? pDT(fD) : 'ACUMULADO GERAL'}\n\n`;
-            txt += `✅ Vendas: ${m.v}\n`;
-            txt += `❌ NQ: ${m.nq}\n\n`;
-            txt += `💵 Dinheiro: ${fBR(m.din)}\n`;
-            txt += `💎 Pix: ${fBR(m.pix)}\n`;
-            txt += `💳 Débito: ${fBR(m.deb)}\n`;
-            txt += `💳 Crédito: ${fBR(m.cre)}\n`;
-            txt += `📄 Boleto: ${fBR(m.bol)}\n`;
-            txt += `💸 Vales: ${fBR(m.vales)}\n\n`;
-            txt += `💰 Total Vendido: ${fBR(m.tot)}\n`;
-            txt += `🎯 Ticket Médio: ${fBR(tk)}`;
+            let txt = `Relatório de Vendas\nProjeto: ${labelsGlobais.cidade} - ${labelsGlobais.escola}\nData: ${fD ? pDT(fD) : 'ACUMULADO GERAL'}\n\n✅ Vendas: ${m.v}\n❌ NQ: ${m.nq}\n\n💵 Dinheiro: ${fBR(m.din)}\n💎 Pix: ${fBR(m.pix)}\n💳 Débito: ${fBR(m.deb)}\n💳 Crédito: ${fBR(m.cre)}\n📄 Boleto: ${fBR(m.bol)}\n💸 Vales: ${fBR(m.vales)}\n\n💰 Total Vendido: ${fBR(m.tot)}\n🎯 Ticket Médio: ${fBR(tk)}`;
             navigator.clipboard.writeText(txt).then(() => alert("Relatório copiado!"));
         };
 
