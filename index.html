@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.30</title>
+    <title>Elite Sales Intelligence - BI v12.31</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -45,8 +45,8 @@
         </header>
         <main class="flex-grow flex items-center justify-center p-4">
             <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl text-center border border-white/5">
-                <h2 id="escola-titulo" class="text-2xl font-extrabold uppercase text-blue-400 italic">...</h2>
-                <h3 id="sub-escola" class="text-xs font-bold text-slate-400 uppercase tracking-widest italic mb-8">...</h3>
+                <h2 id="escola-titulo" class="text-2xl font-extrabold uppercase text-blue-400 italic">CARREGANDO...</h2>
+                <h3 id="sub-escola" class="text-xs font-bold text-slate-400 uppercase tracking-widest italic mb-8">AGUARDE...</h3>
                 <form id="form-agendamento" class="space-y-4">
                     <div class="grid grid-cols-2 gap-2 mb-4" id="day-selector">
                         <button type="button" data-date="2026-03-07" onclick="window.selecionarDia(this)" class="day-btn rounded-2xl py-4 text-[10px] font-black uppercase">Sáb 07/03</button>
@@ -64,7 +64,7 @@
     </section>
 
     <section id="view-logistica" class="view-section p-6 text-white text-white">
-        <div class="max-w-4xl mx-auto w-full">
+        <div class="max-w-4xl mx-auto w-full text-white">
             <nav class="flex justify-between items-center mb-6">
                 <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white">← Sair</button>
                 <div class="flex gap-2 p-1 bg-slate-900 rounded-2xl border border-white/5">
@@ -85,7 +85,7 @@
 
     <section id="view-financeiro" class="view-section p-6 text-white text-white">
         <div class="max-w-7xl mx-auto w-full">
-            <nav class="flex justify-between items-center mb-10">
+            <nav class="flex justify-between items-center mb-10 text-white">
                 <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white text-white">← Voltar</button>
                 <div class="flex gap-4">
                     <input type="date" id="filtro-bi" onchange="window.filtrarBI()" class="bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white">
@@ -97,13 +97,13 @@
             <div id="finance-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8 text-[10px]"></div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-                <div class="lg:col-span-2 glass rounded-[3rem] p-8 border border-white/5">
+                <div class="lg:col-span-2 glass rounded-[3rem] p-8 border border-white/5 text-white">
                     <canvas id="chartWeekly" style="max-height: 250px;"></canvas>
                 </div>
-                <div id="saldo-card" class="glass rounded-[3rem] p-8 border-l-8 border-emerald-500 flex flex-col justify-center text-white"></div>
+                <div id="saldo-card" class="glass rounded-[3rem] p-8 border-l-8 border-emerald-500 flex flex-col justify-center text-white text-white"></div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-white">
                 <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5 text-white">
                     <h4 class="text-emerald-400 font-black uppercase text-xs mb-4 italic">Relação de Vendas</h4>
                     <table class="w-full text-left min-w-[400px] text-white">
@@ -140,15 +140,19 @@
         const pDT = (s) => (s && s.includes('-')) ? s.split("-").reverse().join("/") : s;
 
         let projetoAtualId = "", chartWeekly = null;
-        window.projetoNome = "Franca"; window.escolaNome = "Escola";
+        let labelsGlobais = { cidade: "Franca", escola: "Escola" };
 
+        // DETECÇÃO DO PROJETO ATIVO E ATUALIZAÇÃO DOS NOMES
         onValue(ref(db, "config/projeto_ativo"), async (snap) => {
             projetoAtualId = snap.val() || "guaratingueta-guilherme";
             const projSnap = await get(ref(db, `config/projetos/${projetoAtualId}`));
             if(projSnap.exists()){
                 const d = projSnap.val();
-                window.projetoNome = d.cidade || "Franca";
-                window.escolaNome = d.escola || "Escola";
+                labelsGlobais.cidade = d.cidade || "Franca";
+                labelsGlobais.escola = d.escola || "Escola";
+                // INJEÇÃO DIRETA IMEDIATA
+                document.getElementById('escola-titulo').innerText = labelsGlobais.cidade;
+                document.getElementById('sub-escola').innerText = labelsGlobais.escola;
                 window.carregarRelatorio();
             }
         });
@@ -160,9 +164,9 @@
         };
 
         window.carregarRelatorio = async () => {
-            // REFORÇA OS NOMES NA TELA
-            document.getElementById('escola-titulo').innerText = window.projetoNome;
-            document.getElementById('sub-escola').innerText = window.escolaNome;
+            // REFORÇO DA INJEÇÃO SEMPRE QUE O RELATÓRIO CARREGA
+            document.getElementById('escola-titulo').innerText = labelsGlobais.cidade;
+            document.getElementById('sub-escola').innerText = labelsGlobais.escola;
 
             if(!projetoAtualId) return;
             const [sA, sV] = await Promise.all([get(ref(db, `dados/${projetoAtualId}/agendamentos`)), get(ref(db, `dados/${projetoAtualId}/avulsos`))]);
@@ -185,7 +189,7 @@
                 if(i.resultado === "Venda") { cor = "border-emerald-500/20 bg-emerald-500/5"; statusTxt = "VENDA"; corTxt = "text-emerald-500"; }
                 else if(i.resultado === "NQ") { cor = "border-rose-500/20 bg-rose-500/5"; statusTxt = "NQ"; corTxt = "text-rose-500"; }
                 const p = i.path.replace(/'/g,"\\'"), n = (i.nome_formando||"").replace(/'/g,"\\'"), e = (i.endereco||"").replace(/'/g,"\\'");
-                container.innerHTML += `<div class="glass p-4 rounded-3xl border-l-4 ${cor} flex justify-between items-center text-white"><div class="flex-grow"><div class="flex items-center gap-2 mb-1"><span class="text-xs font-black text-blue-400 uppercase">${i.horario || 'DIR'}</span><span class="text-[10px] font-bold text-slate-500 italic">${pDT(i.data)}</span><span class="text-[10px] font-black uppercase ${corTxt}">${statusTxt}</span></div><h3 class="text-base font-black uppercase leading-tight mb-2">${i.nome_formando}</h3><div class="flex gap-4"><a href="https://wa.me/55${(i.telefone||'').replace(/\D/g,'')}" target="_blank" class="text-emerald-400 text-[10px] font-bold uppercase tracking-wider">📱 Zap</a><a href="https://www.waze.com/ul?q=${encodeURIComponent(i.endereco||'')}&navigate=yes" target="_blank" class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">📍 Waze</a></div></div><button onclick="window.gerenciarItem('${p}', '${n}', '${e}')" class="btn-primary px-5 py-3 rounded-2xl font-black uppercase text-[9px] shadow-lg ml-4">Gerenciar</button></div>`;
+                container.innerHTML += `<div class="glass p-4 rounded-3xl border-l-4 ${cor} flex justify-between items-center text-white text-white"><div class="flex-grow"><div class="flex items-center gap-2 mb-1"><span class="text-xs font-black text-blue-400 uppercase">${i.horario || 'DIR'}</span><span class="text-[10px] font-bold text-slate-500 italic">${pDT(i.data)}</span><span class="text-[10px] font-black uppercase ${corTxt}">${statusTxt}</span></div><h3 class="text-base font-black uppercase leading-tight mb-2 text-white">${i.nome_formando}</h3><div class="flex gap-4"><a href="https://wa.me/55${(i.telefone||'').replace(/\D/g,'')}" target="_blank" class="text-emerald-400 text-[10px] font-bold uppercase tracking-wider text-white">📱 Zap</a><a href="https://www.waze.com/ul?q=${encodeURIComponent(i.endereco||'')}&navigate=yes" target="_blank" class="text-slate-400 text-[10px] font-bold uppercase tracking-wider text-white">📍 Waze</a></div></div><button onclick="window.gerenciarItem('${p}', '${n}', '${e}')" class="btn-primary px-5 py-3 rounded-2xl font-black uppercase text-[9px] shadow-lg ml-4 text-white">Gerenciar</button></div>`;
             });
         };
 
@@ -219,11 +223,11 @@
             const perc = (v) => m.tot > 0 ? ((v / m.tot) * 100).toFixed(0) + '%' : '0%';
 
             document.getElementById('kpi-grid').innerHTML = `
-                <div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10"><p class="text-[9px] text-emerald-500 font-black mb-1 uppercase text-white">Faturamento</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div>
-                <div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase text-white">Vendas / NQ</p><p class="text-3xl font-black">${m.v} / ${m.nq}</p></div>
-                <div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase text-white">Eficiência</p><p class="text-3xl font-black">${tx}%</p></div>
-                <div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10"><p class="text-[9px] text-cyan-500 font-black mb-1 uppercase text-white">Ticket Médio</p><p class="text-3xl font-black">${fBR(m.v ? m.tot/m.v : 0)}</p></div>
-                <div class="card-bi p-6 rounded-[2rem] border-emerald-400 bg-emerald-950/10"><p class="text-[9px] text-emerald-400 font-black mb-1 uppercase text-white">Comissão Total</p><p class="text-3xl font-black">${fBR(m.com)}</p></div>`;
+                <div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10"><p class="text-[9px] text-emerald-500 font-black mb-1 uppercase text-white">Faturamento</p><p class="text-3xl font-black text-white">${fBR(m.tot)}</p></div>
+                <div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase text-white text-white text-white">Vendas / NQ</p><p class="text-3xl font-black text-white">${m.v} / ${m.nq}</p></div>
+                <div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase text-white">Eficiência</p><p class="text-3xl font-black text-white">${tx}%</p></div>
+                <div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10"><p class="text-[9px] text-cyan-500 font-black mb-1 uppercase text-white">Ticket Médio</p><p class="text-3xl font-black text-white">${fBR(m.v ? m.tot/m.v : 0)}</p></div>
+                <div class="card-bi p-6 rounded-[2rem] border-emerald-400 bg-emerald-950/10"><p class="text-[9px] text-emerald-400 font-black mb-1 uppercase text-white">Comissão Total</p><p class="text-3xl font-black text-white">${fBR(m.com)}</p></div>`;
 
             document.getElementById('finance-grid').innerHTML = `
                 <div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Pix (${perc(m.pix)})</p><p class="text-lg font-black">${fBR(m.pix)}</p></div>
@@ -236,7 +240,7 @@
             document.getElementById('saldo-card').innerHTML = `<p class="text-[10px] uppercase mb-4 text-white font-black italic text-slate-500">Consolidado</p><div class="flex justify-between text-sm text-white"><span>Bruta</span><span class="font-black">${fBR(m.com)}</span></div><div class="flex justify-between text-rose-400 text-sm"><span>Vales (Pix/Din)</span><span class="font-black">- ${fBR(m.vales)}</span></div><div class="border-t border-white/10 mt-6 pt-6 text-center text-emerald-400"><p class="text-[8px] uppercase font-black">Saldo Líquido</p><p class="text-5xl font-black italic text-white">${fBR(m.com - m.vales)}</p></div>`;
             document.getElementById('extrato-tabela').innerHTML = rowsVenda || '<tr><td colspan="3" class="p-10 text-center text-white">Sem vendas</td></tr>';
             listaNQ.sort((a, b) => a.localeCompare(b));
-            document.getElementById('nq-tabela').innerHTML = listaNQ.map(n => `<tr class="border-b border-white/5 text-white"><td class="p-4">${n}</td><td class="p-4 text-rose-500 font-bold uppercase text-xs">NQ</td></tr>`).join('') || '<tr><td colspan="2" class="p-10 text-center text-white">Sem NQs</td></tr>';
+            document.getElementById('nq-tabela').innerHTML = listaNQ.map(n => `<tr class="border-b border-white/5 text-white"><td class="p-4 text-white">${n}</td><td class="p-4 text-rose-500 font-bold uppercase text-xs">NQ</td></tr>`).join('') || '<tr><td colspan="2" class="p-10 text-center text-white">Sem NQs</td></tr>';
             if(chartWeekly) chartWeekly.destroy();
             chartWeekly = new Chart(document.getElementById('chartWeekly'), { type: 'bar', data: { labels: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], datasets: [{ data: daily, backgroundColor: '#3b82f6', borderRadius: 8 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } } });
         };
