@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.24</title>
+    <title>Elite Sales Intelligence - BI v12.25</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -63,12 +63,12 @@
         </main>
     </section>
 
-    <section id="view-logistica" class="view-section p-6 text-white">
+    <section id="view-logistica" class="view-section p-6 text-white text-white">
         <div class="max-w-4xl mx-auto w-full">
             <nav class="flex justify-between items-center mb-10">
-                <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest">← Sair</button>
+                <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white">← Sair</button>
                 <div class="flex gap-2 p-1 bg-slate-900 rounded-2xl border border-white/5">
-                    <button class="bg-blue-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg">Visitas</button>
+                    <button class="bg-blue-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg text-white">Visitas</button>
                     <button onclick="window.switchView('view-financeiro')" class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-slate-400">BI Dashboard</button>
                 </div>
             </nav>
@@ -197,17 +197,22 @@
                     let comVenda = 0;
                     (i.pagamentos || []).forEach(p => {
                         const vP = Number(p.valor) || 0;
-                        const t = p.tipo.toLowerCase();
+                        const t = p.tipo.toLowerCase(); // NORMALIZA PARA MINÚSCULO
 
-                        // CLASSIFICA PAGAMENTO E ACUMULA VALES
-                        if(t.includes("pix")) { m.pix += vP; m.vales += vP; }
-                        else if(t.includes("dinheiro")) { m.din += vP; m.vales += vP; }
+                        // LÓGICA DE VALES: Busca as palavras "pix", "dinheiro" ou "entrada" de forma insensível
+                        if(t.includes("pix") || t.includes("dinheiro") || t.includes("entrada")) {
+                            m.vales += vP;
+                        }
+
+                        // CLASSIFICAÇÃO PARA GRÁFICOS E CARDS FINANCEIROS
+                        if(t.includes("pix")) { m.pix += vP; }
+                        else if(t.includes("dinheiro")) { m.din += vP; }
                         else if(t.includes("boleto")) { m.bol += vP; }
-                        else if(t.includes("credito") || t.includes("crédito")) m.cre += vP;
-                        else if(t.includes("debito") || t.includes("débito")) m.deb += vP;
+                        else if(t.includes("credito") || t.includes("crédito")) { m.cre += vP; }
+                        else if(t.includes("debito") || t.includes("débito")) { m.deb += vP; }
 
                         // LÓGICA DE COMISSÃO (12% Entrada, 8% Restante)
-                        if(t.includes("entrada")) comVenda += vP * 0.12; else comVenda += vP * 0.08;
+                        if(t.includes("entrada")) { comVenda += vP * 0.12; } else { comVenda += vP * 0.08; }
                     });
                     m.com += comVenda;
                     rowsVenda += `<tr class="border-b border-white/5 text-white"><td>${i.nome_formando}</td><td>${fBR(valVenda)}</td><td class="font-black text-emerald-400">${fBR(comVenda)}</td></tr>`;
@@ -232,6 +237,7 @@
                 <div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Boleto (${perc(m.bol)})</p><p class="text-lg font-black">${fBR(m.bol)}</p></div>`;
 
             document.getElementById('saldo-card').innerHTML = `<p class="text-[10px] uppercase mb-4 text-white font-black italic text-slate-500">Consolidado</p><div class="flex justify-between text-sm text-white"><span>Bruta</span><span class="font-black">${fBR(m.com)}</span></div><div class="flex justify-between text-rose-400 text-sm"><span>Vales (Pix/Din)</span><span class="font-black">- ${fBR(m.vales)}</span></div><div class="border-t border-white/10 mt-6 pt-6 text-center text-emerald-400"><p class="text-[8px] uppercase font-black">Saldo Líquido</p><p class="text-5xl font-black italic text-white">${fBR(m.com - m.vales)}</p></div>`;
+            
             document.getElementById('extrato-tabela').innerHTML = rowsVenda || '<tr><td colspan="3" class="p-10 text-center text-white">Sem vendas</td></tr>';
             listaNQ.sort((a, b) => a.localeCompare(b));
             document.getElementById('nq-tabela').innerHTML = listaNQ.map(n => `<tr class="border-b border-white/5 text-white"><td class="p-4">${n}</td><td class="p-4 text-rose-500 font-bold uppercase text-xs">NQ</td></tr>`).join('') || '<tr><td colspan="2" class="p-10 text-center text-white">Sem NQs</td></tr>';
@@ -264,7 +270,7 @@
             if (tipo === "Boleto") {
                 const r = prompt("Houve entrada? 1-Sim 2-Não");
                 if (r === "1") {
-                    const vE = parseFloat(prompt("Valor da Entrada:")?.replace(',', '.') || 0);
+                    const vE = parseFloat(prompt("Valor Entrada:")?.replace(',', '.') || 0);
                     const fE = prompt("Forma da entrada: 1-Pix 2-Dinheiro");
                     const txtFE = fE === "1" ? "Pix" : "Dinheiro";
                     window.tempPgs.push({ tipo: `${txtFE} (Entrada)`, valor: vE });
@@ -290,7 +296,7 @@
                 const ocupados = counts[hF] || 0;
                 if(ocupados < 2){ 
                     let opt=document.createElement('option'); opt.value=hF; 
-                    opt.textContent=`${hF} (${2-ocupados} vagas)`; elH.appendChild(opt); 
+                    opt.textContent=`${hF} (${2 - ocupados} vagas)`; elH.appendChild(opt); 
                 }
                 cur.setMinutes(cur.getMinutes()+30);
             }
@@ -311,7 +317,6 @@
         window.finalizarVenda = async () => { const tot = parseFloat(document.getElementById('vTotal').value); if(!tot) return alert("Valor!"); await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, pagamentos: window.tempPgs }); window.fecharModalGestao(); };
         window.fluxoEditar = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs text-white">Editar Cadastro</h3><input type="text" id="edit-nome" value="${window.currentName}" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><textarea id="edit-end" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none" rows="3">${window.currentEnd}</textarea><button onclick="window.salvarEdicao()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar Alterações</button>`; };
         window.salvarEdicao = async () => { const n = document.getElementById('edit-nome').value, e = document.getElementById('edit-end').value; await update(ref(db, window.itemPath), { nome_formando: n, endereco: e }); window.fecharModalGestao(); };
-        window.copiarRelatorio = () => { /* Logica WhatsApp mantida */ };
     </script>
 </body>
 </html>
