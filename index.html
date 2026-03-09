@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.29</title>
+    <title>Elite Sales Intelligence - BI v12.30</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -63,12 +63,12 @@
         </main>
     </section>
 
-    <section id="view-logistica" class="view-section p-6 text-white">
+    <section id="view-logistica" class="view-section p-6 text-white text-white">
         <div class="max-w-4xl mx-auto w-full">
             <nav class="flex justify-between items-center mb-6">
-                <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest">← Sair</button>
+                <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white">← Sair</button>
                 <div class="flex gap-2 p-1 bg-slate-900 rounded-2xl border border-white/5">
-                    <button class="bg-blue-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg">Visitas</button>
+                    <button class="bg-blue-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg text-white">Visitas</button>
                     <button onclick="window.switchView('view-financeiro')" class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-slate-400">BI Dashboard</button>
                 </div>
             </nav>
@@ -83,10 +83,10 @@
         </div>
     </section>
 
-    <section id="view-financeiro" class="view-section p-6 text-white">
+    <section id="view-financeiro" class="view-section p-6 text-white text-white">
         <div class="max-w-7xl mx-auto w-full">
             <nav class="flex justify-between items-center mb-10">
-                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white">← Voltar</button>
+                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white text-white">← Voltar</button>
                 <div class="flex gap-4">
                     <input type="date" id="filtro-bi" onchange="window.filtrarBI()" class="bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white">
                     <button onclick="window.copiarRelatorio()" class="bg-emerald-600 px-6 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg text-white">Copiar Zap</button>
@@ -104,18 +104,18 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5">
+                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5 text-white">
                     <h4 class="text-emerald-400 font-black uppercase text-xs mb-4 italic">Relação de Vendas</h4>
-                    <table class="w-full text-left min-w-[400px]">
-                        <thead><tr class="border-b border-white/5 text-[10px] text-slate-500 font-black uppercase"><th class="p-4 text-white">Cliente</th><th class="p-4 text-white">Venda</th><th class="p-4 text-emerald-400">Comissão</th></tr></thead>
-                        <tbody id="extrato-tabela"></tbody>
+                    <table class="w-full text-left min-w-[400px] text-white">
+                        <thead><tr class="border-b border-white/5 text-[10px] text-slate-500 font-black uppercase text-white"><th class="p-4 text-white">Cliente</th><th class="p-4 text-white">Venda</th><th class="p-4 text-emerald-400">Comissão</th></tr></thead>
+                        <tbody id="extrato-tabela" class="text-white"></tbody>
                     </table>
                 </div>
-                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5">
+                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5 text-white">
                     <h4 class="text-rose-500 font-black uppercase text-xs mb-4 italic">Relação de NQ (Ordem Alfabética)</h4>
-                    <table class="w-full text-left min-w-[400px]">
-                        <thead><tr class="border-b border-white/5 text-[10px] text-slate-500 font-black uppercase"><th class="p-4 text-white">Cliente</th><th class="p-4 text-white">Status</th></tr></thead>
-                        <tbody id="nq-tabela"></tbody>
+                    <table class="w-full text-left min-w-[400px] text-white">
+                        <thead><tr class="border-b border-white/5 text-[10px] text-slate-500 font-black uppercase text-white"><th class="p-4 text-white">Cliente</th><th class="p-4 text-white">Status</th></tr></thead>
+                        <tbody id="nq-tabela" class="text-white"></tbody>
                     </table>
                 </div>
             </div>
@@ -140,15 +140,15 @@
         const pDT = (s) => (s && s.includes('-')) ? s.split("-").reverse().join("/") : s;
 
         let projetoAtualId = "", chartWeekly = null;
+        window.projetoNome = "Franca"; window.escolaNome = "Escola";
 
-        // INICIALIZAÇÃO BLINDADA DO PROJETO ATIVO
         onValue(ref(db, "config/projeto_ativo"), async (snap) => {
             projetoAtualId = snap.val() || "guaratingueta-guilherme";
             const projSnap = await get(ref(db, `config/projetos/${projetoAtualId}`));
             if(projSnap.exists()){
                 const d = projSnap.val();
-                document.getElementById('escola-titulo').innerText = d.cidade || "Franca";
-                document.getElementById('sub-escola').innerText = d.escola || "Escola";
+                window.projetoNome = d.cidade || "Franca";
+                window.escolaNome = d.escola || "Escola";
                 window.carregarRelatorio();
             }
         });
@@ -160,6 +160,10 @@
         };
 
         window.carregarRelatorio = async () => {
+            // REFORÇA OS NOMES NA TELA
+            document.getElementById('escola-titulo').innerText = window.projetoNome;
+            document.getElementById('sub-escola').innerText = window.escolaNome;
+
             if(!projetoAtualId) return;
             const [sA, sV] = await Promise.all([get(ref(db, `dados/${projetoAtualId}/agendamentos`)), get(ref(db, `dados/${projetoAtualId}/avulsos`))]);
             window.dadosCompletos = [];
