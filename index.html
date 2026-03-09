@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.25</title>
+    <title>Elite Sales Intelligence - BI v12.26</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -94,7 +94,7 @@
             </nav>
 
             <div id="kpi-grid" class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8"></div>
-            <div id="finance-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8 text-[10px]"></div>
+            <div id="finance-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8 text-[10px]"></div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
                 <div class="lg:col-span-2 glass rounded-[3rem] p-8 border border-white/5">
@@ -179,25 +179,8 @@
                 let cor = "border-slate-500/20 bg-slate-500/5", statusTxt = "PENDENTE", corTxt = "text-slate-500";
                 if(i.resultado === "Venda") { cor = "border-emerald-500/20 bg-emerald-500/5"; statusTxt = "VENDA"; corTxt = "text-emerald-500"; }
                 else if(i.resultado === "NQ") { cor = "border-rose-500/20 bg-rose-500/5"; statusTxt = "NQ"; corTxt = "text-rose-500"; }
-                
                 const p = i.path.replace(/'/g,"\\'"), n = (i.nome_formando||"").replace(/'/g,"\\'"), e = (i.endereco||"").replace(/'/g,"\\'");
-                
-                container.innerHTML += `
-                <div class="glass p-4 rounded-3xl border-l-4 ${cor} flex justify-between items-center text-white">
-                    <div class="flex-grow">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="text-xs font-black text-blue-400 uppercase">${i.horario || 'DIR'}</span>
-                            <span class="text-[10px] font-bold text-slate-500 italic">${pDT(i.data)}</span>
-                            <span class="text-[10px] font-black uppercase ${corTxt}">${statusTxt}</span>
-                        </div>
-                        <h3 class="text-base font-black uppercase leading-tight mb-2">${i.nome_formando}</h3>
-                        <div class="flex gap-4">
-                            <a href="https://wa.me/55${(i.telefone||'').replace(/\D/g,'')}" target="_blank" class="text-emerald-400 text-[10px] font-bold uppercase tracking-wider">📱 Zap</a>
-                            <a href="https://www.waze.com/ul?q=${encodeURIComponent(i.endereco||'')}&navigate=yes" target="_blank" class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">📍 Waze</a>
-                        </div>
-                    </div>
-                    <button onclick="window.gerenciarItem('${p}', '${n}', '${e}')" class="btn-primary px-5 py-3 rounded-2xl font-black uppercase text-[9px] shadow-lg ml-4">Gerenciar</button>
-                </div>`;
+                container.innerHTML += `<div class="glass p-4 rounded-3xl border-l-4 ${cor} flex justify-between items-center text-white"><div class="flex-grow"><div class="flex items-center gap-2 mb-1"><span class="text-xs font-black text-blue-400 uppercase">${i.horario || 'DIR'}</span><span class="text-[10px] font-bold text-slate-500 italic">${pDT(i.data)}</span><span class="text-[10px] font-black uppercase ${corTxt}">${statusTxt}</span></div><h3 class="text-base font-black uppercase leading-tight mb-2">${i.nome_formando}</h3><div class="flex gap-4"><a href="https://wa.me/55${(i.telefone||'').replace(/\D/g,'')}" target="_blank" class="text-emerald-400 text-[10px] font-bold uppercase tracking-wider">📱 Zap</a><a href="https://www.waze.com/ul?q=${encodeURIComponent(i.endereco||'')}&navigate=yes" target="_blank" class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">📍 Waze</a></div></div><button onclick="window.gerenciarItem('${p}', '${n}', '${e}')" class="btn-primary px-5 py-3 rounded-2xl font-black uppercase text-[9px] shadow-lg ml-4">Gerenciar</button></div>`;
             });
         };
 
@@ -230,19 +213,22 @@
             const tx = (m.v + m.nq) > 0 ? ((m.v / (m.v + m.nq)) * 100).toFixed(0) : 0;
             const perc = (v) => m.tot > 0 ? ((v / m.tot) * 100).toFixed(0) + '%' : '0%';
 
+            // ORDEM KPIS SOLICITADA
             document.getElementById('kpi-grid').innerHTML = `
-                <div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10"><p class="text-[9px] text-emerald-500 font-black mb-1 uppercase text-white">Bruto</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div>
+                <div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10"><p class="text-[9px] text-emerald-500 font-black mb-1 uppercase text-white">Faturamento</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div>
                 <div class="card-bi p-6 rounded-[2rem] border-rose-500 bg-rose-950/10"><p class="text-[9px] text-rose-500 font-black mb-1 uppercase">Vales</p><p class="text-3xl font-black">${fBR(m.vales)}</p></div>
                 <div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase text-white">Vendas / NQ</p><p class="text-3xl font-black">${m.v} / ${m.nq}</p></div>
                 <div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase text-white">Eficiência</p><p class="text-3xl font-black">${tx}%</p></div>
                 <div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10"><p class="text-[9px] text-cyan-500 font-black mb-1 uppercase text-white">Ticket Médio</p><p class="text-3xl font-black">${fBR(m.v ? m.tot/m.v : 0)}</p></div>`;
 
+            // ORDEM FINANCEIRA SOLICITADA + VALES NO FIM
             document.getElementById('finance-grid').innerHTML = `
                 <div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Pix (${perc(m.pix)})</p><p class="text-lg font-black">${fBR(m.pix)}</p></div>
                 <div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Dinheiro (${perc(m.din)})</p><p class="text-lg font-black">${fBR(m.din)}</p></div>
                 <div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Crédito (${perc(m.cre)})</p><p class="text-lg font-black">${fBR(m.cre)}</p></div>
                 <div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Débito (${perc(m.deb)})</p><p class="text-lg font-black">${fBR(m.deb)}</p></div>
-                <div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Boleto (${perc(m.bol)})</p><p class="text-lg font-black">${fBR(m.bol)}</p></div>`;
+                <div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Boleto (${perc(m.bol)})</p><p class="text-lg font-black">${fBR(m.bol)}</p></div>
+                <div class="card-bi p-4 rounded-2xl text-rose-500 bg-rose-950/10 border-rose-500/30"><p class="text-[8px] uppercase">Vales</p><p class="text-lg font-black">${fBR(m.vales)}</p></div>`;
 
             document.getElementById('saldo-card').innerHTML = `<p class="text-[10px] uppercase mb-4 text-white font-black italic text-slate-500">Consolidado</p><div class="flex justify-between text-sm text-white"><span>Bruta</span><span class="font-black">${fBR(m.com)}</span></div><div class="flex justify-between text-rose-400 text-sm"><span>Vales (Pix/Din)</span><span class="font-black">- ${fBR(m.vales)}</span></div><div class="border-t border-white/10 mt-6 pt-6 text-center text-emerald-400"><p class="text-[8px] uppercase font-black">Saldo Líquido</p><p class="text-5xl font-black italic text-white">${fBR(m.com - m.vales)}</p></div>`;
             document.getElementById('extrato-tabela').innerHTML = rowsVenda || '<tr><td colspan="3" class="p-10 text-center text-white">Sem vendas</td></tr>';
@@ -302,8 +288,7 @@
                 const hF = cur.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
                 const ocup = counts[hF] || 0;
                 if(ocup < 2){ 
-                    let opt=document.createElement('option'); opt.value=hF; 
-                    opt.textContent=`${hF} (${2-ocup} vagas)`; elH.appendChild(opt); 
+                    let opt=document.createElement('option'); opt.value=hF; opt.textContent=`${hF} (${2-ocup} vagas)`; elH.appendChild(opt); 
                 }
                 cur.setMinutes(cur.getMinutes()+30);
             }
@@ -324,7 +309,6 @@
         window.finalizarVenda = async () => { const tot = parseFloat(document.getElementById('vTotal').value); if(!tot) return alert("Valor!"); await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, pagamentos: window.tempPgs }); window.fecharModalGestao(); };
         window.fluxoEditar = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs text-white">Editar</h3><input type="text" id="edit-nome" value="${window.currentName}" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><textarea id="edit-end" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none" rows="3">${window.currentEnd}</textarea><button onclick="window.salvarEdicao()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar</button>`; };
         window.salvarEdicao = async () => { const n = document.getElementById('edit-nome').value, e = document.getElementById('edit-end').value; await update(ref(db, window.itemPath), { nome_formando: n, endereco: e }); window.fecharModalGestao(); };
-        window.copiarRelatorio = () => { /* Mantido */ };
     </script>
 </body>
 </html>
