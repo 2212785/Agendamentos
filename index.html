@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.32</title>
+    <title>Elite Sales Intelligence - BI v12.33</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -41,12 +41,15 @@
     <section id="view-agendamento" class="view-section view-active text-white">
         <header class="p-6 flex justify-between items-center w-full">
             <span class="text-xl font-black uppercase italic tracking-tighter">Portal <span class="text-blue-500">Elite</span></span>
-            <button onclick="window.acessoAdmin()" class="glass px-6 py-2 rounded-xl text-[10px] font-black uppercase">ADM</button>
+            <div class="flex gap-2">
+                <button id="btn-trocar-projeto" onclick="window.trocarProjetoAtivo()" class="hidden glass px-4 py-2 rounded-xl text-[9px] font-black uppercase border-rose-500/30 text-rose-400">⚙️ Trocar Projeto</button>
+                <button onclick="window.acessoAdmin()" class="glass px-6 py-2 rounded-xl text-[10px] font-black uppercase">ADM</button>
+            </div>
         </header>
         <main class="flex-grow flex items-center justify-center p-4">
             <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl text-center border border-white/5">
-                <h2 id="escola-titulo" class="text-2xl font-extrabold uppercase text-blue-400 italic">CARREGANDO...</h2>
-                <h3 id="sub-escola" class="text-xs font-bold text-slate-400 uppercase tracking-widest italic mb-8">AGUARDE...</h3>
+                <h2 id="escola-titulo" class="text-2xl font-extrabold uppercase text-blue-400 italic">...</h2>
+                <h3 id="sub-escola" class="text-xs font-bold text-slate-400 uppercase tracking-widest italic mb-8">...</h3>
                 <form id="form-agendamento" class="space-y-4">
                     <div class="grid grid-cols-2 gap-2 mb-4" id="day-selector">
                         <button type="button" data-date="2026-03-07" onclick="window.selecionarDia(this)" class="day-btn rounded-2xl py-4 text-[10px] font-black uppercase">Sáb 07/03</button>
@@ -66,7 +69,7 @@
     <section id="view-logistica" class="view-section p-6 text-white text-white">
         <div class="max-w-4xl mx-auto w-full">
             <nav class="flex justify-between items-center mb-6">
-                <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest">← Sair</button>
+                <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white">← Sair</button>
                 <div class="flex gap-2 p-1 bg-slate-900 rounded-2xl border border-white/5">
                     <button class="bg-blue-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg text-white">Visitas</button>
                     <button onclick="window.switchView('view-financeiro')" class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-slate-400">BI Dashboard</button>
@@ -85,24 +88,21 @@
 
     <section id="view-financeiro" class="view-section p-6 text-white text-white">
         <div class="max-w-7xl mx-auto w-full">
-            <nav class="flex justify-between items-center mb-10">
+            <nav class="flex justify-between items-center mb-10 text-white">
                 <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white text-white">← Voltar</button>
                 <div class="flex gap-4">
                     <input type="date" id="filtro-bi" onchange="window.filtrarBI()" class="bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white">
                     <button onclick="window.copiarRelatorio()" class="bg-emerald-600 px-6 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg text-white italic">Copiar Zap</button>
                 </div>
             </nav>
-
             <div id="kpi-grid" class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8"></div>
             <div id="finance-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8 text-[10px]"></div>
-
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
                 <div class="lg:col-span-2 glass rounded-[3rem] p-8 border border-white/5 text-white">
                     <canvas id="chartWeekly" style="max-height: 250px;"></canvas>
                 </div>
                 <div id="saldo-card" class="glass rounded-[3rem] p-8 border-l-8 border-emerald-500 flex flex-col justify-center text-white text-white"></div>
             </div>
-
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-white">
                 <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5 text-white">
                     <h4 class="text-emerald-400 font-black uppercase text-xs mb-4 italic">Relação de Vendas</h4>
@@ -155,6 +155,14 @@
             }
         });
 
+        window.trocarProjetoAtivo = async () => {
+            const novoID = prompt("Cole o ID do Novo Projeto:");
+            if(novoID) {
+                await set(ref(db, "config/projeto_ativo"), novoID);
+                location.reload();
+            }
+        };
+
         window.switchView = (id) => {
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active'));
             document.getElementById(id).classList.add('view-active');
@@ -194,7 +202,6 @@
             let lista = fD ? window.dadosCompletos.filter(i => i.data === fD) : window.dadosCompletos;
             let m = { v:0, nq:0, tot:0, pix:0, din:0, deb:0, cre:0, bol:0, vales:0, com:0 };
             let daily = [0,0,0,0,0,0,0], rowsVenda = '', listaNQ = [];
-
             lista.forEach(i => {
                 if(i.resultado === "Venda") {
                     m.v++; const valVenda = Number(i.valor)||0; m.tot += valVenda;
@@ -230,7 +237,7 @@
         window.abrirAvulso = () => { 
             document.getElementById('modalGestao').style.display = 'flex'; document.getElementById('gestao-menu').classList.add('hidden'); 
             const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); 
-            f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Novo Cadastro Avulso</h3><input type="text" id="av-nome" placeholder="NOME DO CLIENTE" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="tel" id="av-tel" placeholder="WHATSAPP" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="date" id="av-data" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none"><button onclick="window.salvarNovoAvulso()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar e Continuar</button>`;
+            f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Novo Cadastro Avulso</h3><input type="text" id="av-nome" placeholder="NOME DO CLIENTE" class="w-full bg-slate-900 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="tel" id="av-tel" placeholder="WHATSAPP" class="w-full bg-slate-900 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-900 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="date" id="av-data" class="w-full bg-slate-900 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none"><button onclick="window.salvarNovoAvulso()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar e Continuar</button>`;
             document.getElementById('av-data').value = new Date().toISOString().split('T')[0];
         };
 
@@ -248,15 +255,11 @@
 
         window.copiarRelatorio = () => {
             const { m, lista, fD } = window.dadosAtuaisRelatorio;
-            let txt = `🚀 *RELATÓRIO ELITE* - ${pDT(fD || 'Acumulado')}\n\n`;
-            txt += `💰 *Faturamento:* ${fBR(m.tot)}\n`;
-            txt += `🎟️ *Vales:* ${fBR(m.vales)}\n`;
-            txt += `📊 *Vendas/NQ:* ${m.v}/${m.nq}\n\n`;
-            txt += `✅ *VENDAS:* \n`;
+            let txt = `🚀 *RELATÓRIO ELITE* - ${pDT(fD || 'Acumulado')}\n\n💰 *Faturamento:* ${fBR(m.tot)}\n🎟️ *Vales:* ${fBR(m.vales)}\n📊 *Vendas/NQ:* ${m.v}/${m.nq}\n\n✅ *VENDAS:* \n`;
             lista.filter(i => i.resultado === 'Venda').forEach(v => txt += `- ${v.nome_formando}: ${fBR(v.valor)}\n`);
             txt += `\n❌ *NQs:* \n`;
             lista.filter(i => i.resultado === 'NQ').sort((a,b)=>a.nome_formando.localeCompare(b.nome_formando)).forEach(n => txt += `- ${n.nome_formando}\n`);
-            navigator.clipboard.writeText(txt).then(() => alert("Relatório copiado para o WhatsApp!"));
+            navigator.clipboard.writeText(txt).then(() => alert("Relatório copiado!"));
         };
 
         window.addPg = (tipo) => {
@@ -294,7 +297,7 @@
         };
 
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); window.carregarRelatorio(); };
-        window.acessoAdmin = () => { if(prompt("Senha:") === "2025") window.switchView('view-logistica'); };
+        window.acessoAdmin = () => { if(prompt("Senha:") === "2025") { window.switchView('view-logistica'); document.getElementById('btn-trocar-projeto').classList.remove('hidden'); } };
         window.gerenciarItem = (p, n, e) => { window.itemPath = p; window.currentName = n; window.currentEnd = e; document.getElementById('modalGestao').style.display = 'flex'; };
         window.salvarStatusSimples = async (s) => { await update(ref(db, window.itemPath), { resultado: s, valor: 0 }); window.fecharModalGestao(); };
         window.confirmarExclusao = async () => { if(confirm("EXCLUIR?")) { await remove(ref(db, window.itemPath)); window.fecharModalGestao(); } };
