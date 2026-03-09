@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.21</title>
+    <title>Elite Sales Intelligence - BI v12.22</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -196,25 +196,34 @@
                     daily[new Date(i.data + "T00:00:00").getDay()]++;
                     let comVenda = 0;
                     (i.pagamentos || []).forEach(p => {
-                        const vP = Number(p.valor)||0;
+                        const vP = Number(p.valor) || 0;
                         const t = p.tipo.toLowerCase();
-                        
-                        // LÓGICA DE VALES: Tudo que é Pix ou Dinheiro (Entrada ou Direto) abate como vale
-                        if(t.includes("pix") || t.includes("dinheiro")) {
+
+                        // CLASSIFICA PAGAMENTO
+                        let forma = "";
+                        if(t.includes("pix")) forma = "pix";
+                        else if(t.includes("dinheiro")) forma = "dinheiro";
+                        else if(t.includes("boleto")) forma = "boleto";
+                        else if(t.includes("credito") || t.includes("crédito")) forma = "credito";
+                        else if(t.includes("debito") || t.includes("débito")) forma = "debito";
+
+                        // CONTABILIZA VALORES POR FORMA
+                        if(forma === "pix") m.pix += vP;
+                        if(forma === "dinheiro") m.din += vP;
+                        if(forma === "boleto") m.bol += vP;
+                        if(forma === "credito") m.cre += vP;
+                        if(forma === "debito") m.deb += vP;
+
+                        // VALES (todo pix ou dinheiro)
+                        if(forma === "pix" || forma === "dinheiro") {
                             m.vales += vP;
-                            if(t.includes("pix")) m.pix += vP; else m.din += vP;
                         }
 
-                        // LÓGICA DE COMISSÃO
-                        if(t.includes("entrada")) { 
+                        // COMISSÃO
+                        if(t.includes("entrada")) {
                             comVenda += vP * 0.12;
-                        } else if(t.includes("boleto")) {
-                            comVenda += vP * 0.08; m.bol += vP;
                         } else {
-                            // PIX, DINHEIRO, CRÉDITO, DÉBITO FORA DA ENTRADA
-                            comVenda += vP * 0.08; 
-                            if(t.includes("crédito") || t.includes("credito")) m.cre += vP;
-                            else if(t.includes("débito") || t.includes("debito")) m.deb += vP;
+                            comVenda += vP * 0.08;
                         }
                     });
                     m.com += comVenda;
@@ -302,7 +311,7 @@
             }
         };
 
-        window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
+        window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); CarregarRelatorio(); };
         window.acessoAdmin = () => { if(prompt("Senha:") === "2025") window.switchView('view-logistica'); };
         window.gerenciarItem = (p, n, e) => { window.itemPath = p; window.currentName = n; window.currentEnd = e; document.getElementById('modalGestao').style.display = 'flex'; };
         window.salvarStatusSimples = async (s) => { await update(ref(db, window.itemPath), { resultado: s, valor: 0 }); window.fecharModalGestao(); await window.carregarRelatorio(); };
@@ -311,7 +320,22 @@
         window.finalizarVenda = async () => { const tot = parseFloat(document.getElementById('vTotal').value); if(!tot) return alert("Valor!"); await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, pagamentos: window.tempPgs }); window.fecharModalGestao(); await window.carregarRelatorio(); };
         window.fluxoEditar = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs text-white">Editar Cadastro</h3><input type="text" id="edit-nome" value="${window.currentName}" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><textarea id="edit-end" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none" rows="3">${window.currentEnd}</textarea><button onclick="window.salvarEdicao()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar Alterações</button>`; };
         window.salvarEdicao = async () => { const n = document.getElementById('edit-nome').value, e = document.getElementById('edit-end').value; await update(ref(db, window.itemPath), { nome_formando: n, endereco: e }); window.fecharModalGestao(); await window.carregarRelatorio(); };
-        window.copiarRelatorio = () => { /* Logica WhatsApp mantida */ };
+
+        (async () => {
+            const agora = new Date(), dHoje = agora.toLocaleDateString('en-CA');
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                const dataBtn = btn.getAttribute("data-date");
+                if (dataBtn < dHoje) return;
+                btn.style.display = "block";
+            });
+            document.getElementById("form-agendamento").addEventListener("submit", async function(e){
+                e.preventDefault(); const n = document.getElementById("nome").value, t = document.getElementById("telefone").value, en = document.getElementById("endereco").value, h = document.getElementById("horario").value, d = document.getElementById("data-selecionada").value;
+                await set(ref(db, `dados/${projetoAtualId}/agendamentos/${d}/${h.replace(":","-")}-${Date.now()}`), { nome_formando: n, telefone: t, endereco: en, horario: h, data: d, resultado: "Pendente" });
+                const msg = `NOVO AGENDAMENTO\n\n👤 Formando: ${n}\n📅 Data: ${pDT(d)}\n🕒 Horário: ${h}\n📍 Endereço:\n${en}`;
+                window.open(`https://wa.me/5516993291674?text=${encodeURIComponent(msg)}`, "_blank");
+                location.reload();
+            });
+        })();
     </script>
 </body>
 </html>
