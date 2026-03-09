@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.43</title>
+    <title>Elite Sales Intelligence - BI v12.44</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: #f1f5f9; overflow-x: hidden; }
-        .glass { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .glass { background: rgba(30, 41,  slate-900, 0.4); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); }
         .btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); transition: all 0.3s ease; }
         #modalGestao { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(2, 6, 23, 0.98); align-items: center; justify-content: center; padding: 20px; }
         .view-section { display: none; min-height: 100vh; width: 100%; }
@@ -45,8 +45,8 @@
         </header>
         <main class="flex-grow flex items-center justify-center p-4">
             <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl text-center border border-white/5">
-                <h2 id="escola-titulo" class="text-2xl font-extrabold uppercase text-blue-400 italic">PROCURANDO...</h2>
-                <h3 id="sub-escola" class="text-xs font-bold text-slate-400 uppercase tracking-widest italic mb-8">CONECTANDO BANCO</h3>
+                <h2 id="escola-titulo" class="text-2xl font-extrabold uppercase text-blue-400 italic">CONECTANDO...</h2>
+                <h3 id="sub-escola" class="text-xs font-bold text-slate-400 uppercase tracking-widest italic mb-8">BANCO DE DADOS</h3>
                 <form id="form-agendamento" class="space-y-4">
                     <div class="grid grid-cols-2 gap-2 mb-4" id="day-selector"></div>
                     <input type="hidden" id="data-selecionada">
@@ -99,20 +99,12 @@
             <div id="kpi-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8"></div>
             <div id="finance-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8 text-[10px]"></div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-                <div class="lg:col-span-2 glass rounded-[3rem] p-8 border border-white/5">
-                    <canvas id="chartWeekly" style="max-height: 250px;"></canvas>
-                </div>
+                <div class="lg:col-span-2 glass rounded-[3rem] p-8 border border-white/5"><canvas id="chartWeekly" style="max-height: 250px;"></canvas></div>
                 <div id="saldo-card" class="glass rounded-[3rem] p-8 border-l-8 border-emerald-500 flex flex-col justify-center"></div>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5">
-                    <h4 class="text-emerald-400 font-black uppercase text-xs mb-4 italic">Vendas</h4>
-                    <table class="w-full text-left min-w-[400px]"><tbody id="extrato-tabela" class="text-white"></tbody></table>
-                </div>
-                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5">
-                    <h4 class="text-rose-500 font-black uppercase text-xs mb-4 italic">NQs</h4>
-                    <table class="w-full text-left min-w-[400px]"><tbody id="nq-tabela" class="text-white"></tbody></table>
-                </div>
+                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5"><h4 class="text-emerald-400 font-black uppercase text-xs mb-4 italic">Vendas</h4><table class="w-full text-left min-w-[400px] text-white"><tbody id="extrato-tabela"></tbody></table></div>
+                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5"><h4 class="text-rose-500 font-black uppercase text-xs mb-4 italic">NQs</h4><table class="w-full text-left min-w-[400px] text-white"><tbody id="nq-tabela"></tbody></table></div>
             </div>
         </div>
     </section>
@@ -136,16 +128,18 @@
 
         let projetoAtualId = ""; window.labelsAtivas = { cidade: "", escola: "" };
 
-        // MARRETA DE SINCRONISMO: Garante que os nomes sejam escritos na tela
-        setInterval(() => {
+        // SINCRONISMO FORÇADO
+        const forceRender = () => {
             if (window.labelsAtivas.cidade) {
                 const h2 = document.getElementById('escola-titulo');
                 const h3 = document.getElementById('sub-escola');
                 if (h2 && h2.innerText !== window.labelsAtivas.cidade) h2.innerText = window.labelsAtivas.cidade;
                 if (h3 && h3.innerText !== window.labelsAtivas.escola) h3.innerText = window.labelsAtivas.escola;
             }
-        }, 500);
+        };
+        setInterval(forceRender, 500);
 
+        // CONEXÃO PRIORITÁRIA
         onValue(ref(db, "config/projeto_ativo"), async (snap) => {
             projetoAtualId = snap.val() || "guaratingueta-guilherme";
             const projSnap = await get(ref(db, `config/projetos/${projetoAtualId}`));
@@ -155,12 +149,12 @@
                 window.gerarBotoesDatas(d.data_inicio, d.data_fim);
                 window.carregarRelatorio();
             }
-        });
+        }, (error) => { console.error("Firebase Blocked:", error); });
 
         window.gerarBotoesDatas = (inicio, fim) => {
             const container = document.getElementById('day-selector'); if(!container) return;
-            if(!inicio || !fim) return container.innerHTML = "<p class='text-xs text-rose-400 col-span-2'>Defina as datas no ADM</p>";
             container.innerHTML = "";
+            if(!inicio || !fim) return;
             let cur = new Date(inicio + "T00:00:00"); const end = new Date(fim + "T00:00:00");
             while(cur <= end) {
                 const iso = cur.toISOString().split('T')[0];
@@ -193,7 +187,8 @@
                     let comEsa = 0;
                     (i.pagamentos || []).forEach(p => {
                         const vP = Number(p.valor) || 0; const t = p.tipo.toLowerCase();
-                        if(t.includes("pix")) { m.pix += vP; m.vales += vP; } else if(t.includes("dinheiro")) { m.din += vP; m.vales += vP; }
+                        if(t.includes("pix") || t.includes("dinheiro") || t.includes("entrada")) m.vales += vP;
+                        if(t.includes("pix")) m.pix += vP; else if(t.includes("dinheiro")) m.din += vP;
                         else if(t.includes("boleto")) m.bol += vP; else if(t.includes("credito")) m.cre += vP; else if(t.includes("debito")) m.deb += vP;
                         comEsa += (t.includes("entrada")) ? vP * 0.12 : vP * 0.08;
                     });
@@ -210,9 +205,8 @@
             document.getElementById('extrato-tabela').innerHTML = rowsVenda || '<tr><td colspan="3" class="p-10 text-center">Sem vendas</td></tr>';
             rowsNQ.sort((a,b) => a.localeCompare(b));
             document.getElementById('nq-tabela').innerHTML = rowsNQ.map(n => `<tr class="border-b border-white/5"><td class="p-4 text-xs">${n}</td><td class="p-4 text-rose-500 font-bold uppercase text-[10px]">NQ</td></tr>`).join('') || '<tr><td colspan="2" class="p-10 text-center">Sem NQs</td></tr>';
-            const ctx = document.getElementById('chartWeekly');
             if(window.myChart) window.myChart.destroy();
-            window.myChart = new Chart(ctx, { type: 'bar', data: { labels: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], datasets: [{ data: daily, backgroundColor: '#3b82f6', borderRadius: 8 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } } });
+            window.myChart = new Chart(document.getElementById('chartWeekly'), { type: 'bar', data: { labels: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], datasets: [{ data: daily, backgroundColor: '#3b82f6', borderRadius: 8 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } } });
         };
 
         window.filtrarLogistica = () => {
@@ -226,7 +220,7 @@
                 if(i.resultado === "Venda") { cor = "border-emerald-500/20 bg-emerald-500/5"; statusTxt = "VENDA"; corTxt = "text-emerald-500"; }
                 else if(i.resultado === "NQ") { cor = "border-rose-500/20 bg-rose-500/5"; statusTxt = "NQ"; corTxt = "text-rose-500"; }
                 const p = i.path.replace(/'/g,"\\'"), n = (i.nome_formando||"").replace(/'/g,"\\'"), e = (i.endereco||"").replace(/'/g,"\\'");
-                container.innerHTML += `<div class="glass p-4 rounded-3xl border-l-4 ${cor} flex justify-between items-center text-white"><div class="flex-grow"><div class="flex items-center gap-2 mb-1"><span class="text-xs font-black text-blue-400 uppercase">${i.horario || 'DIR'}</span><span class="text-[10px] font-bold text-slate-500 italic">${pDT(i.data)}</span><span class="text-[10px] font-black uppercase ${corTxt}">${statusTxt}</span></div><h3 class="text-base font-black uppercase leading-tight mb-2 text-white">${i.nome_formando}</h3><div class="flex gap-4"><a href="https://wa.me/55${(i.telefone||'').replace(/\D/g,'')}" target="_blank" class="text-emerald-400 text-[10px] font-bold uppercase">📱 Zap</a><a href="https://www.waze.com/ul?q=${encodeURIComponent(i.endereco||'')}&navigate=yes" target="_blank" class="text-slate-400 text-[10px] font-bold uppercase">📍 Waze</a></div></div><button onclick="window.gerenciarItem('${p}', '${n}', '${e}')" class="btn-primary px-5 py-3 rounded-2xl font-black uppercase text-[9px] shadow-lg ml-4">Gerenciar</button></div>`;
+                container.innerHTML += `<div class="glass p-4 rounded-3xl border-l-4 ${cor} flex justify-between items-center text-white"><div class="flex-grow"><div class="flex items-center gap-2 mb-1"><span class="text-xs font-black text-blue-400 uppercase">${i.horario || 'DIR'}</span><span class="text-[10px] font-bold text-slate-500 italic">${pDT(i.data)}</span><span class="text-[10px] font-black uppercase ${corTxt}">${statusTxt}</span></div><h3 class="text-base font-black uppercase mb-2">${i.nome_formando}</h3><div class="flex gap-4"><a href="https://wa.me/55${(i.telefone||'').replace(/\D/g,'')}" target="_blank" class="text-emerald-400 text-[10px] font-bold uppercase">📱 Zap</a><a href="https://www.waze.com/ul?q=${encodeURIComponent(i.endereco||'')}&navigate=yes" target="_blank" class="text-slate-400 text-[10px] font-bold uppercase">📍 Waze</a></div></div><button onclick="window.gerenciarItem('${p}', '${n}', '${e}')" class="btn-primary px-5 py-3 rounded-2xl font-black uppercase text-[9px] shadow-lg ml-4">Gerenciar</button></div>`;
             });
         };
 
