@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.23</title>
+    <title>Elite Sales Intelligence - BI v12.24</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -63,7 +63,7 @@
         </main>
     </section>
 
-    <section id="view-logistica" class="view-section p-6 text-white text-white">
+    <section id="view-logistica" class="view-section p-6 text-white">
         <div class="max-w-4xl mx-auto w-full">
             <nav class="flex justify-between items-center mb-10">
                 <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest">← Sair</button>
@@ -199,22 +199,15 @@
                         const vP = Number(p.valor) || 0;
                         const t = p.tipo.toLowerCase();
 
-                        let forma = "";
-                        if(t.includes("pix")) forma = "pix";
-                        else if(t.includes("dinheiro")) forma = "dinheiro";
-                        else if(t.includes("boleto")) forma = "boleto";
-                        else if(t.includes("credito") || t.includes("crédito")) forma = "credito";
-                        else if(t.includes("debito") || t.includes("débito")) forma = "debito";
+                        // CLASSIFICA PAGAMENTO E ACUMULA VALES
+                        if(t.includes("pix")) { m.pix += vP; m.vales += vP; }
+                        else if(t.includes("dinheiro")) { m.din += vP; m.vales += vP; }
+                        else if(t.includes("boleto")) { m.bol += vP; }
+                        else if(t.includes("credito") || t.includes("crédito")) m.cre += vP;
+                        else if(t.includes("debito") || t.includes("débito")) m.deb += vP;
 
-                        if(forma === "pix") m.pix += vP;
-                        if(forma === "dinheiro") m.din += vP;
-                        if(forma === "boleto") m.bol += vP;
-                        if(forma === "credito") m.cre += vP;
-                        if(forma === "debito") m.deb += vP;
-
-                        if(forma === "pix" || forma === "dinheiro") { m.vales += vP; }
-
-                        if(t.includes("entrada")) { comVenda += vP * 0.12; } else { comVenda += vP * 0.08; }
+                        // LÓGICA DE COMISSÃO (12% Entrada, 8% Restante)
+                        if(t.includes("entrada")) comVenda += vP * 0.12; else comVenda += vP * 0.08;
                     });
                     m.com += comVenda;
                     rowsVenda += `<tr class="border-b border-white/5 text-white"><td>${i.nome_formando}</td><td>${fBR(valVenda)}</td><td class="font-black text-emerald-400">${fBR(comVenda)}</td></tr>`;
@@ -295,7 +288,6 @@
             while(cur <= new Date(`${d}T${lim}:00`)){
                 const hF = cur.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
                 const ocupados = counts[hF] || 0;
-                if(ocupados < 2 && (new Date(`${d}T${hF}`).getTime() - Date.now()) < (3 * 3600000)) { /* Mantido */ }
                 if(ocupados < 2){ 
                     let opt=document.createElement('option'); opt.value=hF; 
                     opt.textContent=`${hF} (${2-ocupados} vagas)`; elH.appendChild(opt); 
