@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.15</title>
+    <title>Elite Sales Intelligence - BI v12.16</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -53,10 +53,10 @@
                         <button type="button" data-date="2026-03-08" onclick="window.selecionarDia(this)" class="day-btn rounded-2xl py-4 text-[10px] font-black uppercase">Dom 08/03</button>
                     </div>
                     <input type="hidden" id="data-selecionada">
-                    <input type="text" id="nome" required placeholder="Nome do Formando" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-blue-500">
-                    <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none">
+                    <input type="text" id="nome" required placeholder="Nome do Formando" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none focus:border-blue-500 text-white">
+                    <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none text-white">
                     <select id="horario" required class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none text-white"><option value="">Selecione o Dia</option></select>
-                    <textarea id="endereco" required placeholder="Endereço Completo" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none" rows="2"></textarea>
+                    <textarea id="endereco" required placeholder="Endereço Completo" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none text-white" rows="2"></textarea>
                     <button type="submit" class="btn-primary w-full py-5 rounded-2xl font-black uppercase shadow-lg text-white">Finalizar Agendamento</button>
                 </form>
             </div>
@@ -66,7 +66,7 @@
     <section id="view-logistica" class="view-section p-6 text-white text-white">
         <div class="max-w-4xl mx-auto w-full">
             <nav class="flex justify-between items-center mb-10">
-                <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white">← Sair</button>
+                <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest">← Sair</button>
                 <div class="flex gap-2 p-1 bg-slate-900 rounded-2xl border border-white/5">
                     <button class="bg-blue-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg">Visitas</button>
                     <button onclick="window.switchView('view-financeiro')" class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-slate-400">BI Dashboard</button>
@@ -83,10 +83,10 @@
         </div>
     </section>
 
-    <section id="view-financeiro" class="view-section p-6 text-white text-white">
+    <section id="view-financeiro" class="view-section p-6 text-white">
         <div class="max-w-7xl mx-auto w-full">
             <nav class="flex justify-between items-center mb-10">
-                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white">← Voltar</button>
+                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest">← Voltar</button>
                 <div class="flex gap-4">
                     <input type="date" id="filtro-bi" onchange="window.filtrarBI()" class="bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white">
                     <button onclick="window.copiarRelatorio()" class="bg-emerald-600 px-6 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg">Copiar Zap</button>
@@ -98,11 +98,22 @@
                 <div class="lg:col-span-2 glass rounded-[3rem] p-8 border border-white/5"><canvas id="chartWeekly" style="max-height: 250px;"></canvas></div>
                 <div id="saldo-card" class="glass rounded-[3rem] p-8 border-l-8 border-emerald-500 flex flex-col justify-center text-white"></div>
             </div>
-            <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5">
-                <table class="w-full text-left min-w-[800px]">
-                    <thead><tr class="border-b border-white/5 text-[10px] text-slate-500 font-black uppercase text-white"><th class="p-4 text-white">Cliente</th><th class="p-4 text-white">Venda Bruta</th><th class="p-4 text-white">Pagamento</th><th class="p-4 text-emerald-400">Comissão (R$)</th></tr></thead>
-                    <tbody id="extrato-tabela" class="text-white"></tbody>
-                </table>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5">
+                    <h4 class="text-emerald-400 font-black uppercase text-xs mb-4 italic">Relação de Vendas</h4>
+                    <table class="w-full text-left min-w-[400px]">
+                        <thead><tr class="border-b border-white/5 text-[10px] text-slate-500 font-black uppercase"><th class="p-4 text-white">Cliente</th><th class="p-4 text-white">Venda</th><th class="p-4 text-emerald-400">Comissão</th></tr></thead>
+                        <tbody id="extrato-tabela"></tbody>
+                    </table>
+                </div>
+                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5">
+                    <h4 class="text-rose-500 font-black uppercase text-xs mb-4 italic">Relação de NQ</h4>
+                    <table class="w-full text-left min-w-[400px]">
+                        <thead><tr class="border-b border-white/5 text-[10px] text-slate-500 font-black uppercase"><th class="p-4 text-white">Cliente</th><th class="p-4 text-white">Status</th></tr></thead>
+                        <tbody id="nq-tabela"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </section>
@@ -172,35 +183,32 @@
             const fD = document.getElementById('filtro-bi').value;
             let lista = fD ? window.dadosCompletos.filter(i => i.data === fD) : window.dadosCompletos;
             let m = { v:0, nq:0, tot:0, pix:0, din:0, deb:0, cre:0, bol:0, vales:0, com:0 };
-            let daily = [0,0,0,0,0,0,0], rows = '';
+            let daily = [0,0,0,0,0,0,0], rowsVenda = '', rowsNQ = '';
             lista.forEach(i => {
                 if(i.resultado === "Venda") {
                     m.v++; m.tot += Number(i.valor)||0; daily[new Date(i.data + "T00:00:00").getDay()]++;
-                    let comVenda = 0, pgsI = [];
+                    let comVenda = 0;
                     (i.pagamentos || []).forEach(p => {
-                        pgsI.push(p.tipo); const vP = Number(p.valor)||0;
-                        if(p.tipo.includes("Boleto (Restante)")) {
-                            comVenda += vP * 0.08; m.bol += vP;
-                        } 
-                        else if(p.tipo.includes("Entrada")) {
-                            comVenda += vP * 0.12;
-                            if(p.tipo.includes("Pix")) m.pix += vP; else if(p.tipo.includes("Dinheiro")) m.din += vP;
-                            m.vales += vP;
-                        }
+                        const vP = Number(p.valor)||0;
+                        if(p.tipo.includes("Boleto (Restante)")) { comVenda += vP * 0.08; m.bol += vP; } 
+                        else if(p.tipo.includes("Entrada")) { comVenda += vP * 0.12; m.vales += vP; if(p.tipo.includes("Pix")) m.pix += vP; else m.din += vP; }
                         else if(p.tipo.includes("Pix")) { comVenda += vP * 0.08; m.pix += vP; }
                         else if(p.tipo.includes("Dinheiro")) { comVenda += vP * 0.08; m.din += vP; }
                         else if(p.tipo.includes("Crédito")) { comVenda += vP * 0.08; m.cre += vP; }
                         else if(p.tipo.includes("Débito")) { comVenda += vP * 0.08; m.deb += vP; }
-                        else { comVenda += vP * 0.08; m.bol += vP; }
                     });
                     m.com += comVenda;
-                    rows += `<tr class="border-b border-white/5 text-white"><td>${i.nome_formando}</td><td>${fBR(i.valor)}</td><td>${pgsI.join('+')}</td><td class="font-black text-emerald-400">${fBR(comVenda)}</td></tr>`;
-                } else if(i.resultado === "NQ") m.nq++;
+                    rowsVenda += `<tr class="border-b border-white/5"><td>${i.nome_formando}</td><td>${fBR(i.valor)}</td><td class="font-black text-emerald-400">${fBR(comVenda)}</td></tr>`;
+                } else if(i.resultado === "NQ") {
+                    m.nq++;
+                    rowsNQ += `<tr class="border-b border-white/5"><td class="p-4">${i.nome_formando}</td><td class="p-4 text-rose-500 font-bold uppercase">NQ</td></tr>`;
+                }
             });
-            document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-6 rounded-[2rem] border-emerald-500"><p class="text-[9px] uppercase text-white">Bruto</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500"><p class="text-[9px] uppercase text-white">Vendas/NQ</p><p class="text-3xl font-black">${m.v}/${m.nq}</p></div>`;
-            document.getElementById('finance-grid').innerHTML = `<div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Pix</p><p class="text-lg font-black">${fBR(m.pix)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Dinheiro</p><p class="text-lg font-black">${fBR(m.din)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Boleto</p><p class="text-lg font-black">${fBR(m.bol)}</p></div>`;
+            document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-6 rounded-[2rem] border-emerald-500"><p class="text-[9px] uppercase">Bruto</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500"><p class="text-[9px] uppercase text-white">Vendas/NQ</p><p class="text-3xl font-black">${m.v}/${m.nq}</p></div>`;
+            document.getElementById('finance-grid').innerHTML = `<div class="card-bi p-4 rounded-2xl"><p class="text-[8px] uppercase">Pix</p><p class="text-lg font-black">${fBR(m.pix)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] uppercase">Dinheiro</p><p class="text-lg font-black">${fBR(m.din)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] uppercase">Boleto</p><p class="text-lg font-black">${fBR(m.bol)}</p></div>`;
             document.getElementById('saldo-card').innerHTML = `<p class="text-[10px] uppercase mb-4 text-white">Consolidado</p><div class="flex justify-between text-sm text-white"><span>Bruta</span><span>${fBR(m.com)}</span></div><div class="flex justify-between text-rose-400 text-sm"><span>Vales</span><span>- ${fBR(m.vales)}</span></div><div class="border-t border-white/10 mt-6 pt-6 text-center text-emerald-400"><p class="text-[8px] uppercase">Saldo Líquido</p><p class="text-5xl font-black italic text-white">${fBR(m.com - m.vales)}</p></div>`;
-            document.getElementById('extrato-tabela').innerHTML = rows || '<tr><td colspan="4" class="p-10 text-center">Sem dados</td></tr>';
+            document.getElementById('extrato-tabela').innerHTML = rowsVenda || '<tr><td colspan="3" class="p-10 text-center">Sem vendas</td></tr>';
+            document.getElementById('nq-tabela').innerHTML = rowsNQ || '<tr><td colspan="2" class="p-10 text-center">Sem NQs</td></tr>';
             if(chartWeekly) chartWeekly.destroy();
             chartWeekly = new Chart(document.getElementById('chartWeekly'), { type: 'bar', data: { labels: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], datasets: [{ data: daily, backgroundColor: '#3b82f6' }] }, options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } } });
         };
@@ -208,7 +216,7 @@
         window.abrirAvulso = () => { 
             document.getElementById('modalGestao').style.display = 'flex'; document.getElementById('gestao-menu').classList.add('hidden'); 
             const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); 
-            f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Novo Cadastro</h3><input type="text" id="av-nome" placeholder="NOME" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white outline-none"><input type="tel" id="av-tel" placeholder="WHATSAPP" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white outline-none"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white outline-none"><input type="date" id="av-data" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white outline-none"><button onclick="window.salvarNovoAvulso()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar e Continuar</button>`;
+            f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Novo Cadastro</h3><input type="text" id="av-nome" placeholder="NOME" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="tel" id="av-tel" placeholder="WHATSAPP" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="date" id="av-data" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none"><button onclick="window.salvarNovoAvulso()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar e Continuar</button>`;
             document.getElementById('av-data').value = new Date().toISOString().split('T')[0];
         };
 
@@ -242,24 +250,19 @@
         window.selecionarDia = async (btn) => {
             document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
             const d = btn.getAttribute('data-date'); document.getElementById('data-selecionada').value = d;
-            const elH = document.getElementById('horario'); elH.innerHTML = '<option>Buscando horários...</option>';
             const snap = await get(ref(db, `dados/${projetoAtualId}/agendamentos/${d}`));
             const counts = {};
             Object.entries(snap.val() || {}).forEach(([key, item]) => {
                 let h = item.horario ? item.horario.trim().substring(0,5) : (key.includes("-") ? `${key.split("-")[0]}:${key.split("-")[1]}` : "");
                 if(h) counts[h] = (counts[h] || 0) + 1;
             });
-            elH.innerHTML = '<option value="">Escolha o Horário</option>';
-            const diaHoje = new Date().toLocaleDateString('en-CA'), agoraTs = new Date().getTime();
-            let cur = new Date(`${d}T09:00:00`), lim = (d === diaHoje) ? "19:30" : "20:30";
+            const elH = document.getElementById('horario'); elH.innerHTML = '<option value="">Escolha o Horário</option>';
+            let cur = new Date(`${d}T09:00:00`), lim = (d === new Date().toLocaleDateString('en-CA')) ? "19:30" : "20:30";
             while(cur <= new Date(`${d}T${lim}:00`)){
                 const hF = cur.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-                const ocupados = counts[hF] || 0;
-                let permitido = true;
-                if(d === diaHoje && (cur.getTime() - agoraTs) < (3 * 60 * 60 * 1000)) permitido = false;
-                if(permitido && ocupados < 2){ 
-                    let opt=document.createElement('option'); opt.value=hF; 
-                    opt.textContent=`${hF} (${2 - ocupados} vagas)`; elH.appendChild(opt); 
+                const ocup = counts[hF] || 0;
+                if(ocup < 2 && (new Date(`${d}T${hF}`).getTime() - Date.now() > 3*3600000 || d > new Date().toLocaleDateString('en-CA'))){
+                    let opt=document.createElement('option'); opt.value=hF; opt.textContent=`${hF} (${2-ocup} vagas)`; elH.appendChild(opt);
                 }
                 cur.setMinutes(cur.getMinutes()+30);
             }
@@ -269,14 +272,11 @@
         window.acessoAdmin = () => { if(prompt("Senha:") === "2025") window.switchView('view-logistica'); };
         window.gerenciarItem = (p, n, e) => { window.itemPath = p; window.currentName = n; window.currentEnd = e; document.getElementById('modalGestao').style.display = 'flex'; };
         window.salvarStatusSimples = async (s) => { await update(ref(db, window.itemPath), { resultado: s, valor: 0 }); window.fecharModalGestao(); await window.carregarRelatorio(); };
-        window.confirmarExclusao = async () => { if(confirm("Deseja EXCLUIR permanentemente?")) { await remove(ref(db, window.itemPath)); window.fecharModalGestao(); await window.carregarRelatorio(); } };
-        window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-900 p-6 rounded-3xl text-center mb-4 text-white font-black text-3xl border border-white/10 outline-none"><div class="grid grid-cols-2 gap-2 mb-4 text-white"><button onclick="window.addPg('Dinheiro')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Dinheiro</button><button onclick="window.addPg('Pix')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Pix</button><button onclick="window.addPg('Cartão Débito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Débito</button><button onclick="window.addPg('Cartão Crédito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Crédito</button><button onclick="window.addPg('Boleto')" class="p-4 bg-blue-900/30 border border-blue-500/40 rounded-2xl text-[10px] font-black uppercase col-span-2 text-white">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4 text-white"></div><button onclick="window.finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white shadow-xl shadow-emerald-900/20">SALVAR</button>`; window.tempPgs = []; };
+        window.confirmarExclusao = async () => { if(confirm("EXCLUIR?")) { await remove(ref(db, window.itemPath)); window.fecharModalGestao(); await window.carregarRelatorio(); } };
+        window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-900 p-6 rounded-3xl text-center mb-4 text-white font-black text-3xl border border-white/10 outline-none"><div class="grid grid-cols-2 gap-2 mb-4 text-white"><button onclick="window.addPg('Dinheiro')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Dinheiro</button><button onclick="window.addPg('Pix')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Pix</button><button onclick="window.addPg('Cartão Débito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Débito</button><button onclick="window.addPg('Cartão Crédito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Crédito</button><button onclick="window.addPg('Boleto')" class="p-4 bg-blue-900/30 border border-blue-500/40 rounded-2xl text-[10px] font-black uppercase col-span-2 text-white">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4 text-white"></div><button onclick="window.finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white">SALVAR</button>`; window.tempPgs = []; };
         window.finalizarVenda = async () => { const tot = parseFloat(document.getElementById('vTotal').value); if(!tot) return alert("Valor!"); await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, pagamentos: window.tempPgs }); window.fecharModalGestao(); await window.carregarRelatorio(); };
         window.fluxoEditar = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs text-white">Editar</h3><input type="text" id="edit-nome" value="${window.currentName}" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><textarea id="edit-end" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none" rows="3">${window.currentEnd}</textarea><button onclick="window.salvarEdicao()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar</button>`; };
         window.salvarEdicao = async () => { const n = document.getElementById('edit-nome').value, e = document.getElementById('edit-end').value; await update(ref(db, window.itemPath), { nome_formando: n, endereco: e }); window.fecharModalGestao(); await window.carregarRelatorio(); };
-        window.copiarRelatorio = () => { /* Logica WhatsApp simplificada mantida */ };
     </script>
 </body>
 </html>
-</html>
-
