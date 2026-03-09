@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.47</title>
+    <title>Elite Sales Intelligence - BI v12.48</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -23,25 +23,25 @@
 <body>
 
     <div id="modalGestao">
-        <div class="glass w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl text-white">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-xl font-black uppercase text-blue-400">Gerenciar Visita</h2>
+        <div class="glass w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl text-white text-white text-white">
+            <div class="flex justify-between items-center mb-8 text-white">
+                <h2 id="gestao-titulo" class="text-xl font-black uppercase text-blue-400">Gerenciar Visita</h2>
                 <button onclick="window.fecharModalGestao()" class="bg-slate-800 text-white w-10 h-10 rounded-full font-bold">✕</button>
             </div>
             <div id="gestao-menu" class="grid grid-cols-1 gap-4">
-                <button onclick="window.fluxoResultado()" class="bg-emerald-600/20 border border-emerald-500/30 p-8 rounded-3xl text-emerald-400 font-black uppercase hover:bg-emerald-600 transition">1. Registrar Venda</button>
-                <button onclick="window.salvarStatusSimples('NQ')" class="bg-rose-600/10 border border-rose-500/30 p-4 rounded-2xl text-rose-500 font-black uppercase text-xs">2. Marcar NQ</button>
-                <button onclick="window.fluxoEditar()" class="bg-blue-600/10 border border-blue-500/30 p-4 rounded-2xl text-blue-400 font-black uppercase text-xs">3. Editar Cadastro / Data</button>
-                <button onclick="window.confirmarExclusao()" class="text-slate-600 text-[10px] uppercase font-bold mt-4 text-center hover:text-rose-500 transition">Excluir Registro permanentemente</button>
+                <button onclick="window.fluxoResultado()" class="bg-emerald-600/20 border border-emerald-500/30 p-8 rounded-3xl text-emerald-400 font-black uppercase hover:bg-emerald-600 transition text-white">1. Registrar Venda</button>
+                <button onclick="window.salvarStatusSimples('NQ')" class="bg-rose-600/10 border border-rose-500/30 p-4 rounded-2xl text-rose-500 font-black uppercase text-xs text-white">2. Marcar NQ</button>
+                <button onclick="window.fluxoEditar()" class="bg-blue-600/10 border border-blue-500/30 p-4 rounded-2xl text-blue-400 font-black uppercase text-xs text-white">3. Editar Cadastro / Data</button>
+                <button onclick="window.confirmarExclusao()" class="text-slate-600 text-[10px] uppercase font-bold mt-4 text-center hover:text-rose-500 transition text-white">Excluir Registro permanentemente</button>
             </div>
             <div id="gestao-form" class="hidden space-y-4 text-white"></div>
         </div>
     </div>
 
     <section id="view-agendamento" class="view-section view-active text-white">
-        <header class="p-6 flex justify-between items-center w-full">
+        <header class="p-6 flex justify-between items-center w-full text-white">
             <span class="text-xl font-black uppercase italic tracking-tighter">Portal <span class="text-blue-500">Elite</span></span>
-            <button onclick="window.acessoAdmin()" class="glass px-6 py-2 rounded-xl text-[10px] font-black uppercase">ADM</button>
+            <button onclick="window.acessoAdmin()" class="glass px-6 py-2 rounded-xl text-[10px] font-black uppercase text-white">ADM</button>
         </header>
         <main class="flex-grow flex items-center justify-center p-4">
             <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl text-center border border-white/5">
@@ -65,8 +65,8 @@
             <nav class="flex justify-between items-center mb-6">
                 <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white">← Sair</button>
                 <div class="flex gap-2 p-1 bg-slate-900 rounded-2xl border border-white/5">
-                    <button class="bg-blue-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg">Visitas</button>
-                    <button onclick="window.switchView('view-financeiro')" class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-slate-400">BI Dashboard</button>
+                    <button class="bg-blue-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg text-white">Visitas</button>
+                    <button onclick="window.switchView('view-financeiro')" class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-slate-400 text-white">BI Dashboard</button>
                 </div>
             </nav>
             <div class="mb-6">
@@ -87,7 +87,7 @@
         </div>
     </section>
 
-    <section id="view-financeiro" class="view-section p-6 text-white">
+    <section id="view-financeiro" class="view-section p-6 text-white text-white">
         <div class="max-w-7xl mx-auto w-full text-white">
             <nav class="flex justify-between items-center mb-10">
                 <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white">← Voltar</button>
@@ -102,9 +102,9 @@
                 <div class="lg:col-span-2 glass rounded-[3rem] p-8 border border-white/5"><canvas id="chartWeekly" style="max-height: 250px;"></canvas></div>
                 <div id="saldo-card" class="glass rounded-[3rem] p-8 border-l-8 border-emerald-500 flex flex-col justify-center"></div>
             </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5"><h4 class="text-emerald-400 font-black uppercase text-xs mb-4 italic text-white">Vendas</h4><table class="w-full text-left min-w-[400px] text-white"><tbody id="extrato-tabela" class="text-white text-xs"></tbody></table></div>
-                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5"><h4 class="text-rose-500 font-black uppercase text-xs mb-4 italic text-white">NQs</h4><table class="w-full text-left min-w-[400px] text-white"><tbody id="nq-tabela" class="text-white text-[10px]"></tbody></table></div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-white">
+                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5"><h4 class="text-emerald-400 font-black uppercase text-xs mb-4 italic">Vendas</h4><table class="w-full text-left min-w-[400px] text-white"><tbody id="extrato-tabela" class="text-white"></tbody></table></div>
+                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5"><h4 class="text-rose-500 font-black uppercase text-xs mb-4 italic">NQs</h4><table class="w-full text-left min-w-[400px] text-white"><tbody id="nq-tabela" class="text-white"></tbody></table></div>
             </div>
         </div>
     </section>
@@ -129,26 +129,21 @@
         let projetoAtualId = ""; window.labelsAtivas = { cidade: "Guaratinguetá", escola: "Dr. Guilherme Filippo" };
 
         const atualizarTitulosDOM = () => {
-            const h2 = document.getElementById('escola-titulo');
-            const h3 = document.getElementById('sub-escola');
+            const h2 = document.getElementById('escola-titulo'); const h3 = document.getElementById('sub-escola');
             if(h2 && window.labelsAtivas.cidade) h2.innerText = window.labelsAtivas.cidade;
             if(h3 && window.labelsAtivas.escola) h3.innerText = window.labelsAtivas.escola;
         };
+        setInterval(atualizarTitulosDOM, 1000);
 
-        // CONEXÃO COM FALLBACK DE SEGURANÇA
         onValue(ref(db, "config/projeto_ativo"), async (snap) => {
-            const idDoBanco = snap.val();
-            projetoAtualId = idDoBanco || "guaratingueta-guilherme";
-            
+            projetoAtualId = snap.val() || "guaratingueta-guilherme";
             const projSnap = await get(ref(db, `config/projetos/${projetoAtualId}`));
             if(projSnap.exists()){
                 const d = projSnap.val();
-                window.labelsAtivas = { cidade: d.cidade || "Elite", escola: d.escola || "Projeto Ativo", inicio: d.data_inicio, fim: d.data_fim };
+                window.labelsAtivas = { cidade: d.cidade, escola: d.escola, inicio: d.data_inicio, fim: d.data_fim };
                 atualizarTitulosDOM();
                 if(d.data_inicio) window.gerarBotoesDatas(d.data_inicio, d.data_fim);
                 window.carregarRelatorio();
-            } else {
-                atualizarTitulosDOM(); // Se o projeto não existir no banco, usa os nomes padrões definidos acima
             }
         });
 
@@ -159,14 +154,13 @@
             while(cur <= end) {
                 const iso = cur.toISOString().split('T')[0];
                 const lab = cur.toLocaleDateString('pt-BR', {weekday: 'short', day: '2-digit', month: '2-digit'});
-                container.innerHTML += `<button type="button" data-date="${iso}" onclick="window.selecionarDia(this)" class="day-btn rounded-2xl py-4 text-[10px] font-black uppercase text-white">${lab}</button>`;
+                container.innerHTML += `<button type="button" data-date="${iso}" onclick="window.selecionarDia(this)" class="day-btn rounded-2xl py-4 text-[10px] font-black uppercase text-white text-white">${lab}</button>`;
                 cur.setDate(cur.getDate() + 1);
             }
         };
 
         window.carregarRelatorio = async () => {
             if(!projetoAtualId) return;
-            atualizarTitulosDOM();
             const [sA, sV] = await Promise.all([get(ref(db, `dados/${projetoAtualId}/agendamentos`)), get(ref(db, `dados/${projetoAtualId}/avulsos`))]);
             window.dadosCompletos = [];
             const ags = sA.val() || {};
@@ -185,33 +179,39 @@
             lista.forEach(i => {
                 const diaSemana = new Date(i.data + "T00:00:00").getDay();
                 if(i.resultado === "Venda") {
-                    m.v++; m.tot += Number(i.valor)||0;
-                    dailyVendas[diaSemana]++;
+                    m.v++; m.tot += Number(i.valor)||0; dailyVendas[diaSemana]++;
                     let comEsa = 0;
                     (i.pagamentos || []).forEach(p => {
-                        const vP = Number(p.valor) || 0; const t = p.tipo.toLowerCase();
+                        const vP = Number(p.valor) || 0; 
+                        // NORMALIZAÇÃO PARA BUSCA (Resolve acentos e maiúsculas)
+                        const t = p.tipo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                        
                         if(t.includes("pix") || t.includes("dinheiro") || t.includes("entrada")) m.vales += vP;
-                        if(t.includes("pix")) m.pix += vP; else if(t.includes("dinheiro")) m.din += vP;
-                        else if(t.includes("boleto")) m.bol += vP; else if(t.includes("credito")) m.cre += vP; else if(t.includes("debito")) m.deb += vP;
+                        
+                        if(t.includes("pix")) m.pix += vP; 
+                        else if(t.includes("dinheiro")) m.din += vP;
+                        else if(t.includes("boleto")) m.bol += vP; 
+                        else if(t.includes("credito")) m.cre += vP; 
+                        else if(t.includes("debito")) m.deb += vP;
+                        
                         comEsa += (t.includes("entrada")) ? vP * 0.12 : vP * 0.08;
                     });
                     m.com += comEsa;
                     rowsVenda += `<tr class="border-b border-white/5"><td class="p-2">${i.nome_formando}</td><td class="p-2">${fBR(i.valor)}</td><td class="p-2 text-emerald-400 font-bold">${fBR(comEsa)}</td></tr>`;
                 } else if(i.resultado === "NQ") { 
-                    m.nq++; rowsNQ.push(i.nome_formando);
-                    dailyNQs[diaSemana]++;
+                    m.nq++; rowsNQ.push(i.nome_formando); dailyNQs[diaSemana]++;
                 }
             });
             window.dadosAtuaisRelatorio = { m, fD };
             const tx = (m.v + m.nq) > 0 ? ((m.v / (m.v + m.nq)) * 100).toFixed(0) : 0;
             const perc = (v) => m.tot > 0 ? ((v / m.tot) * 100).toFixed(0) + '%' : '0%';
             
-            document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10 text-white text-white"><p class="text-[9px] uppercase text-emerald-500 font-black">Faturamento</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10 text-white"><p class="text-[9px] uppercase text-blue-500 font-black">Vendas / NQ</p><p class="text-3xl font-black">${m.v} / ${m.nq}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10 text-white"><p class="text-[9px] uppercase text-blue-500 font-black">Eficiência</p><p class="text-3xl font-black">${tx}%</p></div><div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10 text-white"><p class="text-[9px] uppercase text-cyan-500 font-black">Ticket Médio</p><p class="text-3xl font-black">${fBR(m.v ? m.tot/m.v : 0)}</p></div><div class="card-bi p-6 rounded-[2rem] border-emerald-400 bg-emerald-950/10 text-white"><p class="text-[9px] uppercase text-emerald-400 font-black">Comissão Bruta</p><p class="text-3xl font-black">${fBR(m.com)}</p></div>`;
-            document.getElementById('finance-grid').innerHTML = `<div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Pix (${perc(m.pix)})</p><p class="text-lg font-black">${fBR(m.pix)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Dinheiro (${perc(m.din)})</p><p class="text-lg font-black">${fBR(m.din)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Crédito (${perc(m.cre)})</p><p class="text-lg font-black">${fBR(m.cre)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Débito (${perc(m.deb)})</p><p class="text-lg font-black">${fBR(m.deb)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Boleto (${perc(m.bol)})</p><p class="text-lg font-black">${fBR(m.bol)}</p></div><div class="card-bi p-4 rounded-2xl text-rose-500 bg-rose-950/10 border-rose-500/30 text-white"><p class="text-[8px] uppercase">Vales</p><p class="text-lg font-black text-white">${fBR(m.vales)}</p></div>`;
-            document.getElementById('saldo-card').innerHTML = `<p class="text-[10px] uppercase mb-4 font-black text-slate-500 text-center">Resumo</p><div class="flex justify-between text-sm"><span>Bruta</span><span class="font-black text-white text-white">${fBR(m.com)}</span></div><div class="flex justify-between text-rose-400 text-sm"><span>Vales</span><span class="font-black text-white">- ${fBR(m.vales)}</span></div><div class="border-t border-white/10 mt-6 pt-6 text-center text-emerald-400"><p class="text-[8px] uppercase font-black">Líquido</p><p class="text-5xl font-black italic text-white">${fBR(m.com - m.vales)}</p></div>`;
+            document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10 text-white"><p class="text-[9px] uppercase text-emerald-500 font-black">Faturamento</p><p class="text-3xl font-black text-white text-white">${fBR(m.tot)}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10 text-white"><p class="text-[9px] uppercase text-blue-500 font-black">Vendas / NQ</p><p class="text-3xl font-black text-white text-white">${m.v} / ${m.nq}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10 text-white"><p class="text-[9px] uppercase text-blue-500 font-black">Eficiência</p><p class="text-3xl font-black text-white text-white">${tx}%</p></div><div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10 text-white"><p class="text-[9px] uppercase text-cyan-500 font-black">Ticket Médio</p><p class="text-3xl font-black text-white text-white">${fBR(m.v ? m.tot/m.v : 0)}</p></div><div class="card-bi p-6 rounded-[2rem] border-emerald-400 bg-emerald-950/10 text-white"><p class="text-[9px] uppercase text-emerald-400 font-black">Comissão Bruta</p><p class="text-3xl font-black text-white text-white">${fBR(m.com)}</p></div>`;
+            document.getElementById('finance-grid').innerHTML = `<div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Pix (${perc(m.pix)})</p><p class="text-lg font-black text-white text-white">${fBR(m.pix)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Dinheiro (${perc(m.din)})</p><p class="text-lg font-black text-white text-white">${fBR(m.din)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Crédito (${perc(m.cre)})</p><p class="text-lg font-black text-white text-white">${fBR(m.cre)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Débito (${perc(m.deb)})</p><p class="text-lg font-black text-white text-white">${fBR(m.deb)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Boleto (${perc(m.bol)})</p><p class="text-lg font-black text-white text-white">${fBR(m.bol)}</p></div><div class="card-bi p-4 rounded-2xl text-rose-500 bg-rose-950/10 border-rose-500/30 text-white"><p class="text-[8px] uppercase">Vales</p><p class="text-lg font-black text-white text-white text-white">${fBR(m.vales)}</p></div>`;
+            document.getElementById('saldo-card').innerHTML = `<p class="text-[10px] uppercase mb-4 font-black text-slate-500 text-center">Resumo</p><div class="flex justify-between text-sm"><span>Bruta</span><span class="font-black text-white text-white">${fBR(m.com)}</span></div><div class="flex justify-between text-rose-400 text-sm"><span>Vales</span><span class="font-black text-white text-white">- ${fBR(m.vales)}</span></div><div class="border-t border-white/10 mt-6 pt-6 text-center text-emerald-400"><p class="text-[8px] uppercase font-black text-white">Líquido</p><p class="text-5xl font-black italic text-white text-white">${fBR(m.com - m.vales)}</p></div>`;
             document.getElementById('extrato-tabela').innerHTML = rowsVenda || '<tr><td colspan="3" class="p-10 text-center text-white">Sem vendas</td></tr>';
             rowsNQ.sort((a,b) => a.localeCompare(b));
-            document.getElementById('nq-tabela').innerHTML = rowsNQ.map(n => `<tr class="border-b border-white/5"><td class="p-4 text-white">${n}</td><td class="p-4 text-rose-500 font-bold uppercase text-[10px]">NQ</td></tr>`).join('') || '<tr><td colspan="2" class="p-10 text-center text-white">Sem NQs</td></tr>';
+            document.getElementById('nq-tabela').innerHTML = rowsNQ.map(n => `<tr class="border-b border-white/5"><td class="p-4 text-xs text-white text-white">${n}</td><td class="p-4 text-rose-500 font-bold uppercase text-[10px]">NQ</td></tr>`).join('') || '<tr><td colspan="2" class="p-10 text-center text-white">Sem NQs</td></tr>';
             if(window.myChart) window.myChart.destroy();
             window.myChart = new Chart(document.getElementById('chartWeekly'), { type: 'bar', data: { labels: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], datasets: [ { label: 'Vendas', data: dailyVendas, backgroundColor: '#3b82f6', borderRadius: 6 }, { label: 'NQ', data: dailyNQs, backgroundColor: 'rgba(244, 63, 94, 0.4)', borderRadius: 6 } ] }, options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } } });
         };
@@ -227,7 +227,7 @@
                 if(i.resultado === "Venda") { cor = "border-emerald-500/20 bg-emerald-500/5"; statusTxt = "VENDA"; corTxt = "text-emerald-500"; }
                 else if(i.resultado === "NQ") { cor = "border-rose-500/20 bg-rose-500/5"; statusTxt = "NQ"; corTxt = "text-rose-500"; }
                 const p = i.path.replace(/'/g,"\\'"), n = (i.nome_formando||"").replace(/'/g,"\\'"), e = (i.endereco||"").replace(/'/g,"\\'");
-                container.innerHTML += `<div class="glass p-4 rounded-3xl border-l-4 ${cor} flex justify-between items-center text-white"><div class="flex-grow"><div class="flex items-center gap-2 mb-1"><span class="text-xs font-black text-blue-400 uppercase">${i.horario || 'DIR'}</span><span class="text-[10px] font-bold text-slate-500 italic text-white">${pDT(i.data)}</span><span class="text-[10px] font-black uppercase ${corTxt}">${statusTxt}</span></div><h3 class="text-base font-black uppercase leading-tight mb-2 text-white">${i.nome_formando}</h3><div class="flex gap-4"><a href="https://wa.me/55${(i.telefone||'').replace(/\D/g,'')}" target="_blank" class="text-emerald-400 text-[10px] font-bold uppercase">📱 Zap</a><a href="https://www.waze.com/ul?q=${encodeURIComponent(i.endereco||'')}&navigate=yes" target="_blank" class="text-slate-400 text-[10px] font-bold uppercase">📍 Waze</a></div></div><button onclick="window.gerenciarItem('${p}', '${n}', '${e}')" class="btn-primary px-5 py-3 rounded-2xl font-black uppercase text-[9px] shadow-lg ml-4">Gerenciar</button></div>`;
+                container.innerHTML += `<div class="glass p-4 rounded-3xl border-l-4 ${cor} flex justify-between items-center text-white"><div class="flex-grow"><div class="flex items-center gap-2 mb-1"><span class="text-xs font-black text-blue-400 uppercase">${i.horario || 'DIR'}</span><span class="text-[10px] font-bold text-slate-500 italic text-white text-white">${pDT(i.data)}</span><span class="text-[10px] font-black uppercase ${corTxt}">${statusTxt}</span></div><h3 class="text-base font-black uppercase mb-2 text-white text-white text-white">${i.nome_formando}</h3><div class="flex gap-4"><a href="https://wa.me/55${(i.telefone||'').replace(/\D/g,'')}" target="_blank" class="text-emerald-400 text-[10px] font-bold uppercase text-white">📱 Zap</a><a href="https://www.waze.com/ul?q=${encodeURIComponent(i.endereco||'')}&navigate=yes" target="_blank" class="text-slate-400 text-[10px] font-bold uppercase text-white">📍 Waze</a></div></div><button onclick="window.gerenciarItem('${p}', '${n}', '${e}')" class="btn-primary px-5 py-3 rounded-2xl font-black uppercase text-[9px] shadow-lg ml-4">Gerenciar</button></div>`;
             });
         };
 
@@ -245,7 +245,7 @@
         window.fluxoEditar = () => {
             document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
             const item = window.dadosCompletos.find(i => i.path === window.itemPath);
-            f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Editar Cadastro / Data</h3><label class="text-[9px] text-slate-500 uppercase font-bold text-white">Nome</label><input type="text" id="edit-nome" value="${window.currentName}" class="w-full bg-slate-800 p-4 rounded-xl mb-3 text-white border border-white/10 outline-none text-white"><label class="text-[9px] text-slate-500 uppercase font-bold text-white">Data</label><input type="date" id="edit-data" value="${item.data}" class="w-full bg-slate-800 p-4 rounded-xl mb-3 text-white border border-white/10 outline-none text-white"><label class="text-[9px] text-slate-500 uppercase font-bold text-white">Endereço</label><textarea id="edit-end" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none text-white" rows="3">${window.currentEnd}</textarea><button onclick="window.salvarEdicaoCompleta()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase text-white">Salvar</button>`;
+            f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Editar Cadastro / Data</h3><label class="text-[9px] text-slate-500 uppercase font-bold text-white">Nome</label><input type="text" id="edit-nome" value="${window.currentName}" class="w-full bg-slate-800 p-4 rounded-xl mb-3 text-white border border-white/10 outline-none text-white"><label class="text-[9px] text-slate-500 uppercase font-bold text-white">Data</label><input type="date" id="edit-data" value="${item.data}" class="w-full bg-slate-800 p-4 rounded-xl mb-3 text-white border border-white/10 outline-none text-white"><label class="text-[9px] text-slate-500 uppercase font-bold text-white">Endereço</label><textarea id="edit-end" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none" rows="3">${window.currentEnd}</textarea><button onclick="window.salvarEdicaoCompleta()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase text-white">Salvar</button>`;
         };
         window.salvarEdicaoCompleta = async () => {
             const nN = document.getElementById('edit-nome').value, nE = document.getElementById('edit-end').value, nD = document.getElementById('edit-data').value;
@@ -257,11 +257,11 @@
             } else { await update(ref(db, window.itemPath), { nome_formando: nN, endereco: nE }); }
             window.fecharModalGestao();
         };
-        window.abrirAvulso = () => { document.getElementById('modalGestao').style.display = 'flex'; document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Novo Cadastro</h3><input type="text" id="av-nome" placeholder="NOME" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none text-white"><input type="tel" id="av-tel" placeholder="WHATSAPP" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none text-white"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none text-white"><input type="date" id="av-data" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none text-white"><button onclick="window.salvarNovoAvulso()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase text-white text-white">Salvar</button>`; document.getElementById('av-data').value = new Date().toISOString().split('T')[0]; };
+        window.abrirAvulso = () => { document.getElementById('modalGestao').style.display = 'flex'; document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Novo Cadastro</h3><input type="text" id="av-nome" placeholder="NOME" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none text-white"><input type="tel" id="av-tel" placeholder="WHATSAPP" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none text-white"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none text-white"><input type="date" id="av-data" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none"><button onclick="window.salvarNovoAvulso()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase text-white">Salvar</button>`; document.getElementById('av-data').value = new Date().toISOString().split('T')[0]; };
         window.salvarNovoAvulso = async () => { const n = document.getElementById('av-nome').value, d = document.getElementById('av-data').value, t = document.getElementById('av-tel').value, e = document.getElementById('av-end').value; if(!n || !d) return alert("Erro!"); const path = `dados/${projetoAtualId}/avulsos/AV-${Date.now()}`; await set(ref(db, path), { nome_formando: n, telefone: t, endereco: e, data: d, resultado: "Pendente" }); window.itemPath = path; window.currentName = n; window.currentEnd = e; window.fluxoResultadoAvulso(); };
-        window.fluxoResultadoAvulso = () => { const f = document.getElementById('gestao-form'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs text-white">Resultado</h3><button onclick="window.fluxoResultado()" class="w-full p-6 mb-3 bg-emerald-600 rounded-2xl font-black uppercase text-white shadow-lg text-white">1. Registrar Venda</button><button onclick="window.salvarStatusSimples('NQ')" class="w-full p-6 bg-rose-600 rounded-2xl font-black uppercase text-white shadow-lg text-white">2. Marcar NQ</button>`; };
+        window.fluxoResultadoAvulso = () => { const f = document.getElementById('gestao-form'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Resultado</h3><button onclick="window.fluxoResultado()" class="w-full p-6 mb-3 bg-emerald-600 rounded-2xl font-black uppercase text-white shadow-lg text-white">1. Registrar Venda</button><button onclick="window.salvarStatusSimples('NQ')" class="w-full p-6 bg-rose-600 rounded-2xl font-black uppercase text-white shadow-lg text-white">2. Marcar NQ</button>`; };
         window.copiarRelatorio = () => { const { m, fD } = window.dadosAtuaisRelatorio; const tk = m.v ? (m.tot / m.v) : 0; let txt = `Relatório de Vendas\nProjeto: ${window.labelsAtivas.cidade} - ${window.labelsAtivas.escola}\nData: ${fD ? pDT(fD) : 'ACUMULADO GERAL'}\n\n✅ Vendas: ${m.v}\n❌ NQ: ${m.nq}\n\n💵 Dinheiro: ${fBR(m.din)}\n💎 Pix: ${fBR(m.pix)}\n💳 Débito: ${fBR(m.deb)}\n💳 Crédito: ${fBR(m.cre)}\n📄 Boleto: ${fBR(m.bol)}\n💸 Vales: ${fBR(m.vales)}\n\n💰 Total Vendido: ${fBR(m.tot)}\n🎯 Ticket Médio: ${fBR(tk)}`; navigator.clipboard.writeText(txt).then(() => alert("Copiado!")); };
-        window.addPg = (tipo) => { const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',', '.') || 0); if (v <= 0) return; if (tipo === "Boleto") { const r = prompt("Houve entrada? 1-Sim 2-Não"); if (r === "1") { const vE = parseFloat(prompt("Valor Entrada:")?.replace(',', '.') || 0); const fE = prompt("Forma: 1-Pix 2-Dinheiro"); const txtFE = fE === "1" ? "Pix" : "Dinheiro"; window.tempPgs.push({ tipo: `${txtFE} (Entrada)`, valor: vE }); if(v-vE > 0) window.tempPgs.push({ tipo: "Boleto (Restante)", valor: v-vE }); } else window.tempPgs.push({ tipo: "Boleto", valor: v }); } else window.tempPgs.push({ tipo, valor: v }); document.getElementById('lista-p').innerHTML = window.tempPgs.map(p => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px]"><span>${p.tipo}</span><span class="text-emerald-400 font-bold">${fBR(p.valor)}</span></div>`).join(''); };
+        window.addPg = (tipo) => { const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',', '.') || 0); if (v <= 0) return; if (tipo === "Boleto") { const r = prompt("Houve entrada? 1-Sim 2-Não"); if (r === "1") { const vE = parseFloat(prompt("Valor Entrada:")?.replace(',', '.') || 0); const fE = prompt("Forma: 1-Pix 2-Dinheiro"); const txtFE = fE === "1" ? "Pix" : "Dinheiro"; window.tempPgs.push({ tipo: `${txtFE} (Entrada)`, valor: vE }); if(v-vE > 0) window.tempPgs.push({ tipo: "Boleto (Restante)", valor: v-vE }); } else window.tempPgs.push({ tipo: "Boleto", valor: v }); } else window.tempPgs.push({ tipo, valor: v }); document.getElementById('lista-p').innerHTML = window.tempPgs.map(p => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px] text-white"><span>${p.tipo}</span><span class="text-emerald-400 font-bold">${fBR(p.valor)}</span></div>`).join(''); };
         window.selecionarDia = async (btn) => { document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); const d = btn.getAttribute('data-date'); document.getElementById('data-selecionada').value = d; const snap = await get(ref(db, `dados/${projetoAtualId}/agendamentos/${d}`)); const counts = {}; Object.entries(snap.val() || {}).forEach(([key, item]) => { let h = item.horario ? item.horario.trim().substring(0,5) : (key.includes("-") ? `${key.split("-")[0]}:${key.split("-")[1]}` : ""); if(h) counts[h] = (counts[h] || 0) + 1; }); const elH = document.getElementById('horario'); elH.innerHTML = '<option value="">Horário</option>'; let cur = new Date(`${d}T09:00:00`), lim = (d === new Date().toLocaleDateString('en-CA')) ? "19:30" : "20:30"; while(cur <= new Date(`${d}T${lim}:00`)){ const hF = cur.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); const ocup = counts[hF] || 0; if(ocup < 2) { let opt=document.createElement('option'); opt.value=hF; opt.textContent=`${hF} (${2-ocup} vagas)`; elH.appendChild(opt); } cur.setMinutes(cur.getMinutes()+30); } };
     </script>
 </body>
