@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.19</title>
+    <title>Elite Sales Intelligence - BI v12.20</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -201,16 +201,16 @@
                             comVenda += vP * 0.08; m.bol += vP; 
                         } 
                         else if(p.tipo.includes("Entrada")) { 
-                            comVenda += vP * 0.12; m.vales += vP;
+                            comVenda += vP * 0.12; m.vales += vP; // TODA ENTRADA ABATE COMO VALE
                             if(p.tipo.includes("Pix")) m.pix += vP; else if(p.tipo.includes("Dinheiro")) m.din += vP;
                         } else {
-                            // OUTROS PAGAMENTOS À VISTA (FORA DA ENTRADA)
+                            // OUTROS PAGAMENTOS À VISTA
                             comVenda += vP * 0.08; 
-                            if(p.tipo.includes("Pix")) m.pix += vP; 
-                            else if(p.tipo.includes("Dinheiro")) m.din += vP;
+                            if(p.tipo.includes("Pix")) { m.pix += vP; m.vales += vP; } // PIX ABATE COMO VALE
+                            else if(p.tipo.includes("Dinheiro")) { m.din += vP; m.vales += vP; } // DINHEIRO ABATE COMO VALE
                             else if(p.tipo.includes("Crédito")) m.cre += vP;
                             else if(p.tipo.includes("Débito")) m.deb += vP;
-                            else m.bol += vP; // Caso caia como boleto genérico
+                            else m.bol += vP;
                         }
                     });
                     m.com += comVenda;
@@ -234,7 +234,7 @@
                 <div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Débito (${perc(m.deb)})</p><p class="text-lg font-black">${fBR(m.deb)}</p></div>
                 <div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Boleto (${perc(m.bol)})</p><p class="text-lg font-black">${fBR(m.bol)}</p></div>`;
 
-            document.getElementById('saldo-card').innerHTML = `<p class="text-[10px] uppercase mb-4 text-white font-black italic text-slate-500">Consolidado</p><div class="flex justify-between text-sm text-white"><span>Bruta</span><span class="font-black">${fBR(m.com)}</span></div><div class="flex justify-between text-rose-400 text-sm"><span>Vales</span><span class="font-black">- ${fBR(m.vales)}</span></div><div class="border-t border-white/10 mt-6 pt-6 text-center text-emerald-400"><p class="text-[8px] uppercase font-black">Saldo Líquido</p><p class="text-5xl font-black italic text-white">${fBR(m.com - m.vales)}</p></div>`;
+            document.getElementById('saldo-card').innerHTML = `<p class="text-[10px] uppercase mb-4 text-white font-black italic text-slate-500">Consolidado</p><div class="flex justify-between text-sm text-white"><span>Bruta</span><span class="font-black">${fBR(m.com)}</span></div><div class="flex justify-between text-rose-400 text-sm"><span>Vales (Pix/Din)</span><span class="font-black">- ${fBR(m.vales)}</span></div><div class="border-t border-white/10 mt-6 pt-6 text-center text-emerald-400"><p class="text-[8px] uppercase font-black">Saldo Líquido</p><p class="text-5xl font-black italic text-white">${fBR(m.com - m.vales)}</p></div>`;
             document.getElementById('extrato-tabela').innerHTML = rowsVenda || '<tr><td colspan="3" class="p-10 text-center">Sem vendas</td></tr>';
             listaNQ.sort((a, b) => a.localeCompare(b));
             document.getElementById('nq-tabela').innerHTML = listaNQ.map(n => `<tr class="border-b border-white/5"><td class="p-4">${n}</td><td class="p-4 text-rose-500 font-bold uppercase text-xs">NQ</td></tr>`).join('') || '<tr><td colspan="2" class="p-10 text-center">Sem NQs</td></tr>';
@@ -246,7 +246,7 @@
         window.abrirAvulso = () => { 
             document.getElementById('modalGestao').style.display = 'flex'; document.getElementById('gestao-menu').classList.add('hidden'); 
             const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); 
-            f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Novo Cadastro Avulso</h3><input type="text" id="av-nome" placeholder="NOME DO CLIENTE" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="tel" id="av-tel" placeholder="WHATSAPP" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="date" id="av-data" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none"><button onclick="window.salvarNovoAvulso()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar e Continuar</button>`;
+            f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Novo Atendimento Avulso</h3><input type="text" id="av-nome" placeholder="NOME DO CLIENTE" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="tel" id="av-tel" placeholder="WHATSAPP" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="date" id="av-data" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none"><button onclick="window.salvarNovoAvulso()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar e Continuar</button>`;
             document.getElementById('av-data').value = new Date().toISOString().split('T')[0];
         };
 
@@ -311,3 +311,4 @@
     </script>
 </body>
 </html>
+
