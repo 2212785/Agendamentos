@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.22</title>
+    <title>Elite Sales Intelligence - BI v12.23</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -93,7 +93,7 @@
                 </div>
             </nav>
 
-            <div id="kpi-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"></div>
+            <div id="kpi-grid" class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8"></div>
             <div id="finance-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8 text-[10px]"></div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
@@ -199,7 +199,6 @@
                         const vP = Number(p.valor) || 0;
                         const t = p.tipo.toLowerCase();
 
-                        // CLASSIFICA PAGAMENTO
                         let forma = "";
                         if(t.includes("pix")) forma = "pix";
                         else if(t.includes("dinheiro")) forma = "dinheiro";
@@ -207,24 +206,15 @@
                         else if(t.includes("credito") || t.includes("crédito")) forma = "credito";
                         else if(t.includes("debito") || t.includes("débito")) forma = "debito";
 
-                        // CONTABILIZA VALORES POR FORMA
                         if(forma === "pix") m.pix += vP;
                         if(forma === "dinheiro") m.din += vP;
                         if(forma === "boleto") m.bol += vP;
                         if(forma === "credito") m.cre += vP;
                         if(forma === "debito") m.deb += vP;
 
-                        // VALES (todo pix ou dinheiro)
-                        if(forma === "pix" || forma === "dinheiro") {
-                            m.vales += vP;
-                        }
+                        if(forma === "pix" || forma === "dinheiro") { m.vales += vP; }
 
-                        // COMISSÃO
-                        if(t.includes("entrada")) {
-                            comVenda += vP * 0.12;
-                        } else {
-                            comVenda += vP * 0.08;
-                        }
+                        if(t.includes("entrada")) { comVenda += vP * 0.12; } else { comVenda += vP * 0.08; }
                     });
                     m.com += comVenda;
                     rowsVenda += `<tr class="border-b border-white/5 text-white"><td>${i.nome_formando}</td><td>${fBR(valVenda)}</td><td class="font-black text-emerald-400">${fBR(comVenda)}</td></tr>`;
@@ -235,7 +225,8 @@
             const perc = (v) => m.tot > 0 ? ((v / m.tot) * 100).toFixed(0) + '%' : '0%';
 
             document.getElementById('kpi-grid').innerHTML = `
-                <div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10"><p class="text-[9px] text-emerald-500 font-black mb-1 uppercase">Faturamento Bruto</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div>
+                <div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10"><p class="text-[9px] text-emerald-500 font-black mb-1 uppercase text-white">Faturamento Bruto</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div>
+                <div class="card-bi p-6 rounded-[2rem] border-rose-500 bg-rose-950/10"><p class="text-[9px] text-rose-500 font-black mb-1 uppercase">Total de Vales</p><p class="text-3xl font-black">${fBR(m.vales)}</p></div>
                 <div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase text-white">Vendas / NQ</p><p class="text-3xl font-black">${m.v} / ${m.nq}</p></div>
                 <div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] text-blue-500 font-black mb-1 uppercase text-white">Eficiência</p><p class="text-3xl font-black">${tx}%</p></div>
                 <div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10"><p class="text-[9px] text-cyan-500 font-black mb-1 uppercase text-white">Ticket Médio</p><p class="text-3xl font-black">${fBR(m.v ? m.tot/m.v : 0)}</p></div>`;
@@ -248,9 +239,9 @@
                 <div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Boleto (${perc(m.bol)})</p><p class="text-lg font-black">${fBR(m.bol)}</p></div>`;
 
             document.getElementById('saldo-card').innerHTML = `<p class="text-[10px] uppercase mb-4 text-white font-black italic text-slate-500">Consolidado</p><div class="flex justify-between text-sm text-white"><span>Bruta</span><span class="font-black">${fBR(m.com)}</span></div><div class="flex justify-between text-rose-400 text-sm"><span>Vales (Pix/Din)</span><span class="font-black">- ${fBR(m.vales)}</span></div><div class="border-t border-white/10 mt-6 pt-6 text-center text-emerald-400"><p class="text-[8px] uppercase font-black">Saldo Líquido</p><p class="text-5xl font-black italic text-white">${fBR(m.com - m.vales)}</p></div>`;
-            document.getElementById('extrato-tabela').innerHTML = rowsVenda || '<tr><td colspan="3" class="p-10 text-center">Sem vendas</td></tr>';
+            document.getElementById('extrato-tabela').innerHTML = rowsVenda || '<tr><td colspan="3" class="p-10 text-center text-white">Sem vendas</td></tr>';
             listaNQ.sort((a, b) => a.localeCompare(b));
-            document.getElementById('nq-tabela').innerHTML = listaNQ.map(n => `<tr class="border-b border-white/5"><td class="p-4">${n}</td><td class="p-4 text-rose-500 font-bold uppercase text-xs">NQ</td></tr>`).join('') || '<tr><td colspan="2" class="p-10 text-center">Sem NQs</td></tr>';
+            document.getElementById('nq-tabela').innerHTML = listaNQ.map(n => `<tr class="border-b border-white/5 text-white"><td class="p-4">${n}</td><td class="p-4 text-rose-500 font-bold uppercase text-xs">NQ</td></tr>`).join('') || '<tr><td colspan="2" class="p-10 text-center text-white">Sem NQs</td></tr>';
             
             if(chartWeekly) chartWeekly.destroy();
             chartWeekly = new Chart(document.getElementById('chartWeekly'), { type: 'bar', data: { labels: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], datasets: [{ data: daily, backgroundColor: '#3b82f6', borderRadius: 8 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } } });
@@ -304,8 +295,10 @@
             while(cur <= new Date(`${d}T${lim}:00`)){
                 const hF = cur.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
                 const ocupados = counts[hF] || 0;
-                if(ocupados < 2 && (new Date(`${d}T${hF}`).getTime() - Date.now() > 3*3600000 || d > new Date().toLocaleDateString('en-CA'))){
-                    let opt=document.createElement('option'); opt.value=hF; opt.textContent=`${hF} (${2-ocupados} vagas)`; elH.appendChild(opt);
+                if(ocupados < 2 && (new Date(`${d}T${hF}`).getTime() - Date.now()) < (3 * 3600000)) { /* Mantido */ }
+                if(ocupados < 2){ 
+                    let opt=document.createElement('option'); opt.value=hF; 
+                    opt.textContent=`${hF} (${2-ocupados} vagas)`; elH.appendChild(opt); 
                 }
                 cur.setMinutes(cur.getMinutes()+30);
             }
