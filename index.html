@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v13.10</title>
+    <title>Elite Sales Intelligence - BI v13.30</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -63,34 +63,50 @@
     <section id="view-logistica" class="view-section p-6 text-white">
         <div class="max-w-4xl mx-auto w-full text-white">
             <nav class="flex justify-between items-center mb-6">
-                <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white text-white">← Sair</button>
+                <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest">← Sair</button>
                 <div class="flex gap-2 p-1 bg-slate-900 rounded-2xl border border-white/5">
-                    <button class="bg-blue-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg text-white">Visitas</button>
-                    <button onclick="window.switchView('view-financeiro')" class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-slate-400 text-white">BI Dashboard</button>
+                    <button class="bg-blue-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg">Visitas</button>
+                    <button onclick="window.switchView('view-financeiro')" class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-slate-400">BI Dashboard</button>
                 </div>
             </nav>
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h1 class="text-2xl font-black italic uppercase">Minha <span class="text-blue-500">Rota</span></h1>
+                    <div id="controles-adm" class="hidden flex flex-wrap gap-1">
+                        <button onclick="window.criarNovoProjeto()" class="glass px-3 py-2 rounded-xl text-[8px] font-black uppercase text-emerald-400">Novo</button>
+                        <button onclick="window.trocarProjetoAtivo()" class="glass px-3 py-2 rounded-xl text-[8px] font-black uppercase text-rose-400">Trocar</button>
+                        <button onclick="window.gerenciarDatas()" class="glass px-3 py-2 rounded-xl text-[8px] font-black uppercase text-blue-400">Datas</button>
+                        <button onclick="window.editarCustosProjeto()" class="glass px-3 py-2 rounded-xl text-[8px] font-black uppercase text-amber-400">⚙️ Custos</button>
+                        <button onclick="window.abrirModalVale()" class="glass px-3 py-2 rounded-xl text-[8px] font-black uppercase text-fuchsia-400">💸 Vale</button>
+                    </div>
+                </div>
+                <div class="flex flex-col md:flex-row gap-2">
+                    <input type="date" id="filtro-data-logistica" onchange="window.filtrarLogistica()" class="flex-grow bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold outline-none text-white">
+                    <button onclick="window.abrirAvulso()" class="bg-white text-black px-6 py-3 rounded-xl text-[10px] font-black uppercase hover:bg-blue-50 transition">+ Avulso</button>
+                </div>
+            </div>
             <div id="lista-visitas" class="space-y-3"></div>
         </div>
     </section>
 
     <section id="view-financeiro" class="view-section p-6 text-white">
         <div class="max-w-7xl mx-auto w-full text-white">
-            <nav class="flex justify-between items-center mb-10 text-white">
-                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white">← Voltar</button>
+            <nav class="flex justify-between items-center mb-10">
+                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest">← Voltar</button>
                 <div class="flex gap-4">
                     <input type="date" id="filtro-bi" onchange="window.filtrarBI()" class="bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white">
                     <button onclick="window.copiarRelatorio()" class="bg-emerald-600 px-6 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg text-white">Copiar Zap</button>
                 </div>
             </nav>
-            <div id="kpi-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8 text-white"></div>
-            <div id="finance-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8 text-[10px] text-white"></div>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10 text-white">
-                <div class="lg:col-span-2 glass rounded-[3rem] p-8 border border-white/5 text-white"><canvas id="chartWeekly" style="max-height: 250px;"></canvas></div>
-                <div id="saldo-card" class="glass rounded-[3rem] p-8 border-l-8 border-emerald-500 flex flex-col justify-center space-y-4 text-white text-white text-white"></div>
+            <div id="kpi-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8"></div>
+            <div id="finance-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8 text-[10px]"></div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+                <div class="lg:col-span-2 glass rounded-[3rem] p-8 border border-white/5"><canvas id="chartWeekly" style="max-height: 250px;"></canvas></div>
+                <div id="saldo-card" class="glass rounded-[3rem] p-8 border-l-8 border-emerald-500 flex flex-col justify-center space-y-4"></div>
             </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-white">
-                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5 text-white text-white"><h4 class="text-emerald-400 font-black uppercase text-xs mb-4 italic text-white text-white">Vendas</h4><table class="w-full text-left min-w-[400px] text-white text-white text-white"><tbody id="extrato-tabela" class="text-xs"></tbody></table></div>
-                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5 text-white text-white"><h4 class="text-rose-500 font-black uppercase text-xs mb-4 italic text-white text-white text-white">NQs</h4><table class="w-full text-left min-w-[400px] text-white text-white text-white text-white"><tbody id="nq-tabela" class="text-[10px]"></tbody></table></div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5"><h4 class="text-emerald-400 font-black uppercase text-xs mb-4 italic">Vendas</h4><table class="w-full text-left min-w-[400px] text-white"><tbody id="extrato-tabela" class="text-xs"></tbody></table></div>
+                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5"><h4 class="text-rose-500 font-black uppercase text-xs mb-4 italic">NQs</h4><table class="w-full text-left min-w-[400px] text-white"><tbody id="nq-tabela" class="text-[10px]"></tbody></table></div>
             </div>
         </div>
     </section>
@@ -115,132 +131,120 @@
         let projetoAtualId = ""; window.labelsAtivas = { cidade: "...", escola: "..." };
         let configProjetoAtual = {}; let custosOperacao = {}; window.dadosCompletos = []; window.valesAvulsos = []; window.dadosAtuaisRelatorio = {};
 
-        // --- TITULOS REATIVOS ---
+        // --- TITULOS ---
         window.atualizarTitulosDOM = () => {
-            const h2 = document.getElementById('escola-titulo');
-            const h3 = document.getElementById('sub-escola');
-            if(!h2 || !h3) return;
-            h2.innerText = window.labelsAtivas.cidade;
-            h3.innerText = window.labelsAtivas.escola;
+            document.getElementById('escola-titulo').innerText = window.labelsAtivas.cidade;
+            document.getElementById('sub-escola').innerText = window.labelsAtivas.escola;
         };
 
-        // --- CONEXÃO INTELIGENTE (RECUPERA VENDAS E NOMES) ---
-        onValue(ref(db, "config/projeto_ativo"), async (snap) => {
-            projetoAtualId = snap.val() || "guaratingueta-guilherme";
-            
-            // Tenta ler de TODOS os locais possíveis para garantir que nada some
-            const [pGaveta, pAntigo, pRaiz, custoGaveta] = await Promise.all([
-                get(ref(db, `projetos/${projetoAtualId}`)),
-                get(ref(db, `config/projetos/${projetoAtualId}`)),
-                get(ref(db, projetoAtualId)),
-                get(ref(db, `custos/${projetoAtualId}`))
-            ]);
-            
-            let dEncontrados = pGaveta.exists() ? pGaveta.val() : (pAntigo.exists() ? pAntigo.val() : (pRaiz.exists() ? pRaiz.val() : {}));
-            configProjetoAtual = dEncontrados;
-            custosOperacao = custoGaveta.exists() ? custoGaveta.val() : dEncontrados;
-
-            window.labelsAtivas = { 
-                cidade: configProjetoAtual.cidade || "Guaratinguetá", 
-                escola: configProjetoAtual.escola || configProjetoAtual.school || "Dr. Guilherme Filippo" 
-            };
-            
-            window.atualizarTitulosDOM();
-            if(configProjetoAtual.data_inicio) window.gerarBotoesDatas(configProjetoAtual.data_inicio, configProjetoAtual.data_fim);
-            window.carregarRelatorio();
-        });
-
-        // --- RECUPERAÇÃO HÍBRIDA DE VENDAS (dados/ vs vendas/) ---
-        window.carregarRelatorio = async () => {
-            if(!projetoAtualId) return;
-            const id = projetoAtualId;
-            
-            // Busca nas DUAS pastas para garantir que as vendas apareçam
-            const [sA_antigo, sV_antigo, sVale, sA_novo, sV_novo] = await Promise.all([
-                get(ref(db, `dados/${id}/agendamentos`)),
-                get(ref(db, `dados/${id}/avulsos`)),
-                get(ref(db, `dados/${id}/vales`)),
-                get(ref(db, `vendas/${id}/agendamentos`)),
-                get(ref(db, `vendas/${id}/avulsos`))
-            ]);
-
-            window.dadosCompletos = [];
-            // Processa dados da pasta antiga
-            const agsA = sA_antigo.val() || {}; 
-            Object.keys(agsA).forEach(d => { if(agsA[d]) Object.keys(agsA[d]).forEach(k => window.dadosCompletos.push({...agsA[d][k], id:k, data:d, path: `dados/${id}/agendamentos/${d}/${k}`})); });
-            const avsA = sV_antigo.val() || {}; 
-            Object.keys(avsA).forEach(k => window.dadosCompletos.push({...avsA[k], id:k, data:avsA[k].data, path: `dados/${id}/avulsos/${k}`}));
-            
-            // Processa dados da pasta nova (se existirem)
-            const agsN = sA_novo.val() || {}; 
-            Object.keys(agsN).forEach(d => { if(agsN[d]) Object.keys(agsN[d]).forEach(k => window.dadosCompletos.push({...agsN[d][k], id:k, data:d, path: `vendas/${id}/agendamentos/${d}/${k}`})); });
-            const avsN = sV_novo.val() || {}; 
-            Object.keys(avsN).forEach(k => window.dadosCompletos.push({...avsN[k], id:k, data:avsN[k].data, path: `vendas/${id}/avulsos/${k}`}));
-
-            window.valesAvulsos = []; const vales = sVale.val() || {}; Object.keys(vales).forEach(id => window.valesAvulsos.push(vales[id]));
-            window.filtrarLogistica(); window.filtrarBI();
-        };
-
-        // --- FILTRAGEM BI (MANTIDO v12.73) ---
+        // --- FILTRAGEM BI (LAYOUT v12.84 INTEGRAL) ---
         window.filtrarBI = () => {
             const fD = document.getElementById('filtro-bi').value;
             let lista = fD ? window.dadosCompletos.filter(i => i.data === fD) : window.dadosCompletos;
             let m = { v:0, nq:0, tot:0, pix:0, din:0, deb:0, cre:0, bol:0, vales:0, com:0 };
             let valeE = (projetoAtualId === "guaratingueta-guilherme") ? 1950.0 : 0;
             let valeW = (projetoAtualId === "guaratingueta-guilherme") ? 2755.0 : 0;
-            let rowsVenda = '';
+            let dailyVendas = [0,0,0,0,0,0,0], dailyNQs = [0,0,0,0,0,0,0], rowsVenda = '', rowsNQ = [];
             
             lista.forEach(i => {
+                const ds = new Date(i.data + "T00:00:00").getDay();
                 if(i.resultado === "Venda") {
-                    m.v++; m.tot += Number(i.valor)||0;
+                    m.v++; m.tot += Number(i.valor)||0; if(!isNaN(ds)) dailyVendas[ds]++;
                     let comEsa = 0;
                     (i.pagamentos || []).forEach(p => {
-                        const vP = Number(p.valor) || 0; const t = p.tipo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                        if((t.includes("pix") || t.includes("dinheiro") || t.includes("entrada")) && !t.includes("debito")) {
+                        const vP = Number(p.valor) || 0; const t = p.tipo.toLowerCase();
+                        if((t.includes("pix") || t.includes("dinheiro")) && !t.includes("debito")) {
                             m.vales += vP; if(i.vendedor === "Evanio") valeE += vP; else if(i.vendedor === "Willian") valeW += vP;
                         }
-                        if(t.includes("pix")) m.pix += vP; else if(t.includes("dinheiro")) m.din += vP; else if(t.includes("debito")) m.deb += vP; else if(t.includes("credito")) m.cre += vP; else if(t.includes("boleto")) m.bol += vP;
-                        comEsa += (t.includes("entrada")) ? vP * 0.12 : vP * 0.08;
+                        if(t.includes("pix")) m.pix += vP; else if(t.includes("dinheiro")) m.din += vP;
+                        else if(t.includes("debito")) m.deb += vP; else if(t.includes("credito")) m.cre += vP;
+                        else if(t.includes("boleto")) m.bol += vP;
+                        comEsa += t.includes("entrada") ? vP * 0.12 : vP * 0.08;
                     });
                     m.com += comEsa;
-                    rowsVenda += `<tr class="border-b border-white/5 text-white"><td>${i.nome_formando}</td><td>${fBR(i.valor)}</td><td class="text-emerald-400 font-bold">${fBR(comEsa)}</td></tr>`;
-                } else if(i.resultado === "NQ") m.nq++;
+                    rowsVenda += `<tr class="border-b border-white/5 text-white"><td>#${i.num_album || '---'} ${i.nome_formando}</td><td>${fBR(i.valor)}</td><td class="text-emerald-400 font-bold">${fBR(comEsa)}</td></tr>`;
+                } else if(i.resultado === "NQ") { m.nq++; rowsNQ.push(i.nome_formando); if(!isNaN(ds)) dailyNQs[ds]++; }
             });
+
             window.valesAvulsos.forEach(v => { m.vales += v.valor; if(v.vendedor === "Evanio") valeE += v.valor; else valeW += v.valor; });
             const c = custosOperacao; const nP = parseInt(c.operacao_pessoas) || 1;
-            const totalR = ((parseFloat(c.hosp_valor)||0)*nP*(parseInt(c.hosp_qtd)||0)) + ((parseFloat(c.alim_valor)||0)*nP*(parseInt(c.alim_qtd)||0)) + ((parseFloat(c.km_total)||0)*(0.70)*nP) + ((parseFloat(c.pedagio_total)||0)*nP);
+            const totalR = ((parseFloat(c.hosp_valor)||0)*nP*(parseInt(c.hosp_qtd)||0)) + ((parseFloat(c.alim_valor)||0)*nP*(parseInt(c.alim_qtd)||0)) + ((parseFloat(c.km_total)||0)*0.7*nP) + ((parseFloat(c.pedagio_total)||0)*nP);
             const cM = m.com / 2; const rM = totalR / 2;
-            document.getElementById('saldo-card').innerHTML = `<div class="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-1 text-white"><p class="text-[10px] font-black text-emerald-400 mb-1">EVANIO</p><div class="flex justify-between text-[10px] text-slate-400"><span>Comis/Reem.</span><span>${fBR(cM)} / ${fBR(rM)}</span></div><div class="flex justify-between text-[10px] text-rose-400"><span>Vales</span><span>- ${fBR(valeE)}</span></div><div class="flex justify-between font-black border-t border-white/10 pt-1 text-white"><span>A RECEBER</span><span>${fBR(cM+rM-valeE)}</span></div></div><div class="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-1 mt-4 text-white"><p class="text-[10px] font-black text-cyan-400 mb-1">WILLIAN</p><div class="flex justify-between text-[10px] text-slate-400"><span>Comis/Reem.</span><span>${fBR(cM)} / ${fBR(rM)}</span></div><div class="flex justify-between text-[10px] text-rose-400"><span>Vales</span><span>- ${fBR(valeW)}</span></div><div class="flex justify-between font-black border-t border-white/10 pt-1 text-white"><span>A RECEBER</span><span>${fBR(cM+rM-valeW)}</span></div></div>`;
-            document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-4 rounded-3xl"><p class="text-[8px] uppercase">Vendido</p><p class="text-xl font-black">${fBR(m.tot)}</p></div><div class="card-bi p-4 rounded-3xl"><p class="text-[8px] uppercase">Vendas/NQ</p><p class="text-xl font-black">${m.v}/${m.nq}</p></div>`;
+
+            document.getElementById('saldo-card').innerHTML = `<div class="text-center border-b border-white/5 pb-2"><p class="text-[10px] uppercase font-black text-blue-400">Total Operação</p><p class="text-2xl font-black">${fBR(m.com + totalR)}</p></div><div class="p-4 bg-white/5 rounded-2xl space-y-1"><p class="text-[10px] font-black text-emerald-400">EVANIO</p><div class="flex justify-between text-[10px] text-slate-400"><span>Comis/Reem.</span><span>${fBR(cM)} / ${fBR(rM)}</span></div><div class="flex justify-between text-[10px] text-rose-400"><span>Vales</span><span>- ${fBR(valeE)}</span></div><div class="flex justify-between font-black border-t border-white/10 pt-1 text-white"><span>A RECEBER</span><span>${fBR(cM+rM-valeE)}</span></div></div><div class="p-4 bg-white/5 rounded-2xl space-y-1 mt-4"><p class="text-[10px] font-black text-cyan-400">WILLIAN</p><div class="flex justify-between text-[10px] text-slate-400"><span>Comis/Reem.</span><span>${fBR(cM)} / ${fBR(rM)}</span></div><div class="flex justify-between text-[10px] text-rose-400"><span>Vales</span><span>- ${fBR(valeW)}</span></div><div class="flex justify-between font-black border-t border-white/10 pt-1 text-white"><span>A RECEBER</span><span>${fBR(cM+rM-valeW)}</span></div></div>`;
+            document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10"><p class="text-[9px] uppercase text-emerald-500 font-black">Faturamento</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] uppercase text-blue-500 font-black">Vendas / NQ</p><p class="text-3xl font-black">${m.v} / ${m.nq}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10"><p class="text-[9px] uppercase text-blue-500 font-black">Eficiência</p><p class="text-3xl font-black">${((m.v / (m.v+m.nq || 1))*100).toFixed(0)}%</p></div><div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10"><p class="text-[9px] uppercase text-cyan-500 font-black">Ticket Médio</p><p class="text-3xl font-black">${fBR(m.v ? m.tot/m.v : 0)}</p></div><div class="card-bi p-6 rounded-[2rem] border-emerald-400 bg-emerald-950/10"><p class="text-[9px] uppercase text-emerald-400 font-black text-white">Comissão Bruta</p><p class="text-3xl font-black">${fBR(m.com)}</p></div>`;
+            document.getElementById('finance-grid').innerHTML = `<div class="card-bi p-4 rounded-2xl"><p class="text-[8px] uppercase">Pix</p><p class="text-lg font-black">${fBR(m.pix)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] uppercase">Dinheiro</p><p class="text-lg font-black">${fBR(m.din)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] uppercase">Débito</p><p class="text-lg font-black">${fBR(m.deb)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] uppercase">Crédito</p><p class="text-lg font-black">${fBR(m.cre)}</p></div><div class="card-bi p-4 rounded-2xl"><p class="text-[8px] uppercase">Boleto</p><p class="text-lg font-black">${fBR(m.bol)}</p></div><div class="card-bi p-4 rounded-2xl text-rose-500 bg-rose-950/10 border-rose-500/30"><p class="text-[8px] uppercase">Vales Geral</p><p class="text-lg font-black">${fBR(m.vales)}</p></div>`;
             document.getElementById('extrato-tabela').innerHTML = rowsVenda || '<tr><td colspan="3" class="p-10 text-center">Sem vendas</td></tr>';
+            rowsNQ.sort((a,b) => a.localeCompare(b)); document.getElementById('nq-tabela').innerHTML = rowsNQ.map(n => `<tr class="border-b border-white/5"><td class="p-4 text-xs">${n}</td><td class="p-4 text-rose-500 font-bold uppercase text-[10px]">NQ</td></tr>`).join('') || '<tr><td colspan="2" class="p-10 text-center">Sem NQs</td></tr>';
+            if(window.myChart) window.myChart.destroy();
+            const cv = document.getElementById('chartWeekly'); if(cv) window.myChart = new Chart(cv, { type: 'bar', data: { labels: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], datasets: [ { label: 'Vendas', data: dailyVendas, backgroundColor: '#3b82f6', borderRadius: 6 }, { label: 'NQ', data: dailyNQs, backgroundColor: 'rgba(244, 63, 94, 0.4)', borderRadius: 6 } ] }, options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } } });
         };
 
-        // --- FILTRAGEM ROTA (MANTIDO v12.84) ---
+        // --- CONEXÃO MESTRE ---
+        onValue(ref(db, "config/projeto_ativo"), async (snap) => {
+            projetoAtualId = snap.val() || "guaratingueta-guilherme";
+            const [pS, cS] = await Promise.all([get(ref(db, `projetos/${projetoAtualId}`)), get(ref(db, `custos/${projetoAtualId}`))]);
+            if(pS.exists()){
+                configProjetoAtual = pS.val(); custosOperacao = cS.exists() ? cS.val() : {};
+                window.labelsAtivas = { cidade: configProjetoAtual.cidade, escola: configProjetoAtual.escola || configProjetoAtual.school };
+                window.atualizarTitulosDOM();
+                if(configProjetoAtual.data_inicio) window.gerarBotoesDatas(configProjetoAtual.data_inicio, configProjetoAtual.data_fim);
+                window.carregarRelatorio();
+            }
+        });
+
+        // --- CARGA HÍBRIDA (JSON + NOVAS VENDAS) ---
+        window.carregarRelatorio = async () => {
+            const id = projetoAtualId;
+            const [sA_antigo, sV_antigo, sV_novo, sVale] = await Promise.all([
+                get(ref(db, `dados/${id}/agendamentos`)),
+                get(ref(db, `dados/${id}/avulsos`)),
+                get(ref(db, `vendas/${id}`)),
+                get(ref(db, `dados/${id}/vales`))
+            ]);
+            window.dadosCompletos = [];
+            const process = (snap, path) => {
+                const val = snap.val() || {};
+                if(path.includes('agendamentos')){
+                    Object.keys(val).forEach(d => { if(val[d]) Object.keys(val[d]).forEach(k => window.dadosCompletos.push({...val[d][k], id:k, data:d, path:`${path}/${d}/${k}`})); });
+                } else {
+                    Object.keys(val).forEach(k => window.dadosCompletos.push({...val[k], id:k, data:val[k].data, path:`${path}/${k}`}));
+                }
+            };
+            process(sA_antigo, `dados/${id}/agendamentos`);
+            process(sV_antigo, `dados/${id}/avulsos`);
+            const vN = sV_novo.val() || {}; if(vN.agendamentos) process(get(ref(db,`vendas/${id}/agendamentos`)), `vendas/${id}/agendamentos`);
+            window.valesAvulsos = []; const vls = sVale.val() || {}; Object.keys(vls).forEach(id => window.valesAvulsos.push(vls[id]));
+            window.filtrarLogistica(); window.filtrarBI();
+        };
+
+        // --- INTERFACE (MANTIDO v12.84) ---
+        window.switchView = (id) => { document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active')); document.getElementById(id).classList.add('view-active'); };
+        window.acessoAdmin = () => { if(prompt("Senha:") === "2025") { document.getElementById('controles-adm').classList.remove('hidden'); window.switchView('view-logistica'); } };
+        window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; };
+        window.gerenciarItem = (p, n, e) => { window.itemPath = p; window.currentName = n; window.currentEnd = e; document.getElementById('modalGestao').style.display = 'flex'; };
+        window.salvarStatusSimples = async (s) => { await update(ref(db, window.itemPath), { resultado: s }); window.carregarRelatorio(); window.fecharModalGestao(); };
         window.filtrarLogistica = () => {
             const container = document.getElementById('lista-visitas'); if(!container) return;
             container.innerHTML = '';
-            window.dadosCompletos.sort((a,b) => new Date(`${a.data}T${a.horario||'23:59'}`) - new Date(`${b.data}T${b.horario||'23:59'}`));
             window.dadosCompletos.forEach(i => {
                 let cor = i.resultado === "Venda" ? "border-emerald-500 bg-emerald-500/10" : (i.resultado === "NQ" ? "border-rose-500 bg-rose-500/10" : "border-slate-500/20");
                 container.innerHTML += `<div class="glass p-4 rounded-3xl border-l-4 ${cor} flex justify-between items-center text-white"><div><p class="text-[10px] font-bold text-slate-500">${i.resultado||'PENDENTE'} | ${i.horario||'DIR'}</p><h3 class="text-base font-black uppercase text-white">${i.nome_formando}</h3></div><button onclick="window.gerenciarItem('${i.path.replace(/'/g,"\\'")}', '${(i.nome_formando||'').replace(/'/g,"\\'")}')" class="btn-primary px-4 py-2 rounded-xl text-[10px] font-bold uppercase">Gerenciar</button></div>`;
             });
         };
-
-        // UI HELPERS
-        window.switchView = (id) => { document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active')); document.getElementById(id).classList.add('view-active'); };
-        window.acessoAdmin = () => { if(prompt("Senha:") === "2025") { window.switchView('view-logistica'); } };
-        window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; };
-        window.gerenciarItem = (p, n) => { window.itemPath = p; window.currentName = n; document.getElementById('modalGestao').style.display = 'flex'; };
-        window.salvarStatusSimples = async (s) => { await update(ref(db, window.itemPath), { resultado: s }); window.carregarRelatorio(); window.fecharModalGestao(); };
-        window.fluxoResultado = () => {
-            document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
-            f.innerHTML = `<select id="vV" class="w-full bg-slate-900 p-4 rounded-xl mb-3 text-white outline-none"><option value="Evanio">Evanio</option><option value="Willian">Willian</option></select><input type="number" id="vT" placeholder="VALOR TOTAL" class="w-full bg-slate-900 p-4 rounded-xl mb-4 text-white font-black text-2xl outline-none"><button onclick="window.finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black">SALVAR</button>`;
-        };
         window.finalizarVenda = async () => {
-            const tot = parseFloat(document.getElementById('vT').value); const v = document.getElementById('vV').value; if(!tot || !v) return alert("Preencha tudo!");
-            await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, vendedor: v }); window.carregarRelatorio(); window.fecharModalGestao();
+            const tot = parseFloat(document.getElementById('vTotal').value); const vend = document.getElementById('vendedor-venda').value;
+            await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, vendedor: vend }); window.carregarRelatorio(); window.fecharModalGestao();
         };
-        window.copiarRelatorio = () => { alert("Relatório comercial pronto para cópia!"); };
+        window.criarNovoProjeto = async () => { 
+            const id = prompt("ID:"); const cid = prompt("Cidade:"); const esc = prompt("Escola:"); 
+            if(cid && esc) { 
+                await set(ref(db, `projetos/${id}`), { cidade: cid, escola: esc }); 
+                await set(ref(db, `custos/${id}`), { km_total: 0, km_valor: 0.7, pedagio_total: 0, hosp_valor: 110, hosp_qtd: 0, alim_valor: 50, alim_qtd: 0, operacao_pessoas: 1 });
+                await set(ref(db, "config/projeto_ativo"), id); location.reload(); 
+            } 
+        };
+        window.gerarBotoesDatas = (inicio, fim) => { const container = document.getElementById('day-selector'); if(!container) return; container.innerHTML = ""; let cur = new Date(inicio + "T00:00:00"); const end = new Date(fim + "T00:00:00"); while(cur <= end) { const iso = cur.toISOString().split('T')[0]; const lab = cur.toLocaleDateString('pt-BR', {weekday: 'short', day: '2-digit', month: '2-digit'}); container.innerHTML += `<button type="button" data-date="${iso}" onclick="window.selecionarDia(this)" class="day-btn rounded-2xl py-4 text-[10px] font-black uppercase text-white">${lab}</button>`; cur.setDate(cur.getDate() + 1); } };
     </script>
 </body>
 </html>
