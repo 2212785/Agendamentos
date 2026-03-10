@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v15.00</title>
+    <title>Elite Sales Intelligence - BI v15.10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -66,7 +66,7 @@
     <section id="view-logistica" class="view-section p-4 text-white">
         <div class="max-w-4xl mx-auto w-full">
             <nav class="flex justify-between items-center mb-4">
-                <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white">← Sair</button>
+                <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest">← Sair</button>
                 <div class="flex gap-2 p-1 bg-slate-900 rounded-2xl border border-white/5">
                     <button class="bg-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg">Visitas</button>
                     <button onclick="window.switchView('view-financeiro')" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase text-slate-400">BI Dashboard</button>
@@ -80,7 +80,7 @@
             </div>
             <div class="flex gap-2 mb-4">
                 <input type="date" id="filtro-data-logistica" onchange="window.filtrarLogistica()" class="flex-grow bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs font-bold outline-none text-white">
-                <button onclick="window.abrirAvulso()" class="bg-white text-black px-4 py-2 rounded-xl text-[9px] font-black uppercase transition">+ Avulso</button>
+                <button onclick="window.abrirAvulso()" class="bg-white text-black px-4 py-2 rounded-xl text-[9px] font-black uppercase">+ Avulso</button>
             </div>
             <div id="lista-visitas" class="space-y-2"></div>
         </div>
@@ -98,12 +98,12 @@
             <div id="kpi-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6"></div>
             <div id="finance-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6 text-[10px]"></div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                <div class="lg:col-span-2 glass rounded-[2.5rem] p-6 border border-white/5"><canvas id="chartWeekly" style="max-height: 220px;"></canvas></div>
+                <div class="lg:col-span-2 glass rounded-[2.5rem] p-6 border border-white/5 text-white"><canvas id="chartWeekly" style="max-height: 220px;"></canvas></div>
                 <div id="saldo-card" class="glass rounded-[2.5rem] p-6 border-l-8 border-emerald-500 flex flex-col justify-center space-y-4"></div>
             </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="glass rounded-[2.5rem] p-6 overflow-x-auto border border-white/5 text-white"><h4 class="text-emerald-400 font-black uppercase text-[10px] mb-3 italic">Vendas</h4><table class="w-full text-left min-w-[300px] text-xs text-white"><tbody id="extrato-tabela"></tbody></table></div>
-                <div class="glass rounded-[2.5rem] p-6 overflow-x-auto border border-white/5 text-white"><h4 class="text-rose-500 font-black uppercase text-[10px] mb-3 italic">NQs</h4><table class="w-full text-left min-w-[300px] text-xs text-white"><tbody id="nq-tabela"></tbody></table></div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-white">
+                <div class="glass rounded-[2.5rem] p-6 border border-white/5"><h4 class="text-emerald-400 font-black uppercase text-[10px] mb-3 italic">Vendas</h4><table class="w-full text-left min-w-[300px] text-xs text-white"><tbody id="extrato-tabela"></tbody></table></div>
+                <div class="glass rounded-[2.5rem] p-6 border border-white/5"><h4 class="text-rose-500 font-black uppercase text-[10px] mb-3 italic">NQs</h4><table class="w-full text-left min-w-[300px] text-xs text-white"><tbody id="nq-tabela"></tbody></table></div>
             </div>
         </div>
     </section>
@@ -133,6 +133,7 @@
             document.getElementById('sub-escola').innerText = window.labelsAtivas.escola;
         };
 
+        // --- LÓGICA BI CORRIGIDA v15.10 ---
         window.filtrarBI = () => {
             const fD = document.getElementById('filtro-bi').value;
             let lista = fD ? window.dadosCompletos.filter(i => i.data === fD) : window.dadosCompletos;
@@ -146,7 +147,7 @@
                 if(i.resultado === "Venda") {
                     m.v++; m.tot += Number(i.valor)||0; if(!isNaN(ds)) dV[ds]++;
                     let cV = 0;
-                    if(i.pagamentos) {
+                    if(i.pagamentos && i.pagamentos.length > 0) {
                         i.pagamentos.forEach(p => {
                             const vP = Number(p.valor) || 0; const t = p.tipo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                             if (t.includes("entrada")) cV += vP * 0.12; else cV += vP * 0.08;
@@ -161,22 +162,39 @@
                 } else if(i.resultado === "NQ") { m.nq++; rowsNQ.push(i.nome_formando); if(!isNaN(ds)) dNQ[ds]++; }
             });
 
-            const c = custosOperacao; const nP = parseInt(c.operacao_pessoas) || 1;
-            const totalR = ((parseFloat(c.hosp_valor)||0)*nP*(parseInt(c.hosp_qtd)||0)) + ((parseFloat(c.alim_valor)||0)*nP*(parseInt(c.alim_qtd)||0)) + ((parseFloat(c.km_total)||0)*0.7*nP) + ((parseFloat(c.pedagio_total)||0)*nP);
-            const cM = m.com / 2; const rM = totalR / 2;
             const tk = m.v ? m.tot / m.v : 0; const ef = (m.v + m.nq) ? (m.v / (m.v+m.nq))*100 : 0;
-
-            document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-3 rounded-2xl border-emerald-500 bg-emerald-950/10"><p class="text-[7px] uppercase text-emerald-500 font-black">Faturamento</p><p class="text-sm font-black">${fBR(m.tot)}</p></div><div class="card-bi p-3 rounded-2xl border-blue-500 bg-blue-950/10"><p class="text-[7px] uppercase text-blue-500 font-black">Ticket Médio</p><p class="text-sm font-black">${fBR(tk)}</p></div><div class="card-bi p-3 rounded-2xl border-blue-500 bg-blue-950/10"><p class="text-[7px] uppercase text-blue-500 font-black">Eficiência</p><p class="text-sm font-black">${ef.toFixed(0)}%</p></div><div class="card-bi p-3 rounded-2xl border-blue-500 bg-blue-950/10"><p class="text-[7px] uppercase text-blue-500 font-black">Vendas/NQ</p><p class="text-sm font-black">${m.v}/${m.nq}</p></div><div class="card-bi p-3 rounded-2xl border-emerald-400 bg-emerald-950/10"><p class="text-[7px] uppercase text-emerald-400 font-black">Comissão</p><p class="text-sm font-black">${fBR(m.com)}</p></div>`;
+            document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-3 rounded-2xl border-emerald-500 bg-emerald-950/10"><p class="text-[7px] uppercase text-emerald-500 font-black">Faturamento</p><p class="text-sm font-black">${fBR(m.tot)}</p></div><div class="card-bi p-3 rounded-2xl border-blue-500 bg-blue-950/10"><p class="text-[7px] uppercase text-blue-500 font-black">Ticket Médio</p><p class="text-sm font-black text-white">${fBR(tk)}</p></div><div class="card-bi p-3 rounded-2xl border-blue-500 bg-blue-950/10"><p class="text-[7px] uppercase text-blue-500 font-black">Eficiência</p><p class="text-sm font-black text-white">${ef.toFixed(0)}%</p></div><div class="card-bi p-3 rounded-2xl border-blue-500 bg-blue-950/10"><p class="text-[7px] uppercase text-blue-500 font-black">Vendas/NQ</p><p class="text-sm font-black text-white">${m.v}/${m.nq}</p></div><div class="card-bi p-3 rounded-2xl border-emerald-400 bg-emerald-950/10"><p class="text-[7px] uppercase text-emerald-400 font-black">Comissão</p><p class="text-sm font-black text-white">${fBR(m.com)}</p></div>`;
             document.getElementById('finance-grid').innerHTML = `<div class="card-bi p-2 rounded-xl text-center"><p class="text-[7px] uppercase">Pix</p><p class="text-xs font-black">${fBR(m.pix)}</p></div><div class="card-bi p-2 rounded-xl text-center"><p class="text-[7px] uppercase">Dinheiro</p><p class="text-xs font-black">${fBR(m.din)}</p></div><div class="card-bi p-2 rounded-xl text-center"><p class="text-[7px] uppercase">Débito</p><p class="text-xs font-black">${fBR(m.deb)}</p></div><div class="card-bi p-2 rounded-xl text-center"><p class="text-[7px] uppercase">Crédito</p><p class="text-xs font-black">${fBR(m.cre)}</p></div><div class="card-bi p-2 rounded-xl text-center"><p class="text-[7px] uppercase">Boleto</p><p class="text-xs font-black">${fBR(m.bol)}</p></div><div class="card-bi p-2 rounded-xl text-center border-rose-500/30 bg-rose-950/10"><p class="text-[7px] uppercase text-rose-500">Vales</p><p class="text-xs font-black text-rose-500">${fBR(m.vales)}</p></div>`;
-            document.getElementById('saldo-card').innerHTML = `<div class="text-center border-b border-white/5 pb-2 text-white"><p class="text-[9px] uppercase font-black text-blue-400">Total Operação</p><p class="text-xl font-black">${fBR(m.com + totalR)}</p></div><div class="p-3 bg-white/5 rounded-2xl space-y-1"><p class="text-[9px] font-black text-emerald-400">EVANIO</p><div class="flex justify-between text-[9px] text-slate-400"><span>Comis/Reem.</span><span>${fBR(cM)} / ${fBR(rM)}</span></div><div class="flex justify-between text-[9px] text-rose-400"><span>Vales</span><span>- ${fBR(valeE)}</span></div><div class="flex justify-between font-black border-t border-white/10 pt-1 text-[10px]"><span>A RECEBER</span><span>${fBR(cM+rM-valeE)}</span></div></div><div class="p-3 bg-white/5 rounded-2xl space-y-1"><p class="text-[9px] font-black text-cyan-400">WILLIAN</p><div class="flex justify-between text-[9px] text-slate-400"><span>Comis/Reem.</span><span>${fBR(cM)} / ${fBR(rM)}</span></div><div class="flex justify-between text-[9px] text-rose-400"><span>Vales</span><span>- ${fBR(valeW)}</span></div><div class="flex justify-between font-black border-t border-white/10 pt-1 text-[10px]"><span>A RECEBER</span><span>${fBR(cM+rM-valeW)}</span></div></div>`;
             document.getElementById('extrato-tabela').innerHTML = rowsV || '<tr><td colspan="3" class="p-4 text-center">Sem dados</td></tr>';
             document.getElementById('nq-tabela').innerHTML = rowsNQ.map(n => `<tr class="border-b border-white/5"><td>${n}</td><td class="text-rose-500 font-bold uppercase text-[9px]">NQ</td></tr>`).join('') || '<tr><td colspan="2" class="p-4 text-center">Sem NQs</td></tr>';
-            if(window.myChart) window.myChart.destroy();
-            const cv = document.getElementById('chartWeekly');
-            if(cv) window.myChart = new Chart(cv, { type: 'bar', data: { labels: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], datasets: [{label: 'Vendas', data: dV, backgroundColor: '#3b82f6', borderRadius: 4}, {label: 'NQ', data: dNQ, backgroundColor: 'rgba(244, 63, 94, 0.3)', borderRadius: 4}]}, options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } } });
         };
 
-        // --- FIREBASE ---
+        // --- CARREGAMENTO DE DADOS ROBUSTO ---
+        window.carregarRelatorio = async () => {
+            const id = projetoAtualId;
+            try {
+                const [sA, sV] = await Promise.all([get(ref(db, `dados/${id}/agendamentos`)), get(ref(db, `vendas/${id}`))]);
+                window.dadosCompletos = [];
+                
+                const proc = (snapshot, path) => {
+                    if(!snapshot.exists()) return;
+                    const val = snapshot.val();
+                    Object.keys(val).forEach(k => {
+                        if (path.includes('agendamentos') && typeof val[k] === 'object' && !val[k].nome_formando) {
+                            Object.keys(val[k]).forEach(id => window.dadosCompletos.push({...val[k][id], id:id, data:k, path:`${path}/${k}/${id}`}));
+                        } else {
+                            window.dadosCompletos.push({...val[k], id:k, data:val[k].data || k, path:`${path}/${k}`});
+                        }
+                    });
+                };
+                proc(sA, `dados/${id}/agendamentos`);
+                proc(sV, `vendas/${id}/avulsos`);
+                if(sV.exists() && sV.val().agendamentos) proc(get(ref(db,`vendas/${id}/agendamentos`)), `vendas/${id}/agendamentos`);
+                
+                window.filtrarLogistica(); window.filtrarBI();
+            } catch (e) { console.error("Erro carga:", e); }
+        };
+
         onValue(ref(db, "config/projeto_ativo"), async (snap) => {
             projetoAtualId = snap.val() || "guaratingueta-guilherme";
             const [pS, cS] = await Promise.all([get(ref(db, `projetos/${projetoAtualId}`)), get(ref(db, `custos/${projetoAtualId}`))]);
@@ -189,27 +207,7 @@
             }
         });
 
-        window.carregarRelatorio = async () => {
-            const id = projetoAtualId;
-            const [sA, sV] = await Promise.all([get(ref(db, `dados/${id}/agendamentos`)), get(ref(db, `vendas/${id}`))]);
-            window.dadosCompletos = [];
-            const proc = (snap, path) => {
-                const val = snap.val() || {};
-                Object.keys(val).forEach(k => {
-                    if (path.includes('agendamentos') && typeof val[k] === 'object' && !val[k].nome_formando) {
-                        Object.keys(val[k]).forEach(id => window.dadosCompletos.push({...val[k][id], id:id, data:k, path:`${path}/${k}/${id}`}));
-                    } else { window.dadosCompletos.push({...val[k], id:k, data:val[k].data || k, path:`${path}/${k}`}); }
-                });
-            };
-            if(sA.exists()) proc(sA, `dados/${id}/agendamentos`);
-            if(sV.exists()) {
-                const v = sV.val();
-                if(v.agendamentos) proc(get(ref(db,`vendas/${id}/agendamentos`)), `vendas/${id}/agendamentos`);
-                if(v.avulsos) proc(get(ref(db,`vendas/${id}/avulsos`)), `vendas/${id}/avulsos`);
-            }
-            window.filtrarLogistica(); window.filtrarBI();
-        };
-
+        // --- FUNÇÕES ROTA E GESTÃO ---
         window.filtrarLogistica = () => {
             const container = document.getElementById('lista-visitas'); if(!container) return;
             const fD = document.getElementById('filtro-data-logistica').value;
@@ -230,13 +228,6 @@
                         </div>
                         <button onclick="window.gerenciarItem('${i.path.replace(/'/g,"\\'")}', '${(i.nome_formando||'').replace(/'/g,"\\'")}', '${(i.endereco||'').replace(/'/g,"\\'")}')" class="btn-primary px-3 py-1.5 rounded-lg text-[8px] font-black uppercase text-white">Gere.</button>
                     </div>
-                    <div class="flex items-center justify-between gap-2 border-t border-white/5 pt-2">
-                        <p class="text-[9px] text-slate-400 truncate flex-grow uppercase font-bold">${i.endereco || 'S/ ENDEREÇO'}</p>
-                        <div class="flex gap-1">
-                            <a href="https://wa.me/55${(i.telefone||'').replace(/\D/g,'')}" target="_blank" class="bg-emerald-500/10 p-1.5 rounded-lg text-emerald-400 text-[8px] font-black uppercase">Zap</a>
-                            <a href="https://www.waze.com/ul?q=${encodeURIComponent(i.endereco||'')}&navigate=yes" target="_blank" class="bg-blue-500/10 p-1.5 rounded-lg text-blue-400 text-[8px] font-black uppercase">Waze</a>
-                        </div>
-                    </div>
                 </div>`;
             });
         };
@@ -250,26 +241,13 @@
             document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
             const item = window.dadosCompletos.find(i => i.path === window.itemPath) || {};
             window.tempPgs = item.pagamentos ? [...item.pagamentos] : []; 
-            f.innerHTML = `
-                <select id="vendedor-venda" class="w-full bg-slate-900 p-3 rounded-xl mb-2 text-white text-xs outline-none">
-                    <option value="">(Sem Vendedor)</option>
-                    <option value="Evanio" ${item.vendedor === 'Evanio' ? 'selected' : ''}>Evanio</option>
-                    <option value="Willian" ${item.vendedor === 'Willian' ? 'selected' : ''}>Willian</option>
-                </select>
-                <input type="text" id="vAlbum" placeholder="Nº ÁLBUM" value="${item.num_album || ''}" class="w-full bg-slate-900 p-3 rounded-xl mb-3 text-white text-center font-bold text-xs border border-white/10 outline-none">
-                <input type="number" id="vTotal" placeholder="VALOR TOTAL" value="${item.valor || ''}" class="w-full bg-slate-900 p-4 rounded-2xl text-center mb-3 text-white font-black text-2xl border border-white/10 outline-none">
-                
-                <div class="grid grid-cols-2 gap-2 mb-3">
-                    <button onclick="window.addPg('Dinheiro')" class="p-3 bg-slate-800 rounded-xl text-[9px] font-black uppercase text-white">+ Dinheiro</button>
-                    <button onclick="window.addPg('Pix')" class="p-3 bg-slate-800 rounded-xl text-[9px] font-black uppercase text-white">+ Pix</button>
-                    <button onclick="window.addPg('Débito')" class="p-3 bg-slate-800 rounded-xl text-[9px] font-black uppercase text-white">+ Débito</button>
-                    <button onclick="window.addPg('Crédito')" class="p-3 bg-slate-800 rounded-xl text-[9px] font-black uppercase text-white">+ Crédito</button>
-                    <button onclick="window.addPg('Boleto')" class="p-3 bg-blue-900/30 border border-blue-500/40 rounded-xl text-[9px] font-black uppercase col-span-2 text-white">+ Boleto</button>
-                </div>
-
-                <div id="lista-p" class="space-y-1 mb-3"></div>
-                <button onclick="window.limparPagamentos()" class="w-full p-3 mb-3 bg-rose-600/20 border border-rose-500/40 rounded-xl text-rose-500 font-black uppercase text-[8px] text-white">LIMPAR</button>
-                <button onclick="window.finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white uppercase text-sm text-white">Salvar Venda</button>`;
+            f.innerHTML = `<select id="vendedor-venda" class="w-full bg-slate-900 p-3 rounded-xl mb-2 text-white text-xs outline-none"><option value="Evanio" ${item.vendedor === 'Evanio' ? 'selected' : ''}>Evanio</option><option value="Willian" ${item.vendedor === 'Willian' ? 'selected' : ''}>Willian</option></select>
+            <input type="text" id="vAlbum" placeholder="Nº ÁLBUM" value="${item.num_album || ''}" class="w-full bg-slate-900 p-3 rounded-xl mb-3 text-white text-center font-bold text-xs border border-white/10 outline-none">
+            <input type="number" id="vTotal" placeholder="VALOR TOTAL" value="${item.valor || ''}" class="w-full bg-slate-900 p-4 rounded-2xl text-center mb-3 text-white font-black text-2xl border border-white/10 outline-none">
+            <div class="grid grid-cols-2 gap-2 mb-3 text-white"><button onclick="window.addPg('Dinheiro')" class="p-3 bg-slate-800 rounded-xl text-[9px] font-black uppercase text-white">+ Dinheiro</button><button onclick="window.addPg('Pix')" class="p-3 bg-slate-800 rounded-xl text-[9px] font-black uppercase text-white">+ Pix</button><button onclick="window.addPg('Débito')" class="p-3 bg-slate-800 rounded-xl text-[9px] font-black uppercase text-white">+ Débito</button><button onclick="window.addPg('Crédito')" class="p-3 bg-slate-800 rounded-xl text-[9px] font-black uppercase text-white">+ Crédito</button><button onclick="window.addPg('Boleto')" class="p-3 bg-blue-900/30 border border-blue-500/40 rounded-xl text-[9px] font-black uppercase col-span-2 text-white">+ Boleto</button></div>
+            <div id="lista-p" class="space-y-1 mb-3 text-white"></div>
+            <button onclick="window.limparPagamentos()" class="w-full p-3 mb-3 bg-rose-600/20 border border-rose-500/40 rounded-xl text-rose-500 font-black uppercase text-[8px] text-white">LIMPAR</button>
+            <button onclick="window.finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white uppercase text-sm text-white">Salvar Venda</button>`;
             window.atualizarListaInterface();
         };
 
@@ -289,41 +267,13 @@
         };
         window.finalizarVenda = async () => {
             const tot = parseFloat(document.getElementById('vTotal').value); if(!tot) return alert("Valor!");
-            const item = window.dadosCompletos.find(i => i.path === window.itemPath) || {};
-            await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, num_album: document.getElementById('vAlbum').value, vendedor: document.getElementById('vendedor-venda').value || item.vendedor || "", pagamentos: window.tempPgs }); 
+            await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, num_album: document.getElementById('vAlbum').value, vendedor: document.getElementById('vendedor-venda').value, pagamentos: window.tempPgs }); 
             window.carregarRelatorio(); window.fecharModalGestao();
         };
-        window.criarNovoProjeto = async () => {
-            const id = prompt("ID:"); const cid = prompt("Cidade:"); const esc = prompt("Escola:");
-            if(id && cid && esc) {
-                await set(ref(db, `projetos/${id}`), { cidade: cid, escola: esc, data_inicio: "", data_fim: "" });
-                await set(ref(db, `custos/${id}`), { operacao_pessoas: 2, km_valor: 0.7, km_total: 0, pedagio_total: 0, hosp_valor: 110, hosp_qtd: 0, alim_valor: 50, alim_qtd: 0 });
-                await set(ref(db, "config/projeto_ativo"), id); location.reload();
-            }
-        };
-        window.trocarProjetoAtivo = async () => { const n = prompt("ID:"); if(n) { await set(ref(db, "config/projeto_ativo"), n); location.reload(); } };
-        window.editarCustosProjeto = async () => {
-            const c = custosOperacao; const nP = prompt("Vendedores:", c.operacao_pessoas || 2);
-            if(nP) { await update(ref(db, `custos/${projetoAtualId}`), { operacao_pessoas: parseInt(nP), km_valor: 0.7, km_total: prompt("KM Total:"), pedagio_total: prompt("Pedágio:"), hosp_valor: 110, hosp_qtd: 6, alim_valor: 50, alim_qtd: 7 }); location.reload(); }
-        };
-        window.gerenciarDatas = async () => {
-            const cid = prompt("Cidade:"); const esc = prompt("Escola:");
-            if(cid) { await update(ref(db, `projetos/${projetoAtualId}`), { cidade: cid, escola: esc, data_inicio: prompt("Início:"), data_fim: prompt("Fim:") }); location.reload(); }
-        };
-        window.salvarStatusSimples = async (s) => { await update(ref(db, window.itemPath), { resultado: s }); window.carregarRelatorio(); window.fecharModalGestao(); };
-        window.confirmarExclusao = async () => { if(confirm("Excluir?")) { await remove(ref(db, window.itemPath)); window.carregarRelatorio(); window.fecharModalGestao(); } };
         window.gerarBotoesDatas = (inicio, fim) => { const container = document.getElementById('day-selector'); if(!container) return; container.innerHTML = ""; let cur = new Date(inicio + "T00:00:00"); const end = new Date(fim + "T00:00:00"); while(cur <= end) { const iso = cur.toISOString().split('T')[0]; const lab = cur.toLocaleDateString('pt-BR', {weekday: 'short', day: '2-digit', month: '2-digit'}); container.innerHTML += `<button type="button" data-date="${iso}" onclick="window.selecionarDia(this)" class="day-btn rounded-lg py-2 text-[7px] font-black uppercase text-white">${lab}</button>`; cur.setDate(cur.getDate() + 1); } };
         window.selecionarDia = async (btn) => { document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); document.getElementById('data-selecionada').value = btn.getAttribute('data-date'); };
         window.abrirAvulso = () => { document.getElementById('modalGestao').style.display = 'flex'; document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-black mb-2 uppercase text-[10px]">Novo Avulso</h3><input type="text" id="av-nome" placeholder="NOME" class="w-full bg-slate-900 p-3 rounded-xl mb-2 text-white text-xs outline-none"><input type="date" id="av-data" class="w-full bg-slate-900 p-3 rounded-xl mb-2 text-white border border-white/10 text-xs"><button onclick="window.salvarNovoAvulso()" class="w-full p-4 bg-blue-600 rounded-xl font-black text-white uppercase text-xs">Avançar para Venda</button>`; document.getElementById('av-data').value = new Date().toISOString().split('T')[0]; };
-        window.salvarNovoAvulso = async () => { 
-            const n = document.getElementById('av-nome').value, d = document.getElementById('av-data').value; 
-            if(!n || !d) return; 
-            const path = `vendas/${projetoAtualId}/avulsos/AV-${Date.now()}`; 
-            await set(ref(db, path), { nome_formando: n, data: d, resultado: "Pendente" }); 
-            window.itemPath = path; 
-            window.carregarRelatorio();
-            window.fluxoResultado(); 
-        };
+        window.salvarNovoAvulso = async () => { const n = document.getElementById('av-nome').value, d = document.getElementById('av-data').value; if(!n || !d) return; const path = `vendas/${projetoAtualId}/avulsos/AV-${Date.now()}`; await set(ref(db, path), { nome_formando: n, data: d, resultado: "Pendente" }); window.itemPath = path; window.carregarRelatorio(); window.fluxoResultado(); };
     </script>
 </body>
 </html>
