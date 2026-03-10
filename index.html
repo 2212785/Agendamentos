@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v12.74</title>
+    <title>Elite Sales Intelligence - BI v12.75</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -34,7 +34,7 @@
                 <button onclick="window.fluxoEditar()" class="bg-blue-600/10 border border-blue-500/30 p-4 rounded-2xl text-blue-400 font-black uppercase text-xs">3. Editar Cadastro / Data</button>
                 <button onclick="window.confirmarExclusao()" class="text-slate-600 text-[10px] uppercase font-bold mt-4 text-center hover:text-rose-500 transition">Excluir Registro permanentemente</button>
             </div>
-            <div id="gestao-form" class="hidden space-y-4 text-white"></div>
+            <div id="gestao-form" class="hidden space-y-4"></div>
         </div>
     </div>
 
@@ -45,8 +45,8 @@
         </header>
         <main class="flex-grow flex items-center justify-center p-4">
             <div class="glass p-8 md:p-12 rounded-[3rem] w-full max-w-md shadow-2xl text-center border border-white/5">
-                <h2 id="escola-titulo" class="text-2xl font-extrabold uppercase text-blue-400 italic">Carregando...</h2>
-                <h3 id="sub-escola" class="text-xs font-bold text-slate-400 uppercase tracking-widest italic mb-8">Aguarde</h3>
+                <h2 id="escola-titulo" class="text-2xl font-extrabold uppercase text-blue-400 italic">Elite</h2>
+                <h3 id="sub-escola" class="text-xs font-bold text-slate-400 uppercase tracking-widest italic mb-8">Sales Intelligence</h3>
                 <form id="form-agendamento" class="space-y-4">
                     <div class="grid grid-cols-2 gap-2 mb-4" id="day-selector"></div>
                     <input type="hidden" id="data-selecionada">
@@ -92,7 +92,7 @@
     <section id="view-financeiro" class="view-section p-6 text-white">
         <div class="max-w-7xl mx-auto w-full">
             <nav class="flex justify-between items-center mb-10">
-                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white">← Voltar</button>
+                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest">← Voltar</button>
                 <div class="flex gap-4">
                     <input type="date" id="filtro-bi" onchange="window.filtrarBI()" class="bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white">
                     <button onclick="window.copiarRelatorio()" class="bg-emerald-600 px-6 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg text-white">Copiar Zap</button>
@@ -128,89 +128,30 @@
         const fBR = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
         const pDT = (s) => (s && s.includes('-')) ? s.split("-").reverse().join("/") : s;
 
-        // Variaveis Globais de Memória
-        let projetoId = ""; 
-        window.labelsAtivas = { cidade: localStorage.getItem('last_city') || "Elite", escola: localStorage.getItem('last_school') || "Sales Intelligence" };
+        // --- VARIÁVEIS GLOBAIS ---
+        let projetoAtualId = "";
+        window.labelsAtivas = { cidade: "Elite", escola: "Sales Intelligence" };
         window.dadosCompletos = [];
         window.valesAvulsos = [];
         window.configProjetoAtual = {};
+        window.dadosAtuaisRelatorio = {};
 
-        // --- FUNÇÃO DE SINCRONISMO (BLINDAGEM) ---
-        window.atualizarTitulosDOM = (cid, esc) => {
-            if(cid) { 
-                window.labelsAtivas.cidade = cid; 
-                localStorage.setItem('last_city', cid);
-                document.getElementById('escola-titulo').innerText = cid;
-            }
-            if(esc) { 
-                window.labelsAtivas.escola = esc; 
-                localStorage.setItem('last_school', esc);
-                document.getElementById('sub-escola').innerText = esc;
-            }
+        // --- FUNÇÃO DE EXIBIÇÃO DE TÍTULOS ---
+        window.escreverTitulos = (cid, esc) => {
+            const h2 = document.getElementById('escola-titulo');
+            const h3 = document.getElementById('sub-escola');
+            if(cid) { h2.innerText = cid; window.labelsAtivas.cidade = cid; localStorage.setItem('last_city', cid); }
+            if(esc) { h3.innerText = esc; window.labelsAtivas.escola = esc; localStorage.setItem('last_school', esc); }
         };
 
-        // --- GESTÃO DE DADOS ---
-        window.carregarRelatorio = async () => {
-            if(!projetoId) return;
-            const [sA, sV, sVale] = await Promise.all([
-                get(ref(db, `dados/${projetoId}/agendamentos`)),
-                get(ref(db, `dados/${projetoId}/avulsos`)),
-                get(ref(db, `dados/${projetoId}/vales`))
-            ]);
-            
-            window.dadosCompletos = [];
-            const ags = sA.val() || {};
-            Object.keys(ags).forEach(d => { 
-                if(ags[d]) Object.keys(ags[d]).forEach(id => window.dadosCompletos.push({...ags[d][id], id, data: d, path: `dados/${projetoId}/agendamentos/${d}/${id}`})); 
-            });
-            const avs = sV.val() || {};
-            Object.keys(avs).forEach(id => window.dadosCompletos.push({...avs[id], id, path: `dados/${projetoId}/avulsos/${id}`, data: avs[id].data}));
-            
-            window.valesAvulsos = [];
-            const vales = sVale.val() || {};
-            Object.keys(vales).forEach(id => window.valesAvulsos.push(vales[id]));
-
-            window.filtrarLogistica();
-            window.filtrarBI();
-        };
-
-        // --- INICIALIZAÇÃO EM CASCATA ---
-        onValue(ref(db, "config/projeto_ativo"), async (snap) => {
-            projetoId = snap.val();
-            if(!projetoId) return;
-
-            // Busca os detalhes do projeto no config
-            const projSnap = await get(ref(db, `config/projetos/${projetoId}`));
-            if(projSnap.exists()){
-                window.configProjetoAtual = projSnap.val();
-                // Força os nomes na tela IMEDIATAMENTE
-                window.atualizarTitulosDOM(window.configProjetoAtual.cidade, window.configProjetoAtual.escola);
-                
-                // Gera datas e carrega o resto
-                if(window.configProjetoAtual.data_inicio) {
-                    window.gerarBotoesDatas(window.configProjetoAtual.data_inicio, window.configProjetoAtual.data_fim);
-                }
-                window.carregarRelatorio();
-            }
-        });
-
-        // --- BOTÃO COPIAR ZAP (PADRÃO SOLICITADO) ---
-        window.copiarRelatorio = () => {
-            const { m, fD } = window.dadosAtuaisRelatorio;
-            const tk = m.v ? (m.tot / m.v) : 0;
-            let txt = `Relatório de Vendas\nProjeto: ${window.labelsAtivas.cidade} - ${window.labelsAtivas.escola}\nData: ${fD ? pDT(fD) : 'ACUMULADO GERAL'}\n\n✅ Vendas: ${m.v}\n❌ NQ: ${m.nq}\n\n💵 Dinheiro: ${fBR(m.din)}\n💎 Pix: ${fBR(m.pix)}\n💳 Débito: ${fBR(m.deb)}\n💳 Crédito: ${fBR(m.cre)}\n📄 Boleto: ${fBR(m.bol)}\n💸 Vales: ${fBR(m.vales)}\n\n💰 Total Vendido: ${fBR(m.tot)}\n🎯 Ticket Médio: ${fBR(tk)}`;
-            navigator.clipboard.writeText(txt).then(() => alert("Copiado!"));
-        };
-
-        // --- LÓGICA DE BI ---
+        // --- FILTRAGEM E BI ---
         window.filtrarBI = () => {
             const fD = document.getElementById('filtro-bi').value;
             let lista = fD ? window.dadosCompletos.filter(i => i.data === fD) : window.dadosCompletos;
             let m = { v:0, nq:0, tot:0, pix:0, din:0, deb:0, cre:0, bol:0, vales:0, com:0 };
             
-            let vBaseE = (projetoId === "guaratingueta-guilherme") ? 1950.0 : 0;
-            let vBaseW = (projetoId === "guaratingueta-guilherme") ? 2755.0 : 0;
-            let valeE = vBaseE, valeW = vBaseW;
+            let vE = (projetoAtualId === "guaratingueta-guilherme") ? 1950.0 : 0;
+            let vW = (projetoAtualId === "guaratingueta-guilherme") ? 2755.0 : 0;
 
             lista.forEach(i => {
                 if(i.resultado === "Venda") {
@@ -219,11 +160,8 @@
                     (i.pagamentos || []).forEach(p => {
                         const vP = Number(p.valor) || 0; 
                         const t = p.tipo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                        const isEntradaVale = t.includes("pix") || t.includes("dinheiro") || t.includes("entrada");
-                        const isCartao = t.includes("debito") || t.includes("credito");
-
-                        if(isEntradaVale && !isCartao) {
-                            m.vales += vP; if(i.vendedor === "Evanio") valeE += vP; else if(i.vendedor === "Willian") valeW += vP;
+                        if((t.includes("pix") || t.includes("dinheiro") || t.includes("entrada")) && !t.includes("debito") && !t.includes("credito")) {
+                            m.vales += vP; if(i.vendedor === "Evanio") vE += vP; else if(i.vendedor === "Willian") vW += vP;
                         }
                         if(t.includes("pix")) m.pix += vP; else if(t.includes("dinheiro")) m.din += vP;
                         else if(t.includes("debito")) m.deb += vP; else if(t.includes("credito")) m.cre += vP;
@@ -235,96 +173,68 @@
             });
 
             window.valesAvulsos.forEach(v => {
-                m.vales += v.valor; if(v.vendedor === "Evanio") valeE += v.valor; else if(v.vendedor === "Willian") valeW += v.valor;
+                m.vales += v.valor; if(v.vendedor === "Evanio") vE += v.valor; else if(v.vendedor === "Willian") vW += v.valor;
             });
 
             const p = window.configProjetoAtual; const nP = parseInt(p.operacao_pessoas) || 1;
-            const rVia = (((parseFloat(p.km_total)||0) * (parseFloat(p.km_valor)||0)) + (parseFloat(p.pedagio_total)||0)) * nP;
-            const rHospAlim = ((parseFloat(p.hosp_valor)||0)* (parseInt(p.hosp_qtd)||0) + (parseFloat(p.alim_valor)||0)* (parseInt(p.alim_qtd)||0)) * nP;
-            const totalR = rVia + rHospAlim;
-            const cM = m.com / 2, rM = totalR / 2;
-
+            const rTotal = (((parseFloat(p.km_total)||0)*(parseFloat(p.km_valor)||0)) + (parseFloat(p.pedagio_total)||0) + (parseFloat(p.hosp_valor)||0)*(parseInt(p.hosp_qtd)||0) + (parseFloat(p.alim_valor)||0)*(parseInt(p.alim_qtd)||0)) * nP;
+            
+            const cM = m.com / 2, rM = rTotal / 2;
             window.dadosAtuaisRelatorio = { m, fD };
 
             document.getElementById('saldo-card').innerHTML = `
-                <div class="text-center border-b border-white/5 pb-2"><p class="text-[10px] uppercase font-black text-blue-400">Total Operação</p><p class="text-2xl font-black text-white">${fBR(m.com + totalR)}</p></div>
-                <div class="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-1">
-                    <p class="text-[10px] uppercase font-black text-emerald-400 mb-1">EVANIO</p>
-                    <div class="flex justify-between text-[10px] text-slate-400"><span>Comissão / Reem.</span><span>${fBR(cM)} / ${fBR(rM)}</span></div>
-                    <div class="flex justify-between text-[10px] text-rose-400"><span>Vales Totais</span><span>- ${fBR(valeE)}</span></div>
-                    <div class="flex justify-between text-xs font-black mt-2 pt-2 border-t border-white/5 text-white"><span>A RECEBER</span><span>${fBR(cM + rM - valeE)}</span></div>
-                </div>
-                <div class="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-1">
-                    <p class="text-[10px] uppercase font-black text-cyan-400 mb-1">WILLIAN</p>
-                    <div class="flex justify-between text-[10px] text-slate-400"><span>Comissão / Reem.</span><span>${fBR(cM)} / ${fBR(rM)}</span></div>
-                    <div class="flex justify-between text-[10px] text-rose-400"><span>Vales Totais</span><span>- ${fBR(valeW)}</span></div>
-                    <div class="flex justify-between text-xs font-black mt-2 pt-2 border-t border-white/5 text-white"><span>A RECEBER</span><span>${fBR(cM + rM - valeW)}</span></div>
-                </div>`;
+                <div class="text-center border-b border-white/5 pb-2"><p class="text-[10px] uppercase font-black text-blue-400">Total Operação</p><p class="text-2xl font-black">${fBR(m.com + rTotal)}</p></div>
+                <div class="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-1"><p class="text-[10px] uppercase font-black text-emerald-400">EVANIO</p><div class="flex justify-between text-[10px]"><span>Crédito (50%)</span><span>${fBR(cM + rM)}</span></div><div class="flex justify-between text-[10px] text-rose-400"><span>Vales</span><span>- ${fBR(vE)}</span></div><div class="flex justify-between text-xs font-black mt-2 pt-2 border-t border-white/5 text-white"><span>SALDO FINAL</span><span>${fBR(cM + rM - vE)}</span></div></div>
+                <div class="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-1"><p class="text-[10px] uppercase font-black text-cyan-400">WILLIAN</p><div class="flex justify-between text-[10px]"><span>Crédito (50%)</span><span>${fBR(cM + rM)}</span></div><div class="flex justify-between text-[10px] text-rose-400"><span>Vales</span><span>- ${fBR(vW)}</span></div><div class="flex justify-between text-xs font-black mt-2 pt-2 border-t border-white/5 text-white"><span>SALDO FINAL</span><span>${fBR(cM + rM - vW)}</span></div></div>`;
 
-            // KPIs e Finance Grid atualizados...
             document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10 text-white"><p class="text-[9px] uppercase text-emerald-500 font-black">Faturamento</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10 text-white"><p class="text-[9px] uppercase text-blue-500 font-black">Vendas/NQ</p><p class="text-3xl font-black">${m.v}/${m.nq}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10 text-white"><p class="text-[9px] uppercase text-blue-500 font-black">Eficiência</p><p class="text-3xl font-black">${((m.v/(m.v+m.nq||1))*100).toFixed(0)}%</p></div><div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10 text-white"><p class="text-[9px] uppercase text-cyan-500 font-black">Ticket Médio</p><p class="text-3xl font-black">${fBR(m.v?m.tot/m.v:0)}</p></div><div class="card-bi p-6 rounded-[2rem] border-emerald-400 bg-emerald-950/10 text-white"><p class="text-[9px] uppercase text-emerald-400 font-black">Comissão Bruta</p><p class="text-3xl font-black">${fBR(m.com)}</p></div>`;
-            document.getElementById('finance-grid').innerHTML = `<div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Pix</p><p class="text-lg font-black">${fBR(m.pix)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Dinheiro</p><p class="text-lg font-black">${fBR(m.din)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Crédito</p><p class="text-lg font-black">${fBR(m.cre)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Débito</p><p class="text-lg font-black">${fBR(m.deb)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Boleto</p><p class="text-lg font-black">${fBR(m.bol)}</p></div><div class="card-bi p-4 rounded-2xl text-rose-500 bg-rose-950/10 border-rose-500/30 text-white"><p class="text-[8px] uppercase">Vales Geral</p><p class="text-lg font-black">${fBR(m.vales)}</p></div>`;
+            document.getElementById('finance-grid').innerHTML = `<div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Pix</p><p class="text-lg font-black">${fBR(m.pix)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Dinheiro</p><p class="text-lg font-black">${fBR(m.din)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Débito</p><p class="text-lg font-black">${fBR(m.deb)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Crédito</p><p class="text-lg font-black">${fBR(m.cre)}</p></div><div class="card-bi p-4 rounded-2xl text-white"><p class="text-[8px] uppercase">Boleto</p><p class="text-lg font-black">${fBR(m.bol)}</p></div><div class="card-bi p-4 rounded-2xl text-rose-500 bg-rose-950/10 border-rose-500/30 text-white"><p class="text-[8px] uppercase">Vales Geral</p><p class="text-lg font-black">${fBR(m.vales)}</p></div>`;
         };
 
-        // --- FUNÇÕES DE UI PADRÃO (window.) ---
+        // --- CARREGAMENTO INICIAL ---
+        onValue(ref(db, "config/projeto_ativo"), async (snap) => {
+            projetoAtualId = snap.val(); if(!projetoAtualId) return;
+            const pSnap = await get(ref(db, `config/projetos/${projetoAtualId}`));
+            if(pSnap.exists()){
+                window.configProjetoAtual = pSnap.val();
+                window.escreverTitulos(window.configProjetoAtual.cidade, window.configProjetoAtual.escola);
+                if(window.configProjetoAtual.data_inicio) window.gerarBotoesDatas(window.configProjetoAtual.data_inicio, window.configProjetoAtual.data_fim);
+                window.carregarRelatorio();
+            }
+        });
+
+        window.carregarRelatorio = async () => {
+            if(!projetoAtualId) return;
+            const [sA, sV, sVale] = await Promise.all([get(ref(db, `dados/${projetoAtualId}/agendamentos`)), get(ref(db, `dados/${projetoAtualId}/avulsos`)), get(ref(db, `dados/${projetoAtualId}/vales`))]);
+            window.dadosCompletos = [];
+            const ags = sA.val() || {}; Object.keys(ags).forEach(d => { if(ags[d]) Object.keys(ags[d]).forEach(id => window.dadosCompletos.push({...ags[d][id], id, data: d, path: `dados/${projetoAtualId}/agendamentos/${d}/${id}`})); });
+            const avs = sV.val() || {}; Object.keys(avs).forEach(id => window.dadosCompletos.push({...avs[id], id, path: `dados/${projetoAtualId}/avulsos/${id}`, data: avs[id].data}));
+            window.valesAvulsos = []; const vales = sVale.val() || {}; Object.keys(vales).forEach(id => window.valesAvulsos.push(vales[id]));
+            window.filtrarLogistica(); window.filtrarBI();
+        };
+
+        // --- FUNÇÕES DE UI (window.) ---
         window.switchView = (id) => { document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active')); document.getElementById(id).classList.add('view-active'); window.carregarRelatorio(); };
         window.acessoAdmin = () => { if(prompt("Senha:") === "2025") { document.getElementById('controles-adm').classList.remove('hidden'); window.switchView('view-logistica'); } };
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); window.carregarRelatorio(); };
         window.gerenciarItem = (p, n, e) => { window.itemPath = p; window.currentName = n; window.currentEnd = e; document.getElementById('modalGestao').style.display = 'flex'; };
         window.salvarStatusSimples = async (s) => { await update(ref(db, window.itemPath), { resultado: s, valor: 0 }); window.fecharModalGestao(); };
         window.confirmarExclusao = async () => { if(confirm("EXCLUIR?")) { await remove(ref(db, window.itemPath)); window.fecharModalGestao(); } };
-        window.filtrarLogistica = () => {
-            const container = document.getElementById('lista-visitas'); if(!container) return;
-            const fD = document.getElementById('filtro-data-logistica').value;
-            let lista = fD ? window.dadosCompletos.filter(i => i.data === fD) : window.dadosCompletos;
-            lista.sort((a,b) => new Date(`${a.data}T${a.horario||'23:59'}`) - new Date(`${b.data}T${b.horario||'23:59'}`));
-            container.innerHTML = '';
-            lista.forEach(i => {
-                let cor = i.resultado === "Venda" ? "border-emerald-500/20 bg-emerald-500/5" : (i.resultado === "NQ" ? "border-rose-500/20 bg-rose-500/5" : "border-slate-500/20 bg-slate-500/5");
-                const alb = i.num_album ? `<span class="text-[9px] font-black text-amber-500 mr-2">#${i.num_album}</span>` : '';
-                container.innerHTML += `<div class="glass p-4 rounded-3xl border-l-4 ${cor} flex justify-between items-center text-white"><div class="flex-grow"><div class="flex items-center gap-2 mb-1">${alb}<span class="text-xs font-black text-blue-400 uppercase">${i.horario || 'DIR'}</span><span class="text-[10px] font-bold text-slate-500 italic">${pDT(i.data)}</span></div><h3 class="text-base font-black uppercase mb-2">${i.nome_formando}</h3><div class="flex gap-4"><a href="https://wa.me/55${(i.telefone||'').replace(/\D/g,'')}" target="_blank" class="text-emerald-400 text-[10px] font-bold uppercase">📱 Zap</a><a href="https://www.waze.com/ul?q=${encodeURIComponent(i.endereco||'')}&navigate=yes" target="_blank" class="text-slate-400 text-[10px] font-bold uppercase">📍 Waze</a></div></div><button onclick="window.gerenciarItem('${i.path.replace(/'/g,"\\'")}', '${(i.nome_formando||'').replace(/'/g,"\\'")}', '${(i.endereco||'').replace(/'/g,"\\'")}')" class="btn-primary px-5 py-3 rounded-2xl font-black uppercase text-[9px] shadow-lg ml-4">Gerenciar</button></div>`;
-            });
-        };
-
-        window.fluxoResultado = () => {
-            document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
-            const item = window.dadosCompletos.find(i => i.path === window.itemPath) || {};
-            f.innerHTML = `<select id="vendedor-venda" class="w-full bg-slate-900 p-4 rounded-xl mb-3 text-white outline-none"><option value="">Vendedor</option><option value="Evanio">Evanio</option><option value="Willian">Willian</option></select><input type="text" id="vAlbum" placeholder="Nº ÁLBUM OU Nº P/ SID" value="${item.num_album || ''}" class="w-full bg-slate-900 p-4 rounded-xl mb-4 text-white text-center font-bold border border-white/10 outline-none"><input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-900 p-6 rounded-3xl text-center mb-4 text-white font-black text-3xl border border-white/10 outline-none"><div class="grid grid-cols-2 gap-2 mb-4"><button onclick="window.addPg('Dinheiro')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Dinheiro</button><button onclick="window.addPg('Pix')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Pix</button><button onclick="window.addPg('Cartão Débito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Débito</button><button onclick="window.addPg('Cartão Crédito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Crédito</button><button onclick="window.addPg('Boleto')" class="p-4 bg-blue-900/30 border border-blue-500/40 rounded-2xl text-[10px] font-black uppercase col-span-2 text-white">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4 text-white"></div><button onclick="window.finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white shadow-xl">SALVAR</button>`;
-            window.tempPgs = item.pagamentos || []; if(window.tempPgs.length > 0) { document.getElementById('lista-p').innerHTML = window.tempPgs.map(p => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px] text-white"><span>${p.tipo}</span><span class="text-emerald-400 font-bold">${fBR(p.valor)}</span></div>`).join(''); }
-        };
-
-        window.finalizarVenda = async () => {
-            const tot = parseFloat(document.getElementById('vTotal').value); const vend = document.getElementById('vendedor-venda').value; let albInput = document.getElementById('vAlbum').value.trim(); if(!tot || !vend) return alert("Valor e Vendedor!");
-            let albFinal = (albInput.length > 0 && albInput.length <= 2 && !isNaN(albInput)) ? "SID-" + albInput.padStart(2, '0') : albInput;
-            await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, num_album: albFinal, vendedor: vend, pagamentos: window.tempPgs }); window.fecharModalGestao();
-        };
-
-        window.abrirModalVale = () => {
-            document.getElementById('modalGestao').style.display = 'flex'; document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
-            f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Vale Avulso</h3><select id="v-vale" class="w-full bg-slate-800 p-4 rounded-xl mb-3 text-white outline-none"><option value="Evanio">Evanio</option><option value="Willian">Willian</option></select><input type="number" id="v-val" placeholder="VALOR R$" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white font-bold outline-none"><button onclick="window.salvarValeAvulso()" class="w-full p-5 bg-fuchsia-600 rounded-2xl font-black text-white uppercase">Confirmar</button>`;
-        };
-
-        window.salvarValeAvulso = async () => { const v = document.getElementById('v-vale').value, val = parseFloat(document.getElementById('v-val').value); if(!val) return; await set(ref(db, `dados/${projetoId}/vales/${Date.now()}`), { vendedor: v, valor: val, data: new Date().toISOString().split('T')[0] }); window.fecharModalGestao(); };
-
-        window.editarCustosProjeto = async () => {
-            const p = window.configProjetoAtual; const q = prompt("Qtd Vendedores:", p.operacao_pessoas || 1); const hv = prompt("Hosp. Valor:", p.hosp_valor || 110); const hq = prompt("Hosp. Qtd:", p.hosp_qtd || 0); const av = prompt("Alim. Valor:", p.alim_valor || 50); const aq = prompt("Alim. Qtd:", p.alim_qtd || 0); const kt = prompt("KM:", p.km_total || 0); const kv = prompt("Valor KM:", p.km_valor || 0.70); const pt = prompt("Pedágio:", p.pedagio_total || 0);
-            if(q !== null) { await update(ref(db, `config/projetos/${projetoId}`), { operacao_pessoas: parseInt(q), hosp_valor: parseFloat(hv), hosp_qtd: parseInt(hq), alim_valor: parseFloat(av), alim_qtd: parseInt(aq), km_total: parseFloat(kt), km_valor: parseFloat(kv), pedagio_total: parseFloat(pt) }); location.reload(); }
-        };
-
-        window.gerarBotoesDatas = (inicio, fim) => { const container = document.getElementById('day-selector'); if(!container) return; container.innerHTML = ""; let cur = new Date(inicio + "T00:00:00"); const end = new Date(fim + "T00:00:00"); while(cur <= end) { const iso = cur.toISOString().split('T')[0]; const lab = cur.toLocaleDateString('pt-BR', {weekday: 'short', day: '2-digit', month: '2-digit'}); container.innerHTML += `<button type="button" data-date="${iso}" onclick="window.selecionarDia(this)" class="day-btn rounded-2xl py-4 text-[10px] font-black uppercase text-white">${lab}</button>`; cur.setDate(cur.getDate() + 1); } };
-
-        window.selecionarDia = async (btn) => { document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); const d = btn.getAttribute('data-date'); document.getElementById('data-selecionada').value = d; const snap = await get(ref(db, `dados/${projetoId}/agendamentos/${d}`)); const counts = {}; Object.entries(snap.val() || {}).forEach(([key, item]) => { let h = item.horario ? item.horario.trim().substring(0,5) : (key.includes("-") ? `${key.split("-")[0]}:${key.split("-")[1]}` : ""); if(h) counts[h] = (counts[h] || 0) + 1; }); const elH = document.getElementById('horario'); elH.innerHTML = '<option value="">Horário</option>'; let cur = new Date(`${d}T09:00:00`), lim = (d === new Date().toLocaleDateString('en-CA')) ? "19:30" : "20:30"; while(cur <= new Date(`${d}T${lim}:00`)){ const hF = cur.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); const ocup = counts[hF] || 0; if(ocup < 2) { let opt=document.createElement('option'); opt.value=hF; opt.textContent=`${hF} (${2-ocup} vagas)`; elH.appendChild(opt); } cur.setMinutes(cur.getMinutes()+30); } };
-        
-        window.abrirAvulso = () => { document.getElementById('modalGestao').style.display = 'flex'; document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Novo</h3><input type="text" id="av-nome" placeholder="NOME" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="tel" id="av-tel" placeholder="WHATSAPP" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="date" id="av-data" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none"><button onclick="window.salvarNovoAvulso()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar</button>`; document.getElementById('av-data').value = new Date().toISOString().split('T')[0]; };
-        window.salvarNovoAvulso = async () => { const n = document.getElementById('av-nome').value, d = document.getElementById('av-data').value, t = document.getElementById('av-tel').value, e = document.getElementById('av-end').value; if(!n || !d) return; const path = `dados/${projetoId}/avulsos/AV-${Date.now()}`; await set(ref(db, path), { nome_formando: n, telefone: t, endereco: e, data: d, resultado: "Pendente" }); window.itemPath = path; window.currentName = n; window.currentEnd = e; window.fluxoResultadoAvulso(); };
-        window.fluxoResultadoAvulso = () => { const f = document.getElementById('gestao-form'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Resultado</h3><button onclick="window.fluxoResultado()" class="w-full p-6 mb-3 bg-emerald-600 rounded-2xl font-black uppercase text-white shadow-lg">1. Registrar Venda</button><button onclick="window.salvarStatusSimples('NQ')" class="w-full p-6 bg-rose-600 rounded-2xl font-black uppercase text-white shadow-lg">2. Marcar NQ</button>`; };
-        
+        window.abrirModalVale = () => { document.getElementById('modalGestao').style.display = 'flex'; document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Vale Avulso</h3><select id="v-vale" class="w-full bg-slate-800 p-4 rounded-xl mb-3 text-white outline-none"><option value="Evanio">Evanio</option><option value="Willian">Willian</option></select><input type="number" id="v-val" placeholder="VALOR R$" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white font-bold outline-none"><button onclick="window.salvarValeAvulso()" class="w-full p-5 bg-fuchsia-600 rounded-2xl font-black text-white uppercase">Confirmar</button>`; };
+        window.salvarValeAvulso = async () => { const v = document.getElementById('v-vale').value, val = parseFloat(document.getElementById('v-val').value); if(!val) return; await set(ref(db, `dados/${projetoAtualId}/vales/${Date.now()}`), { vendedor: v, valor: val, data: new Date().toISOString().split('T')[0] }); window.fecharModalGestao(); };
+        window.editarCustosProjeto = async () => { const p = window.configProjetoAtual; const q = prompt("Vendedores:", p.operacao_pessoas||1); const hv = prompt("Hosp. Val:", p.hosp_valor||110); const hq = prompt("Hosp. Qtd:", p.hosp_qtd||0); const av = prompt("Alim. Val:", p.alim_valor||50); const aq = prompt("Alim. Qtd:", p.alim_qtd||0); const kt = prompt("KM:", p.km_total||0); const kv = prompt("KM Val:", p.km_valor||0.70); const pt = prompt("Pedágio:", p.pedagio_total||0); if(q !== null) { await update(ref(db, `config/projetos/${projetoAtualId}`), { operacao_pessoas: parseInt(q), hosp_valor: parseFloat(hv), hosp_qtd: parseInt(hq), alim_valor: parseFloat(av), alim_qtd: parseInt(aq), km_total: parseFloat(kt), km_valor: parseFloat(kv), pedagio_total: parseFloat(pt) }); location.reload(); } };
+        window.copiarRelatorio = () => { const { m, fD } = window.dadosAtuaisRelatorio; const tk = m.v ? (m.tot / m.v) : 0; let txt = `Relatório de Vendas\nProjeto: ${window.labelsAtivas.cidade} - ${window.labelsAtivas.escola}\nData: ${fD ? pDT(fD) : 'ACUMULADO GERAL'}\n\n✅ Vendas: ${m.v}\n❌ NQ: ${m.nq}\n\n💵 Dinheiro: ${fBR(m.din)}\n💎 Pix: ${fBR(m.pix)}\n💳 Débito: ${fBR(m.deb)}\n💳 Crédito: ${fBR(m.cre)}\n📄 Boleto: ${fBR(m.bol)}\n💸 Vales: ${fBR(m.vales)}\n\n💰 Total Vendido: ${fBR(m.tot)}\n🎯 Ticket Médio: ${fBR(tk)}`; navigator.clipboard.writeText(txt).then(() => alert("Copiado!")); };
+        window.filtrarLogistica = () => { const container = document.getElementById('lista-visitas'); if(!container) return; const fD = document.getElementById('filtro-data-logistica').value; let lista = fD ? window.dadosCompletos.filter(i => i.data === fD) : window.dadosCompletos; lista.sort((a,b) => new Date(`${a.data}T${a.horario||'23:59'}`) - new Date(`${b.data}T${b.horario||'23:59'}`)); container.innerHTML = ''; lista.forEach(i => { let cor = i.resultado === "Venda" ? "border-emerald-500/20 bg-emerald-500/5" : (i.resultado === "NQ" ? "border-rose-500/20 bg-rose-500/5" : "border-slate-500/20 bg-slate-500/5"); const alb = i.num_album ? `<span class="text-[9px] font-black text-amber-500 mr-2">#${i.num_album}</span>` : ''; container.innerHTML += `<div class="glass p-4 rounded-3xl border-l-4 ${cor} flex justify-between items-center text-white"><div class="flex-grow"><div class="flex items-center gap-2 mb-1">${alb}<span class="text-xs font-black text-blue-400 uppercase">${i.horario || 'DIR'}</span><span class="text-[10px] font-bold text-slate-500 italic">${pDT(i.data)}</span></div><h3 class="text-base font-black uppercase mb-2">${i.nome_formando}</h3><div class="flex gap-4"><a href="https://wa.me/55${(i.telefone||'').replace(/\D/g,'')}" target="_blank" class="text-emerald-400 text-[10px] font-bold uppercase">📱 Zap</a><a href="https://www.waze.com/ul?q=${encodeURIComponent(i.endereco||'')}&navigate=yes" target="_blank" class="text-slate-400 text-[10px] font-bold uppercase">📍 Waze</a></div></div><button onclick="window.gerenciarItem('${i.path.replace(/'/g,"\\'")}', '${(i.nome_formando||'').replace(/'/g,"\\'")}', '${(i.endereco||'').replace(/'/g,"\\'")}')" class="btn-primary px-5 py-3 rounded-2xl font-black uppercase text-[9px] shadow-lg ml-4">Gerenciar</button></div>`; }); };
+        window.fluxoResultado = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); const item = window.dadosCompletos.find(i => i.path === window.itemPath) || {}; f.innerHTML = `<select id="vendedor-venda" class="w-full bg-slate-900 p-4 rounded-xl mb-3 text-white outline-none"><option value="">Vendedor</option><option value="Evanio">Evanio</option><option value="Willian">Willian</option></select><input type="text" id="vAlbum" placeholder="Nº ÁLBUM OU Nº P/ SID" value="${item.num_album || ''}" class="w-full bg-slate-900 p-4 rounded-xl mb-4 text-white text-center font-bold border border-white/10 outline-none"><input type="number" id="vTotal" placeholder="VALOR TOTAL" class="w-full bg-slate-900 p-6 rounded-3xl text-center mb-4 text-white font-black text-3xl border border-white/10 outline-none"><div class="grid grid-cols-2 gap-2 mb-4 text-white"><button onclick="window.addPg('Dinheiro')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Dinheiro</button><button onclick="window.addPg('Pix')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Pix</button><button onclick="window.addPg('Cartão Débito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Débito</button><button onclick="window.addPg('Cartão Crédito')" class="p-4 bg-slate-800 rounded-2xl text-[10px] font-black uppercase text-white">+ Crédito</button><button onclick="window.addPg('Boleto')" class="p-4 bg-blue-900/30 border border-blue-500/40 rounded-2xl text-[10px] font-black uppercase col-span-2 text-white">+ Boleto</button></div><div id="lista-p" class="space-y-1 mb-4 text-white"></div><button onclick="window.finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black text-white shadow-xl">SALVAR</button>`; window.tempPgs = item.pagamentos || []; if(window.tempPgs.length > 0) { document.getElementById('lista-p').innerHTML = window.tempPgs.map(p => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px] text-white"><span>${p.tipo}</span><span class="text-emerald-400 font-bold">${fBR(p.valor)}</span></div>`).join(''); } };
+        window.finalizarVenda = async () => { const tot = parseFloat(document.getElementById('vTotal').value); const vend = document.getElementById('vendedor-venda').value; let albI = document.getElementById('vAlbum').value.trim(); if(!tot || !vend) return alert("Valor e Vendedor!"); let albF = (albI.length > 0 && albI.length <= 2 && !isNaN(albI)) ? "SID-" + albI.padStart(2, '0') : albI; await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, num_album: albF, vendedor: vend, pagamentos: window.tempPgs }); window.fecharModalGestao(); };
+        window.fluxoEditar = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); const item = window.dadosCompletos.find(i => i.path === window.itemPath); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Editar</h3><label class="text-[9px] text-slate-500 uppercase font-bold text-white">Nº Álbum</label><input type="text" id="edit-album" value="${item.num_album || ''}" class="w-full bg-slate-800 p-4 rounded-xl mb-3 text-white border border-white/10 outline-none"><label class="text-[9px] text-slate-500 uppercase font-bold text-white">Vendedor</label><select id="edit-vendedor" class="w-full bg-slate-800 p-4 rounded-xl mb-3 text-white outline-none"><option value="Evanio" ${item.vendedor === 'Evanio' ? 'selected' : ''}>Evanio</option><option value="Willian" ${item.vendedor === 'Willian' ? 'selected' : ''}>Willian</option></select><label class="text-[9px] text-slate-500 uppercase font-bold text-white">Nome</label><input type="text" id="edit-nome" value="${window.currentName}" class="w-full bg-slate-800 p-4 rounded-xl mb-3 text-white border border-white/10 outline-none"><label class="text-[9px] text-slate-500 uppercase font-bold text-white">Data</label><input type="date" id="edit-data" value="${item.data}" class="w-full bg-slate-800 p-4 rounded-xl mb-3 text-white border border-white/10 outline-none"><textarea id="edit-end" class="w-full bg-slate-900 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none" rows="3">${window.currentEnd}</textarea><button onclick="window.salvarEdicaoCompleta()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar</button>`; };
+        window.salvarEdicaoCompleta = async () => { const nA = document.getElementById('edit-album').value, nN = document.getElementById('edit-nome').value, nE = document.getElementById('edit-end').value, nD = document.getElementById('edit-data').value, nV = document.getElementById('edit-vendedor').value; const item = window.dadosCompletos.find(i => i.path === window.itemPath); if(nD !== item.data) { const nDads = { ...item, num_album: nA, nome_formando: nN, endereco: nE, data: nD, vendedor: nV }; delete nDads.path; let nP = window.itemPath.includes("avulsos") ? `dados/${projetoAtualId}/avulsos/${item.id}` : `dados/${projetoAtualId}/agendamentos/${nD}/${item.id}`; await set(ref(db, nP), nDads); if(window.itemPath !== nP) await remove(ref(db, window.itemPath)); } else { await update(ref(db, window.itemPath), { num_album: nA, nome_formando: nN, endereco: nE, vendedor: nV }); } window.fecharModalGestao(); };
         window.addPg = (tipo) => { const v = parseFloat(prompt(`Valor ${tipo}:`)?.replace(',', '.') || 0); if (v <= 0) return; if (tipo === "Boleto") { const r = prompt("Entrada? 1-Sim 2-Não"); if (r === "1") { const vE = parseFloat(prompt("Valor Entrada:")?.replace(',', '.') || 0); const fE = prompt("Forma: 1-Pix 2-Dinheiro"); window.tempPgs.push({ tipo: `${fE === "1" ? "Pix" : "Dinheiro"} (Entrada)`, valor: vE }); if(v-vE > 0) window.tempPgs.push({ tipo: "Boleto (Restante)", valor: v-vE }); } else window.tempPgs.push({ tipo: "Boleto", valor: v }); } else window.tempPgs.push({ tipo, valor: v }); document.getElementById('lista-p').innerHTML = window.tempPgs.map(p => `<div class="flex justify-between bg-white/5 p-2 rounded-lg text-[10px] text-white"><span>${p.tipo}</span><span class="text-emerald-400 font-bold">${fBR(p.valor)}</span></div>`).join(''); };
-        window.fluxoEditar = () => { document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); const item = window.dadosCompletos.find(i => i.path === window.itemPath); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Editar</h3><label class="text-[9px] text-slate-500 uppercase font-bold text-white">Nº Álbum</label><input type="text" id="edit-album" value="${item.num_album || ''}" class="w-full bg-slate-800 p-4 rounded-xl mb-3 text-white border border-white/10 outline-none"><label class="text-[9px] text-slate-500 uppercase font-bold">Vendedor</label><select id="edit-vendedor" class="w-full bg-slate-800 p-4 rounded-xl mb-3 text-white outline-none"><option value="Evanio" ${item.vendedor === 'Evanio' ? 'selected' : ''}>Evanio</option><option value="Willian" ${item.vendedor === 'Willian' ? 'selected' : ''}>Willian</option></select><label class="text-[9px] text-slate-500 uppercase font-bold">Nome</label><input type="text" id="edit-nome" value="${window.currentName}" class="w-full bg-slate-800 p-4 rounded-xl mb-3 text-white border border-white/10 outline-none"><label class="text-[9px] text-slate-500 uppercase font-bold">Data</label><input type="date" id="edit-data" value="${item.data}" class="w-full bg-slate-800 p-4 rounded-xl mb-3 text-white border border-white/10 outline-none"><textarea id="edit-end" class="w-full bg-slate-900 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none" rows="3">${window.currentEnd}</textarea><button onclick="window.salvarEdicaoCompleta()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar</button>`; };
-        window.salvarEdicaoCompleta = async () => { const nA = document.getElementById('edit-album').value, nN = document.getElementById('edit-nome').value, nE = document.getElementById('edit-end').value, nD = document.getElementById('edit-data').value, nV = document.getElementById('edit-vendedor').value; const item = window.dadosCompletos.find(i => i.path === window.itemPath); if(nD !== item.data) { const nDads = { ...item, num_album: nA, nome_formando: nN, endereco: nE, data: nD, vendedor: nV }; delete nDads.path; let nP = window.itemPath.includes("avulsos") ? `dados/${projetoId}/avulsos/${item.id}` : `dados/${projetoId}/agendamentos/${nD}/${item.id}`; await set(ref(db, nP), nDads); if(window.itemPath !== nP) await remove(ref(db, window.itemPath)); } else { await update(ref(db, window.itemPath), { num_album: nA, nome_formando: nN, endereco: nE, vendedor: nV }); } window.fecharModalGestao(); };
-        window.criarNovoProjeto = async () => { const id = prompt("ID Único:"); if(!id) return; const cid = prompt("Cidade:"); const esc = prompt("Escola:"); const ini = prompt("Início:"); const fim = prompt("Fim:"); if(cid && esc && ini && fim) { await set(ref(db, `config/projetos/${id}`), { cidade: cid, escola: esc, data_inicio: ini, data_fim: fim, hosp_valor: 110, hosp_qtd: 0, alim_valor: 50, alim_qtd: 0, km_total: 0, km_valor: 0.70, pedagio_total: 0, operacao_pessoas: 1 }); await set(ref(db, "config/projeto_ativo"), id); location.reload(); } };
-        window.trocarProjetoAtivo = async () => { const novoID = prompt("ID:"); if(novoID) { await set(ref(db, "config/projeto_ativo"), novoID); location.reload(); } };
-        window.gerenciarDatas = async () => { const ini = prompt("Início:", window.labelsAtivas.inicio || ""); const fim = prompt("Fim:", window.labelsAtivas.fim || ""); if(ini && fim) { await update(ref(db, `config/projetos/${projetoId}`), { data_inicio: ini, data_fim: fim }); location.reload(); } };
+        window.gerarBotoesDatas = (inicio, fim) => { const container = document.getElementById('day-selector'); if(!container) return; container.innerHTML = ""; let cur = new Date(inicio + "T00:00:00"); const end = new Date(fim + "T00:00:00"); while(cur <= end) { const iso = cur.toISOString().split('T')[0]; const lab = cur.toLocaleDateString('pt-BR', {weekday: 'short', day: '2-digit', month: '2-digit'}); container.innerHTML += `<button type="button" data-date="${iso}" onclick="window.selecionarDia(this)" class="day-btn rounded-2xl py-4 text-[10px] font-black uppercase text-white">${lab}</button>`; cur.setDate(cur.getDate() + 1); } };
+        window.selecionarDia = async (btn) => { document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); const d = btn.getAttribute('data-date'); document.getElementById('data-selecionada').value = d; const snap = await get(ref(db, `dados/${projetoAtualId}/agendamentos/${d}`)); const counts = {}; Object.entries(snap.val() || {}).forEach(([key, item]) => { let h = item.horario ? item.horario.trim().substring(0,5) : (key.includes("-") ? `${key.split("-")[0]}:${key.split("-")[1]}` : ""); if(h) counts[h] = (counts[h] || 0) + 1; }); const elH = document.getElementById('horario'); elH.innerHTML = '<option value="">Horário</option>'; let cur = new Date(`${d}T09:00:00`), lim = (d === new Date().toLocaleDateString('en-CA')) ? "19:30" : "20:30"; while(cur <= new Date(`${d}T${lim}:00`)){ const hF = cur.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); const ocup = counts[hF] || 0; if(ocup < 2) { let opt=document.createElement('option'); opt.value=hF; opt.textContent=`${hF} (${2-ocup} vagas)`; elH.appendChild(opt); } cur.setMinutes(cur.getMinutes()+30); } };
+        window.abrirAvulso = () => { document.getElementById('modalGestao').style.display = 'flex'; document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs">Novo</h3><input type="text" id="av-nome" placeholder="NOME" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="tel" id="av-tel" placeholder="WHATSAPP" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="text" id="av-end" placeholder="ENDEREÇO" class="w-full bg-slate-800 p-4 rounded-xl mb-2 text-white border border-white/10 outline-none"><input type="date" id="av-data" class="w-full bg-slate-800 p-4 rounded-xl mb-4 text-white border border-white/10 outline-none"><button onclick="window.salvarNovoAvulso()" class="w-full p-5 bg-blue-600 rounded-2xl font-black text-white uppercase">Salvar</button>`; document.getElementById('av-data').value = new Date().toISOString().split('T')[0]; };
+        window.salvarNovoAvulso = async () => { const n = document.getElementById('av-nome').value, d = document.getElementById('av-data').value, t = document.getElementById('av-tel').value, e = document.getElementById('av-end').value; if(!n || !d) return; const path = `dados/${projetoAtualId}/avulsos/AV-${Date.now()}`; await set(ref(db, path), { nome_formando: n, telefone: t, endereco: e, data: d, resultado: "Pendente" }); window.itemPath = path; window.currentName = n; window.currentEnd = e; window.fluxoResultadoAvulso(); };
+        window.fluxoResultadoAvulso = () => { const f = document.getElementById('gestao-form'); f.innerHTML = `<h3 class="text-white font-black mb-4 uppercase text-xs text-white">Resultado</h3><button onclick="window.fluxoResultado()" class="w-full p-6 mb-3 bg-emerald-600 rounded-2xl font-black uppercase text-white shadow-lg">1. Registrar Venda</button><button onclick="window.salvarStatusSimples('NQ')" class="w-full p-6 bg-rose-600 rounded-2xl font-black uppercase text-white shadow-lg">2. Marcar NQ</button>`; };
     </script>
 </body>
 </html>
