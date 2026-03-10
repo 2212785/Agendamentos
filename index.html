@@ -89,9 +89,9 @@
         </div>
     </section>
 
-    <section id="view-financeiro" class="view-section p-6 text-white text-white">
+    <section id="view-financeiro" class="view-section p-6 text-white text-white text-white">
         <div class="max-w-7xl mx-auto w-full text-white text-white text-white text-white">
-            <nav class="flex justify-between items-center mb-10 text-white text-white text-white">
+            <nav class="flex justify-between items-center mb-10 text-white text-white text-white text-white">
                 <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white text-white text-white">← Voltar</button>
                 <div class="flex gap-4">
                     <input type="date" id="filtro-bi" onchange="window.filtrarBI()" class="bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white text-white text-white text-white">
@@ -105,8 +105,8 @@
                 <div id="saldo-card" class="glass rounded-[3rem] p-8 border-l-8 border-emerald-500 flex flex-col justify-center space-y-4 text-white text-white text-white text-white"></div>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-white text-white text-white">
-                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5 text-white text-white text-white text-white text-white"><h4 class="text-emerald-400 font-black uppercase text-xs mb-4 italic">Vendas</h4><table class="w-full text-left min-w-[400px] text-white text-white text-white text-white"><tbody id="extrato-tabela" class="text-xs"></tbody></table></div>
-                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5 text-white text-white text-white text-white text-white text-white"><h4 class="text-rose-500 font-black uppercase text-xs mb-4 italic text-white text-white text-white">NQs</h4><table class="w-full text-left min-w-[400px] text-white text-white text-white text-white text-white text-white text-white"><tbody id="nq-tabela" class="text-[10px]"></tbody></table></div>
+                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5 text-white text-white text-white text-white text-white text-white"><h4 class="text-emerald-400 font-black uppercase text-xs mb-4 italic">Vendas</h4><table class="w-full text-left min-w-[400px] text-white text-white text-white text-white"><tbody id="extrato-tabela" class="text-xs"></tbody></table></div>
+                <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5 text-white text-white text-white text-white text-white text-white text-white"><h4 class="text-rose-500 font-black uppercase text-xs mb-4 italic text-white text-white text-white">NQs</h4><table class="w-full text-left min-w-[400px] text-white text-white text-white text-white text-white text-white text-white text-white"><tbody id="nq-tabela" class="text-[10px]"></tbody></table></div>
             </div>
         </div>
     </section>
@@ -131,20 +131,20 @@
         let projetoAtualId = ""; window.labelsAtivas = { cidade: "...", escola: "..." };
         let configProjetoAtual = {}; let custosOperacao = {}; window.dadosCompletos = []; window.valesAvulsos = []; window.dadosAtuaisRelatorio = {};
 
-        // --- ATUALIZAÇÃO REATIVA DO DOM ---
+        // --- NOVA LOGICA DE TITULOS (ESTRATEGIA DIRETA RECOMENDADA) ---
         window.atualizarTitulosDOM = () => {
             const h2 = document.getElementById('escola-titulo');
             const h3 = document.getElementById('sub-escola');
             if(!h2 || !h3) return;
 
-            let cidade = window.labelsAtivas.cidade;
-            let escola = window.labelsAtivas.escola;
+            let cidade = window.labelsAtivas?.cidade;
+            let escola = window.labelsAtivas?.escola;
 
-            if(!cidade || cidade === "...") cidade = localStorage.getItem("last_city") || "Projeto";
-            if(!escola || escola === "...") escola = localStorage.getItem("last_school") || "Sales Intelligence";
+            if(!cidade || cidade === "...") cidade = localStorage.getItem("last_city");
+            if(!escola || escola === "...") escola = localStorage.getItem("last_school");
 
-            h2.innerText = cidade;
-            h3.innerText = escola;
+            if(cidade) h2.textContent = cidade;
+            if(escola) h3.textContent = escola;
         };
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -157,8 +157,9 @@
             let lista = fD ? window.dadosCompletos.filter(i => i.data === fD) : window.dadosCompletos;
             let m = { v:0, nq:0, tot:0, pix:0, din:0, deb:0, cre:0, bol:0, vales:0, com:0 };
             
-            let valeE = (projetoAtualId === "guaratingueta-guilherme") ? 1950.0 : 0;
-            let valeW = (projetoAtualId === "guaratingueta-guilherme") ? 2755.0 : 0;
+            let vBaseE = (projetoAtualId === "guaratingueta-guilherme") ? 1950.0 : 0;
+            let vBaseW = (projetoAtualId === "guaratingueta-guilherme") ? 2755.0 : 0;
+            let valeE = vBaseE, valeW = vBaseW;
             let dailyVendas = [0,0,0,0,0,0,0], dailyNQs = [0,0,0,0,0,0,0], rowsVenda = '', rowsNQ = [];
             
             lista.forEach(i => {
@@ -186,26 +187,24 @@
                 m.vales += v.valor; if(v.vendedor === "Evanio") valeE += v.valor; else if(v.vendedor === "Willian") valeW += v.valor;
             });
 
-            // LÊ DA GAVETA DE CUSTOS SEPARADA
+            // LÊ DA GAVETA DE CUSTOS SEPARADA (ARQUITETURA PROFISSIONAL)
             const c = custosOperacao; const nP = parseInt(c.operacao_pessoas) || 1;
             const totalR = ((parseFloat(c.hosp_valor)||0)*nP*(parseInt(c.hosp_qtd)||0)) + ((parseFloat(c.alim_valor)||0)*nP*(parseInt(c.alim_qtd)||0)) + ((parseFloat(c.km_total)||0)*(parseFloat(c.km_valor)||0.70)*nP) + ((parseFloat(c.pedagio_total)||0)*nP);
             const cMeio = m.com / 2; const rMeio = totalR / 2;
             window.dadosAtuaisRelatorio = { m, fD };
 
             document.getElementById('saldo-card').innerHTML = `<div class="text-center border-b border-white/5 pb-2 text-white"><p class="text-[10px] uppercase font-black text-blue-400">Total Operação</p><p class="text-2xl font-black text-white">${fBR(m.com + totalR)}</p></div><div class="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-1 text-white"><p class="text-[10px] font-black text-emerald-400 mb-1">EVANIO</p><div class="flex justify-between text-[10px] text-slate-400"><span>Comis/Reem.</span><span>${fBR(cMeio)} / ${fBR(rMeio)}</span></div><div class="flex justify-between text-[10px] text-rose-400"><span>Vales</span><span>- ${fBR(valeE)}</span></div><div class="flex justify-between font-black border-t border-white/10 pt-1 text-white"><span>A RECEBER</span><span>${fBR(cMeio+rMeio-valeE)}</span></div></div><div class="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-1 mt-4 text-white"><p class="text-[10px] uppercase font-black text-cyan-400 mb-1">WILLIAN</p><div class="flex justify-between text-[10px] text-slate-400"><span>Comis/Reem.</span><span>${fBR(cMeio)} / ${fBR(rMeio)}</span></div><div class="flex justify-between text-[10px] text-rose-400"><span>Vales</span><span>- ${fBR(valeW)}</span></div><div class="flex justify-between font-black border-t border-white/10 pt-1 text-white"><span>A RECEBER</span><span>${fBR(cMeio+rMeio-valeW)}</span></div></div>`;
-            document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10 text-white"><p class="text-[9px] uppercase text-emerald-500 font-black">Faturamento</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10 text-white"><p class="text-[9px] uppercase text-blue-500 font-black text-white">Vendas / NQ</p><p class="text-3xl font-black text-white">${m.v} / ${m.nq}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10 text-white"><p class="text-[9px] uppercase text-blue-500 font-black text-white">Eficiência</p><p class="text-3xl font-black text-white">${((m.v / (m.v+m.nq || 1))*100).toFixed(0)}%</p></div><div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10 text-white"><p class="text-[9px] uppercase text-cyan-500 font-black text-white text-white">Ticket Médio</p><p class="text-3xl font-black text-white text-white">${fBR(m.v ? m.tot/m.v : 0)}</p></div><div class="card-bi p-6 rounded-[2rem] border-emerald-400 bg-emerald-950/10 text-white"><p class="text-[9px] uppercase text-emerald-400 font-black text-white text-white text-white">Comissão Bruta</p><p class="text-3xl font-black text-white text-white">${fBR(m.com)}</p></div>`;
-            document.getElementById('finance-grid').innerHTML = `<div class="card-bi p-4 rounded-2xl text-white text-white text-white"><p class="text-[8px] uppercase">Pix</p><p class="text-lg font-black text-white">${fBR(m.pix)}</p></div><div class="card-bi p-4 rounded-2xl text-white text-white text-white text-white"><p class="text-[8px] uppercase">Dinheiro</p><p class="text-lg font-black text-white">${fBR(m.din)}</p></div><div class="card-bi p-4 rounded-2xl text-white text-white text-white text-white text-white"><p class="text-[8px] uppercase">Débito</p><p class="text-lg font-black text-white">${fBR(m.deb)}</p></div><div class="card-bi p-4 rounded-2xl text-white text-white text-white text-white text-white text-white"><p class="text-[8px] uppercase">Crédito</p><p class="text-lg font-black text-white">${fBR(m.cre)}</p></div><div class="card-bi p-4 rounded-2xl text-white text-white text-white text-white text-white text-white text-white"><p class="text-[8px] uppercase">Boleto</p><p class="text-lg font-black text-white">${fBR(m.bol)}</p></div><div class="card-bi p-4 rounded-2xl text-rose-500 bg-rose-950/10 border-rose-500/30 text-white text-white text-white text-white text-white text-white text-white text-white"><p class="text-[8px] uppercase text-white">Vales Geral</p><p class="text-lg font-black text-white">${fBR(m.vales)}</p></div>`;
-            document.getElementById('extrato-tabela').innerHTML = rowsVenda || '<tr><td colspan="3" class="p-10 text-center text-white">Sem vendas</td></tr>';
-            rowsNQ.sort((a,b) => a.localeCompare(b)); document.getElementById('nq-tabela').innerHTML = rowsNQ.map(n => `<tr class="border-b border-white/5 text-white"><td class="p-4 text-xs text-white">${n}</td><td class="p-4 text-rose-500 font-bold uppercase text-[10px]">NQ</td></tr>`).join('') || '<tr><td colspan="2" class="p-10 text-center text-white">Sem NQs</td></tr>';
-            if(window.myChart) window.myChart.destroy();
-            const cv = document.getElementById('chartWeekly'); if(cv) window.myChart = new Chart(cv, { type: 'bar', data: { labels: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], datasets: [ { label: 'Vendas', data: dailyVendas, backgroundColor: '#3b82f6', borderRadius: 6 }, { label: 'NQ', data: dailyNQs, backgroundColor: 'rgba(244, 63, 94, 0.4)', borderRadius: 6 } ] }, options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false } } } } });
+            document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-6 rounded-[2rem] border-emerald-500 bg-emerald-950/10 text-white"><p class="text-[9px] uppercase text-emerald-500 font-black">Faturamento</p><p class="text-3xl font-black">${fBR(m.tot)}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10 text-white"><p class="text-[9px] uppercase text-blue-500 font-black text-white">Vendas / NQ</p><p class="text-3xl font-black text-white text-white text-white">${m.v} / ${m.nq}</p></div><div class="card-bi p-6 rounded-[2rem] border-blue-500 bg-blue-950/10 text-white"><p class="text-[9px] uppercase text-blue-500 font-black text-white text-white text-white">Eficiência</p><p class="text-3xl font-black text-white text-white text-white">${((m.v / (m.v+m.nq || 1))*100).toFixed(0)}%</p></div><div class="card-bi p-6 rounded-[2rem] border-cyan-500 bg-cyan-950/10 text-white"><p class="text-[9px] uppercase text-cyan-500 font-black text-white text-white text-white text-white">Ticket Médio</p><p class="text-3xl font-black text-white text-white text-white">${fBR(m.v ? m.tot/m.v : 0)}</p></div><div class="card-bi p-6 rounded-[2rem] border-emerald-400 bg-emerald-950/10 text-white"><p class="text-[9px] uppercase text-emerald-400 font-black text-white text-white text-white text-white text-white">Comissão Bruta</p><p class="text-3xl font-black text-white text-white text-white">${fBR(m.com)}</p></div>`;
+            document.getElementById('finance-grid').innerHTML = `<div class="card-bi p-4 rounded-2xl text-white text-white text-white text-white text-white"><p class="text-[8px] uppercase text-white">Pix</p><p class="text-lg font-black text-white text-white">${fBR(m.pix)}</p></div><div class="card-bi p-4 rounded-2xl text-white text-white text-white text-white text-white text-white"><p class="text-[8px] uppercase text-white">Dinheiro</p><p class="text-lg font-black text-white text-white">${fBR(m.din)}</p></div><div class="card-bi p-4 rounded-2xl text-white text-white text-white text-white text-white text-white text-white"><p class="text-[8px] uppercase text-white">Débito</p><p class="text-lg font-black text-white text-white">${fBR(m.deb)}</p></div><div class="card-bi p-4 rounded-2xl text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white"><p class="text-[8px] uppercase text-white">Crédito</p><p class="text-lg font-black text-white text-white text-white">${fBR(m.cre)}</p></div><div class="card-bi p-4 rounded-2xl text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white"><p class="text-[8px] uppercase text-white">Boleto</p><p class="text-lg font-black text-white text-white">${fBR(m.bol)}</p></div><div class="card-bi p-4 rounded-2xl text-rose-500 bg-rose-950/10 border-rose-500/30 text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white text-white"><p class="text-[8px] uppercase text-white">Vales Geral</p><p class="text-lg font-black text-white text-white">${fBR(m.vales)}</p></div>`;
+            document.getElementById('extrato-tabela').innerHTML = rowsVenda || '<tr><td colspan="3" class="p-10 text-center text-white text-white text-white">Sem vendas</td></tr>';
+            rowsNQ.sort((a,b) => a.localeCompare(b)); document.getElementById('nq-tabela').innerHTML = rowsNQ.map(n => `<tr class="border-b border-white/5 text-white text-white text-white"><td class="p-4 text-xs text-white">${n}</td><td class="p-4 text-rose-500 font-bold uppercase text-[10px]">NQ</td></tr>`).join('') || '<tr><td colspan="2" class="p-10 text-center text-white text-white text-white text-white">Sem NQs</td></tr>';
         };
 
         // --- CONEXÃO MESTRE (ARQUITETURA PROFISSIONAL) ---
         onValue(ref(db, "config/projeto_ativo"), async (snap) => {
             projetoAtualId = snap.val() || "guaratingueta-guilherme";
             
-            // Busca nas 3 gavetas separadas
+            // Busca dados nas gavetas profissionais separadas
             const [projSnap, custoSnap] = await Promise.all([
                 get(ref(db, `projetos/${projetoAtualId}`)),
                 get(ref(db, `custos/${projetoAtualId}`))
@@ -217,6 +216,7 @@
                 
                 console.log("Projeto Profissional carregado:", configProjetoAtual);
                 
+                // CORREÇÃO DEFINITIVA: Aceita escola ou school
                 window.labelsAtivas = { 
                     cidade: configProjetoAtual.cidade, 
                     escola: configProjetoAtual.escola || configProjetoAtual.school 
@@ -225,7 +225,10 @@
                 localStorage.setItem('last_city', window.labelsAtivas.cidade);
                 localStorage.setItem('last_school', window.labelsAtivas.escola);
                 
-                window.atualizarTitulosDOM();
+                // ESCRITA IMEDIATA NO HTML
+                document.getElementById('escola-titulo').innerText = window.labelsAtivas.cidade;
+                document.getElementById('sub-escola').innerText = window.labelsAtivas.escola;
+                
                 if(configProjetoAtual.data_inicio) window.gerarBotoesDatas(configProjetoAtual.data_inicio, configProjetoAtual.data_fim);
                 window.carregarRelatorio();
             }
@@ -241,7 +244,7 @@
             window.filtrarLogistica(); window.filtrarBI();
         };
 
-        // --- INTERFACE (MANTIDO v12.84) ---
+        // --- INTERFACE ( window. ) ---
         window.switchView = (id) => { document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active')); document.getElementById(id).classList.add('view-active'); };
         window.acessoAdmin = () => { if(prompt("Senha:") === "2025") { document.getElementById('controles-adm').classList.remove('hidden'); window.switchView('view-logistica'); } };
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
@@ -255,7 +258,7 @@
             lista.sort((a,b) => new Date(`${a.data}T${a.horario||'23:59'}`) - new Date(`${b.data}T${b.horario||'23:59'}`));
             container.innerHTML = '';
             lista.forEach(i => {
-                let cor = i.resultado === "Venda" ? "border-emerald-500/20 bg-emerald-500/5" : (i.resultado === "NQ" ? "border-rose-500/20 bg-rose-500/5" : "border-slate-500/20 bg-slate-500/5");
+                let cor = i.resultado === "Venda" ? "border-emerald-500 bg-emerald-500/10" : (i.resultado === "NQ" ? "border-rose-500 bg-rose-500/10" : "border-slate-500/20");
                 let statusTxt = i.resultado === "Venda" ? "VENDA" : (i.resultado === "NQ" ? "NQ" : "PENDENTE");
                 let corStatus = i.resultado === "Venda" ? "text-emerald-500" : (i.resultado === "NQ" ? "text-rose-500" : "text-slate-500");
                 const alb = i.num_album ? `<span class="text-[9px] font-black text-amber-500 mr-2">#${i.num_album}</span>` : '';
@@ -263,7 +266,7 @@
             });
         };
         window.finalizarVenda = async () => {
-            const tot = parseFloat(document.getElementById('vTotal').value); const vend = document.getElementById('vendedor-venda').value; let alb = document.getElementById('vAlbum').value.trim(); if(!tot || !vend) return alert("Valor e Vendedor!");
+            const tot = parseFloat(document.getElementById('vTotal').value); const vend = document.getElementById('vendedor-venda').value; let alb = document.getElementById('vAlbum').value.trim(); if(!tot || !vend) return alert("Erro!");
             let albF = (alb.length > 0 && alb.length <= 2 && !isNaN(alb)) ? "SID-" + alb.padStart(2, '0') : alb;
             await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, num_album: albF, vendedor: vend, pagamentos: window.tempPgs }); window.carregarRelatorio(); window.fecharModalGestao();
         };
