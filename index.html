@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite BI v12.81</title>
+    <title>Elite Sales Intelligence - BI v12.82</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -21,21 +21,22 @@
 <body>
 
     <div id="modalGestao">
-        <div class="glass w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl">
+        <div class="glass w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl text-white">
             <div class="flex justify-between items-center mb-8">
-                <h2 id="gestao-titulo" class="text-xl font-black uppercase text-blue-400">Gerenciar</h2>
+                <h2 id="gestao-titulo" class="text-xl font-black uppercase text-blue-400">Gerenciar Visita</h2>
                 <button onclick="window.fecharModalGestao()" class="bg-slate-800 text-white w-10 h-10 rounded-full font-bold">✕</button>
             </div>
             <div id="gestao-menu" class="grid grid-cols-1 gap-4">
-                <button onclick="window.fluxoResultado()" class="bg-emerald-600/20 border border-emerald-500/30 p-8 rounded-3xl text-emerald-400 font-black uppercase hover:bg-emerald-600 transition">Registrar Venda</button>
-                <button onclick="window.salvarStatusSimples('NQ')" class="bg-rose-600/10 border border-rose-500/30 p-4 rounded-2xl text-rose-500 font-black uppercase text-xs">Marcar NQ</button>
-                <button onclick="window.fecharModalGestao()" class="text-slate-500 text-[10px] uppercase mt-4">Cancelar</button>
+                <button onclick="window.fluxoResultado()" class="bg-emerald-600/20 border border-emerald-500/30 p-8 rounded-3xl text-emerald-400 font-black uppercase hover:bg-emerald-600 transition">1. Registrar Venda</button>
+                <button onclick="window.salvarStatusSimples('NQ')" class="bg-rose-600/10 border border-rose-500/30 p-4 rounded-2xl text-rose-500 font-black uppercase text-xs">2. Marcar NQ</button>
+                <button onclick="window.fluxoEditar()" class="bg-blue-600/10 border border-blue-500/30 p-4 rounded-2xl text-blue-400 font-black uppercase text-xs">3. Editar Registro</button>
+                <button onclick="window.confirmarExclusao()" class="text-slate-600 text-[10px] uppercase font-bold mt-4 text-center hover:text-rose-500 transition">Excluir Registro</button>
             </div>
             <div id="gestao-form" class="hidden space-y-4"></div>
         </div>
     </div>
 
-    <section id="view-agendamento" class="view-section view-active">
+    <section id="view-agendamento" class="view-section view-active text-white">
         <header class="p-6 flex justify-between items-center w-full">
             <span class="text-xl font-black uppercase italic tracking-tighter">Portal <span class="text-blue-500">Elite</span></span>
             <button onclick="window.acessoAdmin()" class="glass px-6 py-2 rounded-xl text-[10px] font-black uppercase">ADM</button>
@@ -45,42 +46,47 @@
                 <h2 id="txt-cidade" class="text-2xl font-extrabold uppercase text-blue-400 italic">Guaratinguetá</h2>
                 <h3 id="txt-escola" class="text-xs font-bold text-slate-400 uppercase tracking-widest italic mb-8">Dr. Guilherme Filippo</h3>
                 <form id="form-agendamento" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-2 mb-4" id="day-selector"></div>
+                    <input type="hidden" id="data-selecionada">
                     <input type="text" id="nome" required placeholder="Nome do Formando" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none text-white">
                     <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none text-white">
+                    <select id="horario" required class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none text-white"><option value="">Horário</option></select>
                     <textarea id="endereco" required placeholder="Endereço Completo" class="w-full bg-slate-900 border border-white/5 p-4 rounded-2xl outline-none text-white" rows="2"></textarea>
-                    <button type="submit" class="btn-primary w-full py-5 rounded-2xl font-black uppercase shadow-lg">Finalizar Agendamento</button>
+                    <button type="submit" class="btn-primary w-full py-5 rounded-2xl font-black uppercase shadow-lg text-white">Finalizar Agendamento</button>
                 </form>
             </div>
         </main>
     </section>
 
-    <section id="view-logistica" class="view-section p-6">
+    <section id="view-logistica" class="view-section p-6 text-white">
         <div class="max-w-4xl mx-auto w-full">
             <nav class="flex justify-between items-center mb-6">
-                <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase">← Sair</button>
-                <div class="flex gap-2 p-1 bg-slate-900 rounded-2xl">
-                    <button class="bg-blue-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase">Visitas</button>
-                    <button onclick="window.switchView('view-financeiro')" class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-slate-400">Dashboard</button>
+                <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest">← Sair</button>
+                <div class="flex gap-2 p-1 bg-slate-900 rounded-2xl border border-white/5">
+                    <button class="bg-blue-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg">Visitas</button>
+                    <button onclick="window.switchView('view-financeiro')" class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-slate-400">BI Dashboard</button>
                 </div>
             </nav>
             <div id="lista-visitas" class="space-y-3"></div>
         </div>
     </section>
 
-    <section id="view-financeiro" class="view-section p-6">
+    <section id="view-financeiro" class="view-section p-6 text-white">
         <div class="max-w-7xl mx-auto w-full">
             <nav class="flex justify-between items-center mb-10">
-                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase">← Voltar</button>
-                <button onclick="window.copiarRelatorio()" class="bg-emerald-600 px-6 py-2 rounded-xl text-[10px] font-black uppercase">Copiar Zap</button>
+                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest">← Voltar</button>
+                <button onclick="window.copiarRelatorio()" class="bg-emerald-600 px-6 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg">Copiar Zap</button>
             </nav>
-            <div id="saldo-card" class="glass rounded-[3rem] p-8 border-l-8 border-emerald-500 mb-8"></div>
-            <div id="kpi-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"></div>
+            <div id="kpi-grid" class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8"></div>
+            <div id="saldo-card" class="glass rounded-[3rem] p-8 border-l-8 border-emerald-500 mb-8 space-y-4"></div>
+            <div id="finance-grid" class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8 text-[10px]"></div>
+            <div class="glass rounded-[3rem] p-8 overflow-x-auto border border-white/5"><h4 class="text-emerald-400 font-black uppercase text-xs mb-4 italic">Vendas</h4><table class="w-full text-left min-w-[400px] text-white"><tbody id="extrato-tabela" class="text-xs"></tbody></table></div>
         </div>
     </section>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, get, set, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        import { getDatabase, ref, get, set, remove, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU", 
@@ -95,19 +101,19 @@
         const fBR = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
 
         window.projetoId = "guaratingueta-guilherme";
-        window.dados = []; window.config = {};
+        window.dados = []; window.config = {}; window.valesAvulsos = []; window.dadosRelatorioZap = {};
 
         // --- CARREGAMENTO INICIAL TRAVADO ---
         async function init() {
             const idSnap = await get(ref(db, "config/projeto_ativo"));
-            if(idSnap.exists()) window.projetoId = idSnap.val();
+            if(idSnap.exists()) window.projetoId = idSnap.val().trim();
 
             const confSnap = await get(ref(db, `config/projetos/${window.projetoId}`));
             if(confSnap.exists()) {
                 window.config = confSnap.val();
-                // TRAVA OS NOMES NO HTML
                 document.getElementById('txt-cidade').innerText = window.config.cidade;
                 document.getElementById('txt-escola').innerText = window.config.escola;
+                if(window.config.data_inicio) window.gerarBotoesDatas(window.config.data_inicio, window.config.data_fim);
             }
             await window.carregarTudo();
         }
@@ -119,16 +125,13 @@
                 get(ref(db, `dados/${id}/avulsos`)),
                 get(ref(db, `dados/${id}/vales`))
             ]);
-            
             window.dados = [];
             const ags = sA.val() || {};
             Object.keys(ags).forEach(d => { if(ags[d]) Object.keys(ags[d]).forEach(k => window.dados.push({...ags[d][k], id:k, data:d, path:`dados/${id}/agendamentos/${d}/${k}`})); });
             const avs = sV.val() || {};
             Object.keys(avs).forEach(k => window.dados.push({...avs[k], id:k, data:avs[k].data, path:`dados/${id}/avulsos/${k}`}));
-            
             window.valesAvulsos = []; const vls = sL.val() || {};
             Object.keys(vls).forEach(k => window.valesAvulsos.push(vls[k]));
-
             window.filtrarLogistica(); window.filtrarBI();
         };
 
@@ -136,54 +139,64 @@
             const container = document.getElementById('lista-visitas'); if(!container) return;
             container.innerHTML = '';
             window.dados.forEach(i => {
-                let cor = "border-slate-500/20", selo = "PENDENTE", cS = "text-slate-500";
+                let cor = "border-slate-500/20 bg-slate-500/5", selo = "PENDENTE", cS = "text-slate-500";
                 if(i.resultado === "Venda") { cor = "border-emerald-500 bg-emerald-500/10"; selo = "VENDA"; cS = "text-emerald-500"; }
                 else if(i.resultado === "NQ") { cor = "border-rose-500 bg-rose-500/10"; selo = "NQ"; cS = "text-rose-500"; }
-                
-                container.innerHTML += `
-                <div class="glass p-4 rounded-3xl border-l-4 ${cor} flex justify-between items-center">
-                    <div>
-                        <p class="text-[10px] font-bold ${cS}">${selo} | ${i.horario||'DIR'}</p>
-                        <h3 class="text-white font-black uppercase">${i.nome_formando}</h3>
-                    </div>
-                    <button onclick="window.gerenciarItem('${i.path.replace(/'/g,"\\'")}', '${i.nome_formando}')" class="btn-primary px-4 py-2 rounded-xl text-[10px] font-bold uppercase">Gerenciar</button>
-                </div>`;
+                container.innerHTML += `<div class="glass p-4 rounded-3xl border-l-4 ${cor} flex justify-between items-center"><div><div class="flex items-center gap-2 text-[10px] font-bold mb-1 text-white"><span class="text-amber-500">#${i.num_album||'---'}</span><span>${i.horario||'DIR'}</span><span class="${cS} uppercase ml-2">${selo}</span></div><h3 class="text-base font-black uppercase text-white">${i.nome_formando}</h3></div><button onclick="window.gerenciarItem('${i.path.replace(/'/g,"\\'")}', '${i.nome_formando}')" class="btn-primary px-4 py-2 rounded-xl text-[10px] font-bold uppercase">Gerenciar</button></div>`;
             });
         };
 
         window.filtrarBI = () => {
-            let m = { v:0, nq:0, tot:0, com:0, vales:0 };
+            let m = { v:0, nq:0, tot:0, com:0, vales:0, pix:0, din:0, deb:0, cre:0, bol:0 };
             let vE = (window.projetoId === "guaratingueta-guilherme") ? 1950.0 : 0, vW = (window.projetoId === "guaratingueta-guilherme") ? 2755.0 : 0;
 
             window.dados.forEach(i => {
                 if(i.resultado === "Venda") {
                     m.v++; m.tot += Number(i.valor)||0;
+                    let vendaCom = 0;
                     (i.pagamentos || []).forEach(p => {
                         const vP = Number(p.valor) || 0; const t = p.tipo.toLowerCase();
                         if((t.includes("pix") || t.includes("dinheiro")) && !t.includes("debito")) {
                             m.vales += vP; if(i.vendedor === "Evanio") vE += vP; else if(i.vendedor === "Willian") vW += vP;
                         }
-                        m.com += (t.includes("entrada")) ? vP * 0.12 : vP * 0.08;
+                        if(t.includes("pix")) m.pix += vP; else if(t.includes("dinheiro")) m.din += vP; else if(t.includes("debito")) m.deb += vP; else if(t.includes("credito")) m.cre += vP; else if(t.includes("boleto")) m.bol += vP;
+                        vendaCom += (t.includes("entrada")) ? vP * 0.12 : vP * 0.08;
                     });
+                    m.com += vendaCom;
                 } else if(i.resultado === "NQ") m.nq++;
             });
 
-            const rT = 4170.0; // Reembolso fixo Guaratinguetá (v12.81)
-            const cM = m.com/2, rM = rT/2;
+            window.valesAvulsos.forEach(v => { m.vales += v.valor; if(v.vendedor === "Evanio") vE += v.valor; else vW += v.valor; });
+            const p = window.config; const nP = parseInt(p.operacao_pessoas) || 2;
+            const rT = ((((parseFloat(p.km_total)||0)*(0.7)) + (parseFloat(p.pedagio_total)||0)) + ((parseFloat(p.hosp_valor)||0)*(parseInt(p.hosp_qtd)||0) + (parseFloat(p.alim_valor)||0)*(parseInt(p.alim_qtd)||0))) * nP;
+            const cMeio = m.com/2, rMeio = rT/2; window.dadosRelatorioZap = m;
 
             document.getElementById('saldo-card').innerHTML = `
-                <div class="space-y-4">
-                    <div class="flex justify-between border-b border-white/5 pb-2"><p class="text-emerald-400 font-bold">EVANIO</p><p class="font-black text-xl">${fBR(cM+rM-vE)}</p></div>
-                    <div class="flex justify-between"><p class="text-cyan-400 font-bold">WILLIAN</p><p class="font-black text-xl">${fBR(cM+rM-vW)}</p></div>
+                <div class="text-center border-b border-white/5 pb-2 mb-4"><p class="text-[10px] uppercase font-black text-blue-400">Total Operação</p><p class="text-2xl font-black text-white">${fBR(m.com + rT)}</p></div>
+                <div class="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-1"><p class="text-[10px] font-black text-emerald-400">EVANIO</p>
+                    <div class="flex justify-between text-[10px]"><span>Comissão/Reem. (50%)</span><span>${fBR(cMeio)} / ${fBR(rMeio)}</span></div>
+                    <div class="flex justify-between text-[10px] text-rose-400"><span>Vales Totais</span><span>- ${fBR(vE)}</span></div>
+                    <div class="flex justify-between font-black border-t border-white/10 pt-1 text-white"><span>A RECEBER</span><span>${fBR(cMeio+rMeio-vE)}</span></div>
+                </div>
+                <div class="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-1 mt-3"><p class="text-[10px] font-black text-cyan-400">WILLIAN</p>
+                    <div class="flex justify-between text-[10px]"><span>Comissão/Reem. (50%)</span><span>${fBR(cMeio)} / ${fBR(rMeio)}</span></div>
+                    <div class="flex justify-between text-[10px] text-rose-400"><span>Vales Totais</span><span>- ${fBR(vW)}</span></div>
+                    <div class="flex justify-between font-black border-t border-white/10 pt-1 text-white"><span>A RECEBER</span><span>${fBR(cMeio+rMeio-vW)}</span></div>
                 </div>`;
 
-            document.getElementById('kpi-grid').innerHTML = `
-                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] uppercase">Vendido</p><p class="text-lg font-black">${fBR(m.tot)}</p></div>
-                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] uppercase">Vendas/NQ</p><p class="text-lg font-black">${m.v}/${m.nq}</p></div>
-                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] uppercase">Comissão</p><p class="text-lg font-black">${fBR(m.com)}</p></div>
-                <div class="card-bi p-4 rounded-2xl"><p class="text-[8px] uppercase">Reembolso</p><p class="text-lg font-black">${fBR(rT)}</p></div>`;
+            document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-4 rounded-3xl"><p class="text-[8px] uppercase">Vendas</p><p class="text-lg font-black text-white">${fBR(m.tot)}</p></div><div class="card-bi p-4 rounded-3xl"><p class="text-[8px] uppercase">Vendas/NQ</p><p class="text-lg font-black text-white">${m.v}/${m.nq}</p></div><div class="card-bi p-4 rounded-3xl"><p class="text-[8px] uppercase">Comissão</p><p class="text-lg font-black text-white">${fBR(m.com)}</p></div><div class="card-bi p-4 rounded-3xl"><p class="text-[8px] uppercase">Reembolso</p><p class="text-lg font-black text-white">${fBR(rT)}</p></div><div class="card-bi p-4 rounded-3xl"><p class="text-[8px] uppercase">Vales</p><p class="text-lg font-black text-white">${fBR(m.vales)}</p></div>`;
+            document.getElementById('finance-grid').innerHTML = `<div class="glass p-2 text-center text-white">Pix: ${fBR(m.pix)}</div><div class="glass p-2 text-center text-white">Din: ${fBR(m.din)}</div><div class="glass p-2 text-center text-white">Deb: ${fBR(m.deb)}</div><div class="glass p-2 text-center text-white">Cre: ${fBR(m.cre)}</div><div class="glass p-2 text-center text-white">Bol: ${fBR(m.bol)}</div>`;
+            document.getElementById('extrato-tabela').innerHTML = window.dados.filter(d=>d.resultado==="Venda").map(v=>`<tr class="border-b border-white/5"><td>${v.nome_formando}</td><td>${fBR(v.valor)}</td><td class="text-emerald-400">Venda</td></tr>`).join('');
         };
 
+        window.copiarRelatorio = () => {
+            const m = window.dadosRelatorioZap;
+            const tk = m.v ? (m.tot / m.v) : 0;
+            const t = `Relatório de Vendas\nProjeto: ${window.config.cidade} - ${window.config.escola}\nData: ACUMULADO GERAL\n\n✅ Vendas: ${m.v}\n❌ NQ: ${m.nq}\n\n💵 Dinheiro: ${fBR(m.din)}\n💎 Pix: ${fBR(m.pix)}\n💳 Débito: ${fBR(m.deb)}\n💳 Crédito: ${fBR(m.cre)}\n📄 Boleto: ${fBR(m.bol)}\n💸 Vales: ${fBR(m.vales)}\n\n💰 Total Vendido: ${fBR(m.tot)}\n🎯 Ticket Médio: ${fBR(tk)}`;
+            navigator.clipboard.writeText(t).then(() => alert("Copiado!"));
+        };
+
+        // UI HELPERS
         window.switchView = (id) => { document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active')); document.getElementById(id).classList.add('view-active'); window.carregarTudo(); };
         window.acessoAdmin = () => { if(prompt("Senha:") === "2025") { window.switchView('view-logistica'); } };
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); window.carregarTudo(); };
@@ -191,14 +204,17 @@
         window.salvarStatusSimples = async (s) => { await update(ref(db, window.itemPath), { resultado: s }); window.fecharModalGestao(); };
         window.fluxoResultado = () => {
             document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
-            f.innerHTML = `<select id="vV" class="w-full bg-slate-900 p-4 rounded-xl mb-3 text-white outline-none"><option value="Evanio">Evanio</option><option value="Willian">Willian</option></select><input type="number" id="vT" placeholder="VALOR TOTAL" class="w-full bg-slate-900 p-4 rounded-xl mb-4 text-white font-black text-2xl outline-none"><button onclick="window.finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black">SALVAR</button>`;
+            f.innerHTML = `<select id="vV" class="w-full bg-slate-900 p-4 rounded-xl mb-3 text-white outline-none"><option value="Evanio">Evanio</option><option value="Willian">Willian</option></select><input type="number" id="vT" placeholder="VALOR TOTAL" class="w-full bg-slate-900 p-4 rounded-xl mb-4 text-white font-black text-2xl outline-none"><div class="grid grid-cols-2 gap-2 mb-4"><button onclick="window.addPg('Dinheiro')" class="bg-slate-800 p-3 rounded-xl text-[10px]">Dinheiro</button><button onclick="window.addPg('Pix')" class="bg-slate-800 p-3 rounded-xl text-[10px]">Pix</button></div><div id="lista-p" class="mb-4"></div><button onclick="window.finalizarVenda()" class="w-full p-4 bg-emerald-600 rounded-xl font-black">SALVAR</button>`;
+            window.tempPgs = [];
         };
         window.finalizarVenda = async () => {
             const tot = parseFloat(document.getElementById('vT').value); const v = document.getElementById('vV').value; if(!tot || !v) return alert("Erro!");
-            await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, vendedor: v }); window.fecharModalGestao();
+            await update(ref(db, window.itemPath), { resultado: "Venda", valor: tot, vendedor: v, pagamentos: window.tempPgs }); window.fecharModalGestao();
         };
-        window.copiarRelatorio = () => { alert("Copiado!"); };
-
+        window.addPg = (tipo) => { const v = parseFloat(prompt(`Valor ${tipo}:`)); if(v) window.tempPgs.push({tipo, valor: v}); document.getElementById('lista-p').innerHTML += `<div class="text-[10px] text-emerald-400">${tipo}: ${fBR(v)}</div>`; };
+        window.gerarBotoesDatas = (inicio, fim) => { const container = document.getElementById('day-selector'); if(!container) return; container.innerHTML = ""; let cur = new Date(inicio + "T00:00:00"); const end = new Date(fim + "T00:00:00"); while(cur <= end) { const iso = cur.toISOString().split('T')[0]; const lab = cur.toLocaleDateString('pt-BR', {weekday: 'short', day: '2-digit', month: '2-digit'}); container.innerHTML += `<button type="button" data-date="${iso}" onclick="window.selecionarDia(this)" class="day-btn rounded-2xl py-4 text-[10px] font-black uppercase text-white">${lab}</button>`; cur.setDate(cur.getDate() + 1); } };
+        window.selecionarDia = (btn) => { document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); document.getElementById('data-selecionada').value = btn.getAttribute('data-date'); };
+        
         init();
     </script>
 </body>
