@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Intelligence - BI v15.70</title>
+    <title>Elite Sales Intelligence - BI v15.90</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -14,13 +14,10 @@
         #modalGestao { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(2, 6, 23, 0.98); align-items: flex-start; justify-content: center; overflow-y: auto; padding: 20px; }
         .modal-container { width: 100%; max-width: 32rem; margin-top: 10px; }
         .view-section { display: none; min-height: 100vh; width: 100%; }
-        .view-active { display: flex; flex-direction: column; animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .card-bi { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-top: 3px solid #3b82f6; }
-        .day-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
-        .day-btn.active { background: #3b82f6 !important; border-color: #60a5fa !important; }
+        .view-active { display: flex; flex-direction: column; }
+        .card-bi { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); border-top: 4px solid #3b82f6; }
         .status-txt-compact { font-size: 14px; font-weight: 900; text-transform: uppercase; }
-        .input-compact { padding: 0.75rem !important; border-radius: 1rem !important; font-size: 0.875rem !important; }
+        .input-compact { padding: 0.75rem !important; border-radius: 1rem !important; font-size: 0.875rem !important; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); color: white; width: 100%; outline: none; }
     </style>
 </head>
 <body>
@@ -28,14 +25,13 @@
     <div id="modalGestao">
         <div class="modal-container glass rounded-[2.5rem] p-8 shadow-2xl text-white">
             <div class="flex justify-between items-center mb-6">
-                <h2 id="gestao-titulo" class="text-lg font-black uppercase text-blue-400">Gerenciar Visita</h2>
-                <button onclick="window.fecharModalGestao()" class="bg-slate-800 text-white w-8 h-8 rounded-full font-bold">✕</button>
+                <h2 id="gestao-titulo" class="text-lg font-black uppercase text-blue-400">Gerenciar</h2>
+                <button onclick="window.fecharModalGestao()" class="bg-slate-800 text-white w-8 h-8 rounded-full font-bold text-white">✕</button>
             </div>
             <div id="gestao-menu" class="grid grid-cols-1 gap-3">
                 <button onclick="window.fluxoResultado()" class="bg-emerald-600/20 border border-emerald-500/30 p-6 rounded-3xl text-emerald-400 font-black uppercase hover:bg-emerald-600 transition text-sm">1. Registrar Venda</button>
                 <button onclick="window.salvarStatusSimples('NQ')" class="bg-rose-600/10 border border-rose-500/30 p-3 rounded-2xl text-rose-500 font-black uppercase text-[10px]">2. Marcar NQ</button>
-                <button onclick="window.fluxoEditar()" class="bg-blue-600/10 border border-blue-500/30 p-3 rounded-2xl text-blue-400 font-black uppercase text-[10px]">3. Editar Cadastro</button>
-                <button onclick="window.confirmarExclusao()" class="text-slate-600 text-[9px] uppercase font-bold mt-2 text-center">Excluir permanentemente</button>
+                <button onclick="window.confirmarExclusao()" class="text-slate-600 text-[9px] uppercase font-bold mt-2 text-center">Excluir Registro</button>
             </div>
             <div id="gestao-form" class="hidden space-y-3 text-white pb-4"></div>
         </div>
@@ -46,39 +42,32 @@
             <span class="text-lg font-black uppercase italic tracking-tighter">Portal <span class="text-blue-500">Elite</span></span>
             <button onclick="window.acessoAdmin()" class="glass px-4 py-1.5 rounded-lg text-[9px] font-black uppercase">ADM</button>
         </header>
-        <main class="flex-grow flex items-start justify-center p-2">
-            <div class="glass p-6 rounded-[2.5rem] w-full max-w-sm shadow-2xl text-center border border-white/5">
-                <h2 id="escola-titulo" class="text-xl font-extrabold uppercase text-blue-400 leading-none">...</h2>
-                <h3 id="sub-escola" class="text-[9px] font-bold text-slate-400 uppercase mb-4 mt-1">PROJETO</h3>
-                <form id="form-agendamento" class="space-y-3">
-                    <div class="grid grid-cols-2 gap-1.5 mb-3" id="day-selector"></div>
+        <div class="flex-grow flex items-center justify-center p-2">
+            <div class="glass p-6 rounded-[2.5rem] w-full max-w-sm text-center">
+                <h2 id="escola-titulo" class="text-xl font-extrabold uppercase text-blue-400 italic">...</h2>
+                <h3 id="sub-escola" class="text-[9px] font-bold text-slate-500 mb-4 uppercase">PROJETO</h3>
+                <div class="grid grid-cols-2 gap-1 mb-3" id="day-selector"></div>
+                <form id="form-agendamento" class="space-y-2">
                     <input type="hidden" id="data-selecionada">
-                    <input type="text" id="nome" required placeholder="Nome do Formando" class="w-full bg-slate-900 border border-white/5 input-compact outline-none text-white">
-                    <input type="tel" id="telefone" required placeholder="WhatsApp" class="w-full bg-slate-900 border border-white/5 input-compact outline-none text-white">
-                    <select id="horario" required class="w-full bg-slate-900 border border-white/5 input-compact outline-none text-white"><option value="">Horário</option></select>
-                    <textarea id="endereco" required placeholder="Endereço Completo" class="w-full bg-slate-900 border border-white/5 input-compact outline-none text-white" rows="2"></textarea>
-                    <button type="submit" class="btn-primary w-full py-4 rounded-xl font-black uppercase shadow-lg text-sm">Finalizar Agendamento</button>
+                    <input type="text" id="nome" placeholder="Nome" class="input-compact">
+                    <input type="tel" id="telefone" placeholder="WhatsApp" class="input-compact">
+                    <button type="submit" class="btn-primary w-full py-4 rounded-xl font-black uppercase text-sm">Agendar</button>
                 </form>
             </div>
-        </main>
+        </div>
     </section>
 
     <section id="view-logistica" class="view-section p-4 text-white">
         <nav class="flex justify-between items-center mb-4">
-            <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white">← Sair</button>
-            <div class="flex gap-2 p-1 glass rounded-2xl">
-                <button class="bg-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase shadow-lg">Visitas</button>
-                <button onclick="window.switchView('view-financeiro')" class="px-4 py-2 rounded-xl text-[10px] font-black uppercase text-slate-400">BI Dashboard</button>
+            <button onclick="window.switchView('view-agendamento')" class="text-slate-500 text-[10px] font-black uppercase text-white">← Sair</button>
+            <div class="flex gap-2 p-1 glass rounded-xl">
+                <button class="bg-blue-600 px-4 py-1.5 rounded-lg text-[10px] font-black">Visitas</button>
+                <button onclick="window.switchView('view-financeiro')" class="px-4 py-1.5 text-slate-400 text-[10px] font-black">BI Dashboard</button>
             </div>
         </nav>
-        <div id="controles-adm" class="hidden flex flex-wrap gap-1 mb-4 justify-center">
-            <button onclick="window.criarNovoProjeto()" class="glass px-2 py-1.5 rounded-lg text-[7px] font-black uppercase text-emerald-400">Novo</button>
-            <button onclick="window.trocarProjetoAtivo()" class="glass px-2 py-1.5 rounded-lg text-[7px] font-black uppercase text-rose-400">Trocar</button>
-            <button onclick="window.gerenciarDatas()" class="glass px-2 py-1.5 rounded-lg text-[7px] font-black uppercase text-blue-400">Dados</button>
-        </div>
         <div class="flex gap-2 mb-4">
             <input type="date" id="filtro-data-logistica" onchange="window.filtrarLogistica()" class="flex-grow bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs font-bold outline-none text-white">
-            <button onclick="window.abrirAvulso()" class="bg-white text-black px-4 py-2 rounded-xl text-[9px] font-black uppercase">+ Avulso</button>
+            <button onclick="window.abrirAvulso()" class="bg-white text-black px-4 py-2 rounded-xl text-[9px] font-black uppercase">+ AVULSO</button>
         </div>
         <div id="lista-visitas" class="space-y-2"></div>
     </section>
@@ -86,27 +75,17 @@
     <section id="view-financeiro" class="view-section p-4 text-white">
         <div class="max-w-7xl mx-auto w-full">
             <nav class="flex justify-between items-center mb-6">
-                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase tracking-widest text-white">← Voltar</button>
-                <div class="flex gap-2">
-                    <input type="date" id="filtro-bi" onchange="window.filtrarBI()" class="bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none text-white">
-                </div>
+                <button onclick="window.switchView('view-logistica')" class="text-slate-500 text-[10px] font-black uppercase text-white">← Voltar</button>
+                <input type="date" id="filtro-bi" onchange="window.filtrarBI()" class="bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white">
             </nav>
-            
+
             <div id="kpi-grid" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6"></div>
-            
-            <div id="finance-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6"></div>
-            
-            <div id="saldo-card" class="glass rounded-[2.5rem] p-6 border-l-8 border-emerald-500 flex flex-col justify-center space-y-4 mb-6"></div>
+            <div id="finance-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 mb-6"></div>
+            <div id="saldo-card" class="glass rounded-[2.5rem] p-6 border-l-8 border-emerald-500 mb-6"></div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="glass p-6 rounded-[2rem] border border-white/5 text-white">
-                    <h4 class="text-emerald-400 font-black uppercase text-[10px] mb-3 italic">Extrato de Vendas</h4>
-                    <table class="w-full text-left text-xs text-white"><tbody id="extrato-tabela"></tbody></table>
-                </div>
-                <div class="glass p-6 rounded-[2rem] border border-white/5 text-white">
-                    <h4 class="text-rose-500 font-black uppercase text-[10px] mb-3 italic">Registros NQ</h4>
-                    <table class="w-full text-left text-xs text-white"><tbody id="nq-tabela"></tbody></table>
-                </div>
+                <div class="glass p-4 rounded-2xl border border-white/5"><h4 class="text-emerald-400 font-black text-[10px] mb-3 uppercase">Vendas Realizadas</h4><div id="extrato-tabela" class="text-xs"></div></div>
+                <div class="glass p-4 rounded-2xl border border-white/5"><h4 class="text-rose-500 font-black text-[10px] mb-3 uppercase">Registros NQ</h4><div id="nq-tabela" class="text-xs"></div></div>
             </div>
         </div>
     </section>
@@ -119,32 +98,27 @@
         const app = initializeApp(firebaseConfig); const db = getDatabase(app);
         const fBR = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
 
-        let projetoAtualId = ""; window.dadosCompletos = [];
-
-        // --- GRAVAÇÃO REAL (COMMIT) ---
-        window.salvarNoBanco = async (path, dados) => {
-            try { await update(ref(db, path), dados); window.carregarRelatorio(); } catch(e) { alert("Erro ao gravar!"); }
-        };
+        let projId = ""; window.dadosCompletos = [];
 
         window.carregarRelatorio = async () => {
-            const id = projetoAtualId;
+            const id = projId;
             try {
-                const [sDados, sVendas] = await Promise.all([get(ref(db, `dados/${id}`)), get(ref(db, `vendas/${id}`))]);
+                // Buscamos em todas as pastas possíveis
+                const [sA, sV] = await Promise.all([get(ref(db, `dados/${id}/agendamentos`)), get(ref(db, `vendas/${id}`))]);
                 window.dadosCompletos = [];
-                const proc = (pasta, base) => {
-                    if (!pasta) return;
-                    Object.keys(pasta).forEach(k => {
-                        const item = pasta[k];
-                        if (typeof item === 'object' && !item.nome_formando) {
-                            Object.keys(item).forEach(subK => window.dadosCompletos.push({...item[subK], id:subK, data:k, path:`${base}/${k}/${subK}`}));
-                        } else window.dadosCompletos.push({...item, id:k, data:item.data||k, path:`${base}/${k}`});
-                    });
-                };
-                if(sDados.exists()) proc(sDados.val().agendamentos, `dados/${id}/agendamentos`);
-                if(sVendas.exists()){
-                    proc(sVendas.val().avulsos, `vendas/${id}/avulsos`);
-                    proc(sVendas.val().agendamentos, `vendas/${id}/agendamentos`);
+                
+                // Processa Agendamentos Antigos
+                if(sA.exists()){
+                    const d = sA.val();
+                    Object.keys(d).forEach(dt => { Object.keys(d[dt]).forEach(k => window.dadosCompletos.push({...d[dt][k], id:k, data:dt, path:`dados/${id}/agendamentos/${dt}/${k}`})); });
                 }
+                // Processa Vendas/Avulsos Novos
+                if(sV.exists()){
+                    const v = sV.val();
+                    if(v.avulsos) Object.keys(v.avulsos).forEach(k => window.dadosCompletos.push({...v.avulsos[k], id:k, data:v.avulsos[k].data, path:`vendas/${id}/avulsos/${k}`}));
+                    if(v.agendamentos) Object.keys(v.agendamentos).forEach(k => window.dadosCompletos.push({...v.agendamentos[k], id:k, data:v.agendamentos[k].data, path:`vendas/${id}/agendamentos/${k}`}));
+                }
+
                 window.filtrarLogistica(); window.filtrarBI();
             } catch(e) { console.error(e); }
         };
@@ -153,71 +127,63 @@
             const fD = document.getElementById('filtro-bi').value;
             let list = fD ? window.dadosCompletos.filter(i => i.data === fD) : window.dadosCompletos;
             let m = { v:0, nq:0, tot:0, pix:0, din:0, deb:0, cre:0, bol:0, vales:0, com:0 };
-            let valeE = (projetoAtualId === "guaratingueta-guilherme") ? 1950.0 : 0;
-            let valeW = (projetoAtualId === "guaratingueta-guilherme") ? 2755.0 : 0;
+            
+            // Lógica de Vales Específica Evanio/Willian
+            let vE = (projId === "guaratingueta-guilherme") ? 350.0 : 0;
+            let vW = (projId === "guaratingueta-guilherme") ? 1155.0 : 0;
             let rowsV = '', rowsNQ = '';
 
             list.forEach(i => {
                 if(i.resultado === "Venda") {
                     m.v++; m.tot += Number(i.valor)||0;
                     let cV = 0;
-                    if(i.pagamentos) {
-                        i.pagamentos.forEach(p => {
-                            const vP = Number(p.valor)||0; const t = p.tipo.toLowerCase();
-                            if (t.includes("entrada")) cV += vP*0.12; else cV += vP*0.08;
-                            if((t.includes("pix")||t.includes("dinheiro")||t.includes("entrada")) && !t.includes("debito") && !t.includes("credito")) {
-                                m.vales += vP; if(i.vendedor === "Evanio") valeE += vP; else if(i.vendedor === "Willian") valeW += vP;
-                            }
-                            if(t.includes("pix")) m.pix += vP; else if(t.includes("dinheiro")) m.din += vP;
-                            else if(t.includes("debito")) m.deb += vP; else if(t.includes("credito")) m.cre += vP;
-                            else if(t.includes("boleto")) m.bol += vP;
-                        });
-                    } else cV = (Number(i.valor)||0)*0.08;
+                    if(i.pagamentos) i.pagamentos.forEach(p => {
+                        const valP = Number(p.valor)||0; const t = p.tipo.toLowerCase();
+                        if (t.includes("entrada")) cV += valP*0.12; else cV += valP*0.08;
+                        if((t.includes("pix")||t.includes("dinheiro")) && !t.includes("debito")) m.vales += valP;
+                        if(t.includes("pix")) m.pix += valP; else if(t.includes("dinheiro")) m.din += valP;
+                        else if(t.includes("debito")) m.deb += valP; else if(t.includes("credito")) m.cre += valP;
+                        else if(t.includes("boleto")) m.bol += valP;
+                    }); else cV = (Number(i.valor)||0)*0.08;
                     m.com += cV;
-                    rowsV += `<tr class="border-b border-white/5"><td>#${i.num_album || ''} ${i.nome_formando}</td><td>${fBR(i.valor)}</td><td class="text-emerald-400 font-bold">${fBR(cV)}</td></tr>`;
-                } else if(i.resultado === "NQ") { m.nq++; rowsNQ += `<tr class="border-b border-white/5"><td>${i.nome_formando}</td><td class="text-rose-500 font-bold uppercase text-[10px]">NQ</td></tr>`; }
+                    rowsV += `<div class="flex justify-between border-b border-white/5 py-1"><span>#${i.num_album||''} ${i.nome_formando}</span><b class="text-emerald-400">${fBR(i.valor)}</b></div>`;
+                } else if(i.resultado === "NQ") { m.nq++; rowsNQ += `<div class="py-1 border-b border-white/5 text-slate-400">${i.nome_formando}</div>`; }
             });
 
-            const tk = m.v ? m.tot/m.v : 0; const ef = (m.v + m.nq) ? (m.v / (m.v+m.nq))*100 : 0;
-
-            // RENDER CARDS GRANDES
+            // CARDS GRANDES
             document.getElementById('kpi-grid').innerHTML = `
-                <div class="card-bi p-4 rounded-3xl"><p class="text-[8px] uppercase text-blue-400 font-black">Faturamento</p><p class="text-xl font-black">${fBR(m.tot)}</p></div>
-                <div class="card-bi p-4 rounded-3xl"><p class="text-[8px] uppercase text-blue-400 font-black">Ticket Médio</p><p class="text-xl font-black">${fBR(tk)}</p></div>
-                <div class="card-bi p-4 rounded-3xl"><p class="text-[8px] uppercase text-blue-400 font-black">Eficiência</p><p class="text-xl font-black">${ef.toFixed(0)}%</p></div>
-                <div class="card-bi p-4 rounded-3xl"><p class="text-[8px] uppercase text-blue-400 font-black">Vendas / NQ</p><p class="text-xl font-black">${m.v} / ${m.nq}</p></div>
-            `;
-
-            // RENDER GRID PAGAMENTOS
+                <div class="card-bi p-4 rounded-3xl text-center"><p class="text-[8px] font-black text-blue-400">FATURAMENTO</p><p class="text-xl font-black">${fBR(m.tot)}</p></div>
+                <div class="card-bi p-4 rounded-3xl text-center"><p class="text-[8px] font-black text-blue-400">TICKET MÉDIO</p><p class="text-xl font-black">${fBR(m.v?m.tot/m.v:0)}</p></div>
+                <div class="card-bi p-4 rounded-3xl text-center"><p class="text-[8px] font-black text-blue-400">EFICIÊNCIA</p><p class="text-xl font-black">${(m.v+m.nq)?(m.v/(m.v+m.nq)*100).toFixed(0):0}%</p></div>
+                <div class="card-bi p-4 rounded-3xl text-center"><p class="text-[8px] font-black text-blue-400">VENDAS/NQ</p><p class="text-xl font-black">${m.v}/${m.nq}</p></div>`;
+            
+            // CARDS PAGAMENTOS
             document.getElementById('finance-grid').innerHTML = `
-                <div class="glass p-3 rounded-2xl text-center"><p class="text-[7px] uppercase">Pix</p><p class="text-xs font-black">${fBR(m.pix)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center"><p class="text-[7px] uppercase">Dinheiro</p><p class="text-xs font-black">${fBR(m.din)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center"><p class="text-[7px] uppercase">Débito</p><p class="text-xs font-black">${fBR(m.deb)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center"><p class="text-[7px] uppercase">Crédito</p><p class="text-xs font-black">${fBR(m.cre)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center"><p class="text-[7px] uppercase">Boleto</p><p class="text-xs font-black">${fBR(m.bol)}</p></div>
-                <div class="glass p-3 rounded-2xl text-center border-rose-500/30 bg-rose-950/10"><p class="text-[7px] uppercase text-rose-500">Total Vales</p><p class="text-xs font-black text-rose-500">${fBR(m.vales)}</p></div>
-            `;
+                <div class="glass p-2 rounded-xl text-center"><p class="text-[7px]">PIX</p><p class="text-xs font-bold">${fBR(m.pix)}</p></div>
+                <div class="glass p-2 rounded-xl text-center"><p class="text-[7px]">DINHEIRO</p><p class="text-xs font-bold">${fBR(m.din)}</p></div>
+                <div class="glass p-2 rounded-xl text-center"><p class="text-[7px]">DÉBITO</p><p class="text-xs font-bold">${fBR(m.deb)}</p></div>
+                <div class="glass p-2 rounded-xl text-center"><p class="text-[7px]">CRÉDITO</p><p class="text-xs font-bold">${fBR(m.cre)}</p></div>
+                <div class="glass p-2 rounded-xl text-center"><p class="text-[7px]">BOLETO</p><p class="text-xs font-bold">${fBR(m.bol)}</p></div>
+                <div class="glass p-2 rounded-xl text-center border-rose-500/30 text-rose-500"><p class="text-[7px]">VALES</p><p class="text-xs font-bold">${fBR(m.vales)}</p></div>`;
 
-            // RENDER SALDO VENDEDOR
+            // SALDO FINAL
             document.getElementById('saldo-card').innerHTML = `
-                <div class="text-center border-b border-white/5 pb-2"><p class="text-[10px] uppercase font-black text-emerald-400">Comissão Bruta Total</p><p class="text-2xl font-black">${fBR(m.com)}</p></div>
-                <div class="grid grid-cols-2 gap-4 pt-2">
-                    <div class="bg-white/5 p-4 rounded-2xl"><p class="text-[10px] font-black text-blue-400">EVANIO</p><div class="flex justify-between text-xs mt-1"><span>A Receber:</span><span class="font-black">${fBR(m.com/2 - valeE)}</span></div><p class="text-[8px] text-slate-500 mt-1 uppercase">Vales: ${fBR(valeE)}</p></div>
-                    <div class="bg-white/5 p-4 rounded-2xl"><p class="text-[10px] font-black text-cyan-400">WILLIAN</p><div class="flex justify-between text-xs mt-1"><span>A Receber:</span><span class="font-black">${fBR(m.com/2 - valeW)}</span></div><p class="text-[8px] text-slate-500 mt-1 uppercase">Vales: ${fBR(valeW)}</p></div>
-                </div>
-            `;
-
-            document.getElementById('extrato-tabela').innerHTML = rowsV || '<tr><td>Sem dados</td></tr>';
-            document.getElementById('nq-tabela').innerHTML = rowsNQ || '<tr><td>Sem NQs</td></tr>';
+                <div class="text-center mb-4"><p class="text-[10px] font-black text-emerald-400">COMISSÃO BRUTA: ${fBR(m.com)}</p></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white/5 p-4 rounded-2xl text-center"><p class="text-[10px] font-black text-blue-400">EVANIO</p><p class="text-sm font-black mt-1">${fBR(m.com/2 - vE)}</p><p class="text-[8px] text-slate-500 uppercase mt-1">Vales: ${fBR(vE)}</p></div>
+                    <div class="bg-white/5 p-4 rounded-2xl text-center"><p class="text-[10px] font-black text-cyan-400">WILLIAN</p><p class="text-sm font-black mt-1">${fBR(m.com/2 - vW)}</p><p class="text-[8px] text-slate-500 uppercase mt-1">Vales: ${fBR(vW)}</p></div>
+                </div>`;
+            
+            document.getElementById('extrato-tabela').innerHTML = rowsV || 'Nenhuma venda';
+            document.getElementById('nq-tabela').innerHTML = rowsNQ || 'Nenhum NQ';
         };
 
         onValue(ref(db, "config/projeto_ativo"), async (snap) => {
-            projetoAtualId = snap.val() || "guaratingueta-guilherme";
-            const pS = await get(ref(db, `projects/${projetoAtualId}`));
-            if(pS.exists()){
+            projId = snap.val() || "guaratingueta-guilherme";
+            const pS = await get(ref(db, `projetos/${projId}`));
+            if(pS.exists()){ 
                 document.getElementById('escola-titulo').innerText = pS.val().cidade;
-                if(pS.val().data_inicio) window.gerarBotoesDatas(pS.val().data_inicio, pS.val().data_fim);
-                window.carregarRelatorio();
+                window.carregarRelatorio(); 
             }
         });
 
@@ -228,8 +194,8 @@
             cont.innerHTML = '';
             list.sort((a,b) => new Date(`${a.data}T${a.horario||'23:59'}`) - new Date(`${b.data}T${b.horario||'23:59'}`));
             list.forEach(i => {
-                let sT = i.resultado || "PENDENTE"; let cS = sT==="Venda"?"text-emerald-500":sT==="NQ"?"text-rose-500":"text-slate-600";
-                cont.innerHTML += `<div class="glass p-3 rounded-2xl flex justify-between items-center"><div class="flex items-center gap-3"><span class="text-[9px] font-black text-blue-400">${i.horario||'DIR'}</span><span class="status-txt-compact ${cS}">${sT==="Venda"?"VENDIDO":sT}</span><h3 class="text-sm font-black uppercase truncate max-w-[120px] text-white">${i.nome_formando}</h3></div><button onclick="window.gerenciarItem('${i.path}')" class="btn-primary px-3 py-1.5 rounded-lg text-[8px] font-black uppercase text-white">GERENCIAR</button></div>`;
+                let s = i.resultado || "PENDENTE"; let c = s==="Venda"?"text-emerald-500":s==="NQ"?"text-rose-500":"text-slate-600";
+                cont.innerHTML += `<div class="glass p-3 rounded-2xl flex justify-between items-center text-white"><div class="flex items-center gap-3"><span class="text-[9px] font-black text-blue-400">${i.horario||'DIR'}</span><span class="status-txt-compact ${c}">${s==="Venda"?"VENDIDO":s}</span><h3 class="text-sm font-black uppercase truncate max-w-[120px] text-white">${i.nome_formando}</h3></div><button onclick="window.gerenciarItem('${i.path}')" class="btn-primary px-3 py-1.5 rounded-lg text-[8px] font-black uppercase text-white text-white">Gere.</button></div>`;
             });
         };
 
@@ -237,48 +203,32 @@
             document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
             const item = window.dadosCompletos.find(i => i.path === window.itemPath) || {};
             window.tempPgs = item.pagamentos ? [...item.pagamentos] : []; 
-            f.innerHTML = `<select id="vV" class="input-compact mb-2 text-white"><option value="Evanio" ${item.vendedor==='Evanio'?'selected':''}>Evanio</option><option value="Willian" ${item.vendedor==='Willian'?'selected':''}>Willian</option></select>
-            <input type="text" id="vA" placeholder="Nº ÁLBUM" value="${item.num_album||''}" class="input-compact mb-2 text-white">
-            <input type="number" id="vT" placeholder="TOTAL" value="${item.valor||''}" class="input-compact text-xl font-black mb-3 text-white">
-            <div class="grid grid-cols-2 gap-2 mb-3">
-                <button onclick="window.addPg('Pix')" class="bg-slate-800 p-2 rounded text-[9px] text-white">+ Pix</button>
-                <button onclick="window.addPg('Dinheiro')" class="bg-slate-800 p-2 rounded text-[9px] text-white">+ Dinheiro</button>
-                <button onclick="window.addPg('Débito')" class="bg-slate-800 p-2 rounded text-[9px] text-white">+ Débito</button>
-                <button onclick="window.addPg('Crédito')" class="bg-slate-800 p-2 rounded text-[9px] text-white">+ Crédito</button>
-                <button onclick="window.addPg('Boleto')" class="bg-blue-900/40 p-2 rounded text-[9px] col-span-2 text-white">+ Boleto</button>
-            </div>
-            <div id="lista-p" class="space-y-1 mb-2"></div>
-            <button onclick="window.finalizarVenda()" class="btn-primary w-full p-4 rounded-xl font-black text-xs uppercase text-white">Salvar Venda</button>`;
-            window.atualizarListaInterface();
-        };
-
-        window.atualizarListaInterface = () => { document.getElementById('lista-p').innerHTML = window.tempPgs.map(p => `<div class="flex justify-between text-[10px] bg-white/5 p-1 text-white"><span>${p.tipo}</span><b>${fBR(p.valor)}</b></div>`).join(''); };
-        window.addPg = (t) => {
-            const v = parseFloat(prompt(`Valor ${t}:`) || 0); if(v<=0) return;
-            if(t==="Boleto" && confirm("Tem entrada?")) { 
-                const vE = parseFloat(prompt("Valor Entrada:")||0); 
-                window.tempPgs.push({tipo:"Pix (Entrada)", valor:vE}); 
-                if(v-vE>0) window.tempPgs.push({tipo:"Boleto", valor:v-vE});
-            } else window.tempPgs.push({tipo:t, valor:v}); 
+            f.innerHTML = `<select id="vV" class="input-compact mb-2"><option value="Evanio" ${item.vendedor==='Evanio'?'selected':''}>Evanio</option><option value="Willian" ${item.vendedor==='Willian'?'selected':''}>Willian</option></select>
+            <input type="text" id="vA" placeholder="Nº ÁLBUM" value="${item.num_album||''}" class="input-compact mb-2"><input type="number" id="vT" placeholder="TOTAL" value="${item.valor||''}" class="input-compact text-xl font-black mb-3">
+            <div class="grid grid-cols-2 gap-2 mb-3"><button onclick="window.addPg('Pix')" class="bg-slate-800 p-2 rounded text-[9px] text-white">+ Pix</button><button onclick="window.addPg('Débito')" class="bg-slate-800 p-2 rounded text-[9px] text-white">+ Débito</button><button onclick="window.addPg('Crédito')" class="bg-slate-800 p-2 rounded text-[9px] text-white">+ Crédito</button><button onclick="window.addPg('Boleto')" class="bg-blue-900/40 p-2 rounded text-[9px] col-span-2 text-white">+ Boleto</button></div>
+            <div id="lista-p" class="space-y-1 mb-2"></div><button onclick="window.finalizarVenda()" class="btn-primary w-full p-4 rounded-xl font-black text-xs uppercase text-white text-white">Salvar Venda</button>`;
             window.atualizarListaInterface();
         };
 
         window.finalizarVenda = async () => {
-            const dados = { resultado:"Venda", valor:document.getElementById('vT').value, num_album: document.getElementById('vA').value, vendedor: document.getElementById('vV').value, pagamentos: window.tempPgs };
-            await window.salvarNoBanco(window.itemPath, dados);
-            window.fecharModalGestao();
+            const d = { resultado:"Venda", valor:document.getElementById('vT').value, num_album:document.getElementById('vA').value, vendedor:document.getElementById('vV').value, pagamentos:window.tempPgs, data: "2024-06-06" };
+            await update(ref(db, window.itemPath), d); window.carregarRelatorio(); window.fecharModalGestao();
         };
 
         window.switchView = (id) => { document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active')); document.getElementById(id).classList.add('view-active'); };
-        window.acessoAdmin = () => { if(prompt("Senha:")==="2025") { document.getElementById('controles-adm').classList.remove('hidden'); window.switchView('view-logistica'); } };
+        window.acessoAdmin = () => { if(prompt("Senha:")==="2025") document.getElementById('controles-adm').classList.remove('hidden'); window.switchView('view-logistica'); };
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display='none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
         window.gerenciarItem = (p) => { window.itemPath = p; document.getElementById('modalGestao').style.display='flex'; };
-        window.salvarStatusSimples = async (s) => { await window.salvarNoBanco(window.itemPath, { resultado:s }); window.fecharModalGestao(); };
+        window.salvarStatusSimples = async (s) => { await update(ref(db, window.itemPath), { resultado:s }); window.carregarRelatorio(); window.fecharModalGestao(); };
         window.confirmarExclusao = async () => { if(confirm("Excluir?")) { await remove(ref(db, window.itemPath)); window.carregarRelatorio(); window.fecharModalGestao(); } };
-        window.gerarBotoesDatas = (i, f) => { const c = document.getElementById('day-selector'); c.innerHTML = ""; let cur = new Date(i+"T00:00:00"); while(cur <= new Date(f+"T00:00:00")) { const iso = cur.toISOString().split('T')[0]; c.innerHTML += `<button type="button" onclick="window.selecionarDia(this)" data-date="${iso}" class="day-btn glass rounded-lg py-2 text-[8px] font-black text-white">${cur.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}</button>`; cur.setDate(cur.getDate()+1); } };
-        window.selecionarDia = (b) => { document.querySelectorAll('.day-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); document.getElementById('data-selecionada').value = b.dataset.date; };
-        window.abrirAvulso = () => { document.getElementById('modalGestao').style.display='flex'; document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<input type="text" id="avN" placeholder="Nome" class="input-compact mb-2 text-white"><input type="date" id="avD" class="input-compact mb-3 text-white"><button onclick="window.salvarAvulso()" class="btn-primary w-full p-3 rounded-xl text-[10px] font-black text-white uppercase">Avançar para Venda</button>`; document.getElementById('avD').value = new Date().toISOString().split('T')[0]; };
-        window.salvarAvulso = async () => { const p = `vendas/${projetoAtualId}/avulsos/AV-${Date.now()}`; await set(ref(db,p), { nome_formando:document.getElementById('avN').value, data:document.getElementById('avD').value, resultado:"Pendente" }); window.itemPath = p; window.carregarRelatorio(); window.fluxoResultado(); };
+        window.atualizarListaInterface = () => { document.getElementById('lista-p').innerHTML = window.tempPgs.map(p => `<div class="flex justify-between text-[10px] bg-white/5 p-1"><span>${p.tipo}</span><b>${fBR(p.valor)}</b></div>`).join(''); };
+        window.addPg = (t) => {
+            const v = parseFloat(prompt(`Valor ${t}:`) || 0); if(v<=0) return;
+            if(t==="Boleto" && confirm("Entrada?")) { const vE = parseFloat(prompt("Valor Entrada:")||0); window.tempPgs.push({tipo:"Pix (Entrada)", valor:vE}); if(v-vE>0) window.tempPgs.push({tipo:"Boleto", valor:v-vE}); }
+            else window.tempPgs.push({tipo:t, valor:v}); window.atualizarListaInterface();
+        };
+        window.abrirAvulso = () => { document.getElementById('modalGestao').style.display='flex'; document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<input type="text" id="avN" placeholder="Nome" class="input-compact mb-2 text-white"><input type="date" id="avD" class="input-compact mb-3 text-white"><button onclick="window.salvarAvulso()" class="btn-primary w-full p-3 rounded-xl text-[10px] font-black uppercase text-white">Avançar</button>`; document.getElementById('avD').value = new Date().toISOString().split('T')[0]; };
+        window.salvarAvulso = async () => { const p = `vendas/${projId}/avulsos/AV-${Date.now()}`; await set(ref(db,p), { nome_formando:document.getElementById('avN').value, data:document.getElementById('avD').value, resultado:"Pendente" }); window.itemPath = p; window.carregarRelatorio(); window.fluxoResultado(); };
     </script>
 </body>
 </html>
