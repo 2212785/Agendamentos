@@ -306,36 +306,84 @@
 
         // --- GESTÃO E LOGÍSTICA (RESTAURAÇÃO DOS CARDS COM DATA, HORA, ENDEREÇO E LINKS) ---
         window.filtrarLogistica = () => {
-            const cont = document.getElementById('lista-visitas'); if(!cont) return; cont.innerHTML = '';
-            const fD = document.getElementById('filtro-data-logistica').value; let list = fD ? window.dadosCompletos.filter(i => i.data === fD) : window.dadosCompletos;
-            list.sort((a,b) => new Date(`${a.data}T${a.horario||'23:59'}`) - new Date(`${b.data}T${b.horario||'23:59'}`));
-            list.forEach(i => {
-                let s = i.resultado || "PENDENTE"; let c = s==="Venda"?"text-emerald-500":s==="NQ"?"text-rose-500":"text-slate-600";
-                const dRev = (i.data || '').split('-').reverse().join('/');
-                cont.innerHTML += `
-                <div class="glass p-4 rounded-3xl flex flex-col gap-3 text-white border border-white/5">
-                    <div class="flex justify-between items-start">
-                        <div class="flex flex-col">
-                            <span class="text-2xl font-black text-blue-400 leading-none">${i.horario || 'DIR'}</span>
-                            <span class="text-[10px] font-bold text-slate-500 mt-1 uppercase">${dRev}</span>
-                        </div>
-                        <div class="flex flex-col items-end text-right">
-                            <span class="text-[11px] font-black ${c} uppercase tracking-widest">${s === "Venda" ? "VENDIDO" : s}</span>
-                            <h3 class="text-sm font-black uppercase truncate max-w-[150px] mt-1 text-white">#${i.num_album || ''} ${i.nome_formando}</h3>
-                        </div>
-                    </div>
-                    <div class="bg-white/5 p-3 rounded-2xl">
-                        <p class="text-[10px] text-slate-400 uppercase font-black mb-1">Endereço:</p>
-                        <p class="text-xs font-bold leading-relaxed text-slate-200">${i.endereco || 'Não informado'}</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="window.gerenciarItem('${i.path}')" class="btn-primary flex-grow py-3 rounded-xl text-[10px] font-black uppercase">Gere.</button>
-                        <a href="https://wa.me/55${(i.telefone || '').replace(/\D/g,'')}" target="_blank" class="bg-emerald-600/20 border border-emerald-500/30 px-6 py-3 rounded-xl text-emerald-400 text-[10px] font-black uppercase">Zap</a>
-                        <a href="https://www.waze.com/ul?q=${encodeURIComponent(i.endereco || '')}&navigate=yes" target="_blank" class="bg-blue-600/20 border border-blue-500/30 px-6 py-3 rounded-xl text-blue-400 text-[10px] font-black uppercase">Waze</a>
-                    </div>
-                </div>`;
-            });
-        };
+    const cont = document.getElementById('lista-visitas');
+    if(!cont) return;
+
+    cont.innerHTML = '';
+
+    const fD = document.getElementById('filtro-data-logistica').value;
+    let list = fD ? window.dadosCompletos.filter(i => i.data === fD) : window.dadosCompletos;
+
+    // ordenação por DATA + HORÁRIO
+    list.sort((a,b)=>{
+        const da = new Date(`${a.data}T${a.horario || '23:59'}`);
+        const db = new Date(`${b.data}T${b.horario || '23:59'}`);
+        return da - db;
+    });
+
+    list.forEach(i => {
+
+        let status = i.resultado || "PENDENTE";
+        let cor = status==="Venda" ? "text-emerald-500" :
+                  status==="NQ" ? "text-rose-500" :
+                  "text-slate-400";
+
+        const dataBR = i.data ? i.data.split('-').reverse().join('/') : '';
+
+        cont.innerHTML += `
+        <div class="glass p-4 rounded-3xl flex flex-col gap-3 border border-white/5">
+
+            <div class="flex justify-between items-start">
+
+                <div class="flex flex-col text-left">
+                    <span class="text-xs text-slate-400 font-bold">📅 ${dataBR}</span>
+                    <span class="text-xl font-black text-blue-400">⏰ ${i.horario || '--:--'}</span>
+                </div>
+
+                <div class="flex flex-col items-end text-right">
+                    <span class="text-[10px] font-black uppercase ${cor}">
+                        ${status === "Venda" ? "VENDIDO" : status}
+                    </span>
+
+                    <span class="text-sm font-black uppercase text-white truncate max-w-[150px]">
+                        #${i.num_album || ''} ${i.nome_formando}
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="bg-white/5 p-3 rounded-2xl">
+                <p class="text-[10px] text-slate-400 uppercase font-black mb-1">📍 Endereço</p>
+                <p class="text-xs font-bold text-slate-200 break-words">
+                    ${i.endereco || 'Endereço não informado'}
+                </p>
+            </div>
+
+            <div class="flex gap-2">
+
+                <button onclick="window.gerenciarItem('${i.path}')" 
+                class="btn-primary flex-grow py-3 rounded-xl text-[10px] font-black uppercase">
+                Gerenciar
+                </button>
+
+                <a href="https://wa.me/55${(i.telefone || '').replace(/\D/g,'')}" 
+                target="_blank"
+                class="bg-emerald-600/20 border border-emerald-500/30 px-5 py-3 rounded-xl text-emerald-400 text-[10px] font-black uppercase">
+                Zap
+                </a>
+
+                <a href="https://www.waze.com/ul?q=${encodeURIComponent(i.endereco || '')}&navigate=yes"
+                target="_blank"
+                class="bg-blue-600/20 border border-blue-500/30 px-5 py-3 rounded-xl text-blue-400 text-[10px] font-black uppercase">
+                Waze
+                </a>
+
+            </div>
+
+        </div>
+        `;
+    });
+};
 
         // --- AUXILIARES ---
         window.renderFila = () => { const cont = document.getElementById('lista-fila'); if(!cont) return; const lista = projetoDB.automacao?.lista?.split('\n').filter(l => l.trim() !== "") || []; const atual = projetoDB.automacao?.index_atual || 0; cont.innerHTML = lista.map((l, i) => `<div class="flex justify-between p-2 rounded-lg ${i < atual ? 'bg-emerald-500/10 text-emerald-500' : 'bg-white/5'}"><span>${i+1}. ${l.split(',')[0]}</span><b>${i < atual ? 'OK' : 'PENDENTE'}</b></div>`).join(''); };
@@ -358,3 +406,4 @@
     </script>
 </body>
 </html>
+
