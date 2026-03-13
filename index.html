@@ -253,6 +253,9 @@
                 window.renderFila();
                 document.getElementById('status-automacao').innerText = `Enviando para: ${nome}`;
                 window.open(`https://web.whatsapp.com/send?phone=55${fone}&text=${encodeURIComponent(msgFinal)}`, '_blank');
+                
+                // espera 4 segundos antes de continuar
+                await new Promise(r => setTimeout(r, 4000));
                 if(prox >= lista.length) { setTimeout(() => { window.pararCampanha(); document.getElementById('status-automacao').innerText = "FIM DA LISTA"; }, 2000); return; }
                 const randSeg = Math.floor(Math.random() * (660 - 180 + 1)) + 180;
                 window.iniciarContagem(randSeg);
@@ -418,4 +421,5 @@ window.switchView = function(viewId){
     </script>
 </body>
 </html>
+
 
