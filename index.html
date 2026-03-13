@@ -219,7 +219,7 @@
         let projetoDB = {}; 
         let weeklyChart = null;
 
-        // --- CONEXÃO INALTERADA ---
+         // --- CONEXÃO INALTERADA ---
         onValue(ref(db, "config/projeto_ativo"), async (snap) => {
             projId = snap.val() || "guaratingueta-guilherme";
             const pS = await get(ref(db, `projetos/${projId}`));
@@ -227,9 +227,17 @@
                 projetoDB = pS.val();
                 document.getElementById('escola-titulo').innerText = projetoDB.cidade;
                 document.getElementById('sub-escola').innerText = projetoDB.escola || projetoDB.school;
-                if(projetoDB.data_inicio) window.gerarBotoesDatas(projetoDB.data_inicio, projetoDB.data_fim);
+                
+                if(projetoDB.data_inicio) {
+                    window.gerarBotoesDatas(projetoDB.data_inicio, projetoDB.data_fim);
+                }
+                
                 window.carregarRelatorio();
-                if(sessionStorage.getItem('isAdm') === 'true') document.getElementById('controles-admin').classList.remove('hidden');
+                
+                // LEI: Persistência de Login ADM
+                if(sessionStorage.getItem('isAdm') === 'true') {
+                    document.getElementById('controles-admin').classList.remove('hidden');
+                }
             }
         });
 
@@ -445,6 +453,7 @@ window.switchView = function(viewId){
     </script>
 </body>
 </html>
+
 
 
 
