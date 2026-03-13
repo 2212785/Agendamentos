@@ -384,7 +384,19 @@
         `;
     });
 };
+window.switchView = function(viewId){
 
+    document.querySelectorAll('.view-section').forEach(view=>{
+        view.classList.remove('view-active');
+    });
+
+    const target = document.getElementById(viewId);
+
+    if(target){
+        target.classList.add('view-active');
+    }
+
+};
         // --- AUXILIARES ---
         window.renderFila = () => { const cont = document.getElementById('lista-fila'); if(!cont) return; const lista = projetoDB.automacao?.lista?.split('\n').filter(l => l.trim() !== "") || []; const atual = projetoDB.automacao?.index_atual || 0; cont.innerHTML = lista.map((l, i) => `<div class="flex justify-between p-2 rounded-lg ${i < atual ? 'bg-emerald-500/10 text-emerald-500' : 'bg-white/5'}"><span>${i+1}. ${l.split(',')[0]}</span><b>${i < atual ? 'OK' : 'PENDENTE'}</b></div>`).join(''); };
         window.acessoAdmin = () => { if(sessionStorage.getItem('isAdm') === 'true') { window.switchView('view-logistica'); return; } const s = prompt("Senha:"); if(s === "2025") { sessionStorage.setItem('isAdm', 'true'); document.getElementById('controles-admin').classList.remove('hidden'); window.switchView('view-logistica'); } };
@@ -406,3 +418,4 @@
     </script>
 </body>
 </html>
+
