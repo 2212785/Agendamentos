@@ -234,6 +234,7 @@
         });
 
         // --- MOTOR AUTOMAÇÃO ---
+        let abaWhats = null;
         let autoAtivo = false; let timerInterval = null;
         window.iniciarCampanha = () => { if(!projetoDB.automacao?.lista) return alert("Configure a lista!"); autoAtivo = true; document.getElementById('btn-start-auto').classList.add('hidden'); document.getElementById('btn-stop-auto').classList.remove('hidden'); window.dispararProximo(); };
         window.pararCampanha = () => { autoAtivo = false; if(timerInterval) clearInterval(timerInterval); document.getElementById('btn-start-auto').classList.remove('hidden'); document.getElementById('btn-stop-auto').classList.add('hidden'); document.getElementById('timer-display').innerText = "00:00"; };
@@ -249,18 +250,41 @@
             const prox = idx + 1;
             try {
                 await update(ref(db, `projetos/${projId}/automacao`), { index_atual: prox });
-                projetoDB.automacao.index_atual = prox;
-                window.renderFila();
-                document.getElementById('status-automacao').innerText = `Enviando para: ${nome}`;
-                window.open(`https://web.whatsapp.com/send?phone=55${fone}&text=${encodeURIComponent(msgFinal)}`, '_blank');
+projetoDB.automacao.index_atual = prox;
+
+window.renderFila();
+
+document.getElementById('status-automacao').innerText = `Enviando para: ${nome}`;
+
+const urlZap = `https://web.whatsapp.com/send?phone=55${fone}&text=${encodeURIComponent(msgFinal)}`;
+
+// abre a aba apenas uma vez
+if (!abaWhats || abaWhats.closed) {
+    abaWhats = window.open(urlZap, 'zapJanela');
+} else {
+    abaWhats.location.href = urlZap;
+}
+
+// delay humano para abertura da conversa
                 
-                const delayAbertura = Math.floor(Math.random() * 4000) + 7000;
-                await new Promise(r => setTimeout(r, delayAbertura));
-                if(prox >= lista.length) { setTimeout(() => { window.pararCampanha(); document.getElementById('status-automacao').innerText = "FIM DA LISTA"; }, 2000); return; }
-                const randSeg = Math.floor(Math.random() * (660 - 180 + 1)) + 180;
-                window.iniciarContagem(randSeg);
-            } catch (err) { window.pararCampanha(); }
-        };
+const delayAbertura = Math.floor(Math.random() * 4000) + 7000;
+await new Promise(r => setTimeout(r, delayAbertura));
+
+if(prox >= lista.length){
+    setTimeout(() => {
+        window.pararCampanha();
+        document.getElementById('status-automacao').innerText = "FIM DA LISTA";
+    }, 2000);
+    return;
+}
+
+const randSeg = Math.floor(Math.random() * (660 - 180 + 1)) + 180;
+
+window.iniciarContagem(randSeg);
+
+} catch (err) { 
+    window.pararCampanha(); 
+}
 
         window.iniciarContagem = (seg) => { if(timerInterval) clearInterval(timerInterval); let rest = seg; timerInterval = setInterval(() => { if(!autoAtivo) { clearInterval(timerInterval); return; } const m = Math.floor(rest/60); const s = rest%60; document.getElementById('timer-display').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; if(rest <= 0) { clearInterval(timerInterval); window.dispararProximo(); } rest--; }, 1000); };
 
@@ -421,6 +445,7 @@ window.switchView = function(viewId){
     </script>
 </body>
 </html>
+
 
 
 
