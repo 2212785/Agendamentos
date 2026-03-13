@@ -266,11 +266,16 @@ document.getElementById('status-automacao').innerText = `Enviando para: ${nome}`
 
 const urlZap = `https://web.whatsapp.com/send?phone=55${fone}&text=${encodeURIComponent(msgFinal)}`;
 
-// abre a aba apenas uma vez
+// abre apenas uma aba e reutiliza sempre
 if (!abaWhats || abaWhats.closed) {
+
     abaWhats = window.open(urlZap, 'zapJanela');
+
 } else {
+
     abaWhats.location.href = urlZap;
+    abaWhats.focus();
+
 }
 
 // delay humano para abertura da conversa
@@ -484,6 +489,7 @@ window.switchView = function(viewId){
     </script>
 </body>
 </html>
+
 
 
 
