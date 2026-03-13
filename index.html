@@ -279,8 +279,14 @@ if (!abaWhats || abaWhats.closed) {
 }
 
 // delay humano para abertura da conversa
-                
-const delayAbertura = Math.floor(Math.random() * 4000) + 7000;
+let delayAbertura;
+
+if(idx === 0){
+    delayAbertura = Math.floor(Math.random() * 6000) + 12000;
+}else{
+    delayAbertura = Math.floor(Math.random() * 4000) + 7000;
+}
+
 await new Promise(r => setTimeout(r, delayAbertura));
 
 if(prox >= lista.length){
@@ -489,6 +495,7 @@ window.switchView = function(viewId){
     </script>
 </body>
 </html>
+
 
 
 
