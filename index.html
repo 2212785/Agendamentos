@@ -234,11 +234,11 @@
         });
 
         // --- MOTOR AUTOMAÇÃO ---
-        let abaWhats = null;
+        
         let autoAtivo = false; let timerInterval = null;
         window.iniciarCampanha = () => { if(!projetoDB.automacao?.lista) return alert("Configure a lista!"); autoAtivo = true; document.getElementById('btn-start-auto').classList.add('hidden'); document.getElementById('btn-stop-auto').classList.remove('hidden'); window.dispararProximo(); };
         window.pararCampanha = () => { autoAtivo = false; if(timerInterval) clearInterval(timerInterval); document.getElementById('btn-start-auto').classList.remove('hidden'); document.getElementById('btn-stop-auto').classList.add('hidden'); document.getElementById('timer-display').innerText = "00:00"; };
-
+        let abaWhats = null;
         window.dispararProximo = async () => {
             if(!autoAtivo) return;
             const lista = projetoDB.automacao.lista.split('\n').filter(l => l.trim() !== "");
@@ -445,6 +445,7 @@ window.switchView = function(viewId){
     </script>
 </body>
 </html>
+
 
 
 
