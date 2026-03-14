@@ -481,7 +481,50 @@ window.switchView = function(viewId){
         window.gerenciarItem = (p) => { window.itemPath = p; document.getElementById('modalGestao').style.display='flex'; };
         window.obterHorariosArray = (d, a = false) => { const doB = new Date(d + "T00:00:00"); const fds = (doB.getDay() === 0 || doB.getDay() === 6); let hL = []; const f = fds ? 17 : 20.5; for (let h = 9; h <= f; h += 0.5) { const hh = Math.floor(h).toString().padStart(2, '0'); const mm = (h % 1 === 0) ? '00' : '30'; hL.push(`${hh}:${mm}`); } if (!a) { const ag = new Date(); const hj = ag.toLocaleDateString('en-CA'); if (d === hj) { const mL = (ag.getHours() * 60) + ag.getMinutes() + 180; hL = hL.filter(h => { const p = h.split(':').map(Number); return (p[0]*60 + p[1]) >= mL; }); } } return hL; };
         window.gerarBotoesDatas = (i, f) => { const c = document.getElementById('day-selector'); c.innerHTML = ""; let cur = new Date(i + "T00:00:00"); const hj = new Date().toLocaleDateString('en-CA'); while(cur <= new Date(f + "T00:00:00")) { const iso = cur.toISOString().split('T')[0]; if (iso >= hj) { if (!(iso === hj && window.obterHorariosArray(iso, false).length === 0)) { c.innerHTML += `<button type="button" onclick="window.selecionarDia(this, '${iso}')" class="day-btn text-white text-white text-white text-white text-white text-white text-white">${cur.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}</button>`; } } cur.setDate(cur.getDate() + 1); } };
-        window.selecionarDia = (b, iso) => { document.querySelectorAll('.day-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); document.getElementById('data-selecionada').value = iso; const s = document.getElementById('horario'); s.innerHTML = '<option value="">Horário</option>'; window.obterHorariosArray(iso, false).forEach(h => { s.innerHTML += `<option value="${h}">${h}</option>`; }); };
+        window.selecionarDia = async (b, iso) => {
+            // Estética dos botões de data
+            document.querySelectorAll('.day-btn').forEach(x => x.classList.remove('active'));
+            b.classList.add('active');
+            document.getElementById('data-selecionada').value = iso;
+            
+            const selectH = document.getElementById('horario');
+            selectH.innerHTML = '<option value="">Consultando vagas...</option>';
+
+            try {
+                // CONSULTA O BANCO: Vai até a pasta do dia selecionado
+                const snapshot = await get(ref(db, `dados/${projId}/agendamentos/${iso}`));
+                const agendadosNoDia = snapshot.exists() ? snapshot.val() : {};
+
+                // Gera a lista padrão de horários (09:00 às 20:30)
+                const todosHorarios = window.obterHorariosArray(iso, false);
+                selectH.innerHTML = '<option value="">Selecione o Horário</option>';
+
+                todosHorarios.forEach(h => {
+                    // CONTAGEM: Verifica quantos agendamentos existem para o horário "h"
+                    let contagem = 0;
+                    Object.values(agendadosNoDia).forEach(ag => {
+                        if(ag.horario === h) contagem++;
+                    });
+
+                    // A TRAVA: Só mostra o horário se houver menos de 2 agendamentos
+                    if (contagem < 2) {
+                        selectH.innerHTML += `<option value="${h}">${h}</option>`;
+                    } else {
+                        // Opcional: Log para você saber que travou no console
+                        console.log(`Horário ${h} lotado.`);
+                    }
+                });
+
+                // Se todos os horários do dia estiverem com 2 agendamentos
+                if (selectH.options.length <= 1) {
+                    selectH.innerHTML = '<option value="">Agenda lotada para este dia!</option>';
+                }
+
+            } catch (error) {
+                console.error("Erro na trava:", error);
+                selectH.innerHTML = '<option value="">Erro ao carregar horários</option>';
+            }
+        };
         document.getElementById('form-agendamento').onsubmit = async (e) => { e.preventDefault(); const dt = document.getElementById('data-selecionada').value; if(!dt) return alert("Selecione o Dia!"); const n = document.getElementById('nome').value; const t = document.getElementById('telefone').value; const h = document.getElementById('horario').value; const ed = document.getElementById('endereco').value; await set(ref(db, `dados/${projId}/agendamentos/${dt}/AG-${Date.now()}`), { nome_formando: n, telefone: t, endereco: ed, horario: h, resultado: "Pendente" }); alert("✅ VISITA AGENDADA COM SUCESSO!"); const txt = `Olá! Agendamento Elite.\nData: ${dt.split('-').reverse().join('/')}\nHora: ${h}\nFormando: ${n}\nEndereço: ${ed}`; window.location.href = `https://wa.me/5516993291674?text=${encodeURIComponent(txt)}`; };
         window.carregarRelatorio = async () => { if(!projId) return; try { const [sA, sV, sC, sVales] = await Promise.all([ get(ref(db, `dados/${projId}/agendamentos`)), get(ref(db, `vendas/${projId}`)), get(ref(db, `custos/${projId}`)), get(ref(db, `vales/${projId}`)) ]); window.dadosCompletos = []; custosDB = sC.exists() ? sC.val() : {}; valesDB = sVales.exists() ? sVales.val() : { evanio: 0, willian: 0 }; const proc = (pasta, base) => { if (!pasta) return; Object.keys(pasta).forEach(k => { const item = pasta[k]; if (typeof item === 'object' && !item.nome_formando) { Object.keys(item).forEach(subK => window.dadosCompletos.push({...item[subK], id:subK, data:k, path:`${base}/${k}/${subK}`})); } else window.dadosCompletos.push({...item, id:k, data:item.data||k, path:`${base}/${k}`}); }); }; if(sA.exists()) proc(sA.val(), `dados/${projId}/agendamentos`); if(sV.exists()) { const v = sV.val(); if(v.avulsos) proc(v.avulsos, `vendas/${projId}/avulsos`); if(v.agendamentos) proc(v.agendamentos, `vendas/${projId}/agendamentos`); } window.filtrarLogistica(); window.filtrarBI(); window.renderFila(); } catch(e) { console.error(e); } };
         window.resetIndex = async () => { if(confirm("Reiniciar fila?")) { await update(ref(db, `projetos/${projId}/automacao`), { index_atual: 0 }); location.reload(); } };
