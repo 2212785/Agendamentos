@@ -80,6 +80,17 @@
             margin-left: 4px; 
             display: block; 
         }
+        /* ESTILO DO LED */
+        .led-bot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .led-offline { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+        .led-online { background: #10b981; box-shadow: 0 0 8px #10b981; }
     </style>
 </head>
 <body>
@@ -102,7 +113,13 @@
 
     <section id="view-agendamento" class="view-section view-active text-white">
         <header class="p-4 flex justify-between items-center text-white">
-            <span class="text-lg font-black uppercase italic tracking-tighter text-white">Portal <span class="text-blue-500">Elite</span></span>
+            <div class="flex flex-col">
+                <span class="text-lg font-black uppercase italic tracking-tighter text-white">Portal <span class="text-blue-500">Elite</span></span>
+                <div class="flex items-center mt-[-4px]">
+                    <span id="bot-led" class="led-bot led-offline"></span>
+                    <span id="bot-status-text" class="text-[7px] font-bold uppercase text-slate-500">Bot Offline</span>
+                </div>
+            </div>
             <button onclick="window.acessoAdmin()" class="glass px-4 py-1.5 rounded-lg text-[9px] font-black uppercase text-white">ADM</button>
         </header>
         <div class="flex-grow flex items-center justify-center p-4">
@@ -238,6 +255,23 @@
                 if(sessionStorage.getItem('isAdm') === 'true') {
                     document.getElementById('controles-admin').classList.remove('hidden');
                 }
+
+                // --- ESCUTA DO STATUS DO BOT (LED) ---
+                onValue(ref(db, `projetos/${projId}/bot`), (botSnap) => {
+                    const led = document.getElementById('bot-led');
+                    const txt = document.getElementById('bot-status-text');
+                    const botData = botSnap.val();
+
+                    if(botData && botData.status === 'Online') {
+                        led.className = 'led-bot led-online';
+                        txt.innerText = 'Bot Ativo';
+                        txt.className = 'text-[7px] font-bold uppercase text-emerald-400';
+                    } else {
+                        led.className = 'led-bot led-offline';
+                        txt.innerText = 'Bot Offline';
+                        txt.className = 'text-[7px] font-bold uppercase text-slate-500';
+                    }
+                });
             }
         });
 
@@ -258,85 +292,57 @@
             const prox = idx + 1;
             try {
                 await update(ref(db, `projetos/${projId}/automacao`), { index_atual: prox });
-projetoDB.automacao.index_atual = prox;
+                projetoDB.automacao.index_atual = prox;
+                window.renderFila();
+                document.getElementById('status-automacao').innerText = `Enviando para: ${nome}`;
+                const urlZap = `https://web.whatsapp.com/send?phone=55${fone}&text=${encodeURIComponent(msgFinal)}`;
+                if (!abaWhats || abaWhats.closed) {
+                    abaWhats = window.open(urlZap, 'zapJanela');
+                } else {
+                    abaWhats.location.href = urlZap;
+                    abaWhats.focus();
+                }
+                let delayAbertura;
+                if(idx === 0){
+                    delayAbertura = Math.floor(Math.random() * 6000) + 12000;
+                }else{
+                    delayAbertura = Math.floor(Math.random() * 4000) + 7000;
+                }
+                await new Promise(r => setTimeout(r, delayAbertura));
+                if(prox >= lista.length){
+                    setTimeout(() => {
+                        window.pararCampanha();
+                        document.getElementById('status-automacao').innerText = "FIM DA LISTA";
+                    }, 2000);
+                    return;
+                }
+                const randSeg = Math.floor(Math.random() * (660 - 180 + 1)) + 180;
+                window.iniciarContagem(randSeg);
+            } catch (err) { 
+                console.error(err);
+                window.pararCampanha(); 
+            }
+        }; 
 
-window.renderFila();
-
-document.getElementById('status-automacao').innerText = `Enviando para: ${nome}`;
-
-const urlZap = `https://web.whatsapp.com/send?phone=55${fone}&text=${encodeURIComponent(msgFinal)}`;
-
-// abre apenas uma aba e reutiliza sempre
-if (!abaWhats || abaWhats.closed) {
-
-    abaWhats = window.open(urlZap, 'zapJanela');
-
-} else {
-
-    abaWhats.location.href = urlZap;
-    abaWhats.focus();
-
-}
-
-// delay humano para abertura da conversa
-let delayAbertura;
-
-if(idx === 0){
-    delayAbertura = Math.floor(Math.random() * 6000) + 12000;
-}else{
-    delayAbertura = Math.floor(Math.random() * 4000) + 7000;
-}
-
-await new Promise(r => setTimeout(r, delayAbertura));
-
-if(prox >= lista.length){
-    setTimeout(() => {
-        window.pararCampanha();
-        document.getElementById('status-automacao').innerText = "FIM DA LISTA";
-    }, 2000);
-    return;
-}
-
-const randSeg = Math.floor(Math.random() * (660 - 180 + 1)) + 180;
-
-window.iniciarContagem(randSeg);
-
-} catch (err) { 
-    console.error(err);
-    window.pararCampanha(); 
-}
-
-}; // fecha dispararProximo
-
-window.iniciarContagem = (seg) => {
-
-    if(timerInterval) clearInterval(timerInterval);
-
-    let rest = seg;
-
-    timerInterval = setInterval(() => {
-
-        if(!autoAtivo){
-            clearInterval(timerInterval);
-            return;
-        }
-
-        const m = Math.floor(rest/60);
-        const s = rest%60;
-
-        document.getElementById('timer-display').innerText =
-            `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-
-        if(rest <= 0){
-            clearInterval(timerInterval);
-            window.dispararProximo();
-        }
-
-        rest--;
-
-    },1000);
-
-};
+        window.iniciarContagem = (seg) => {
+            if(timerInterval) clearInterval(timerInterval);
+            let rest = seg;
+            timerInterval = setInterval(() => {
+                if(!autoAtivo){
+                    clearInterval(timerInterval);
+                    return;
+                }
+                const m = Math.floor(rest/60);
+                const s = rest%60;
+                document.getElementById('timer-display').innerText =
+                    `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                if(rest <= 0){
+                    clearInterval(timerInterval);
+                    window.dispararProximo();
+                }
+                rest--;
+            },1000);
+        };
 
         // --- RELATÓRIOS E BI ---
         window.menuRelatorio = () => { document.getElementById('modalGestao').style.display='flex'; document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-blue-400 font-black text-xs uppercase mb-4 text-center">Relatórios</h3><div class="grid grid-cols-1 gap-3 text-white"><button onclick="window.copyRel('Geral')" class="bg-slate-800 p-4 rounded-2xl text-[10px] font-black uppercase text-white">📋 Geral</button><button onclick="window.copyRel('Evanio')" class="bg-blue-900/40 p-4 rounded-2xl text-[10px] font-black uppercase text-white">📋 Evanio</button><button onclick="window.copyRel('Willian')" class="bg-cyan-900/40 p-4 rounded-2xl text-[10px] font-black uppercase text-white">📋 Willian</button></div>`; };
@@ -538,14 +544,3 @@ window.switchView = function(viewId){
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
