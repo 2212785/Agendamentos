@@ -710,18 +710,22 @@ Data: ${fD ? fD.split('-').reverse().join('/') : "ACUMULADO GERAL"}
         };
 
         window.salvarTudoProjeto = async () => {
-            await update(ref(db, `projetos/${projId}`), {
-                data_inicio: document.getElementById('pDi').value,
-                data_fim: document.getElementById('pDf').value,
-                automacao: {
-                    lista: document.getElementById('pLista').value,
-                    msg1: document.getElementById('m1').value,
-                    msg2: document.getElementById('m2').value,
-                    msg3: document.getElementById('m3').value,
-                    msg4: document.getElementById('m4').value,
-                    index_atual: projetoDB.automacao?.index_atual || 0
-                }
-            });
+    await update(ref(db, `projetos/${projId}`), {
+        data_inicio: document.getElementById('pDi').value,
+        data_fim: document.getElementById('pDf').value,
+        // MUDADO DE 'automacao' PARA 'campanha' PARA O BOT LER
+        campanha: { 
+            lista: document.getElementById('pLista').value,
+            msg1: document.getElementById('m1').value,
+            msg2: document.getElementById('m2').value,
+            msg3: document.getElementById('m3').value,
+            msg4: document.getElementById('m4').value,
+            index_atual: projetoDB.campanha?.index_atual || 0,
+            status: "Pendente" // Garante que comece parado
+        }
+    });
+    // ... restante do código (custos e reload)
+};
             await update(ref(db, `custos/${projId}`), {
                 km_valor: document.getElementById('cKv').value,
                 km_total: document.getElementById('cKt').value,
