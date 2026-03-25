@@ -314,12 +314,43 @@
         let timerInterval = null;
         let abaWhats = null;
 
-        window.iniciarCampanha = () => {
-            if (!projetoDB.automacao?.lista) return alert("Configure a lista!");
+       window.iniciarCampanha = async () => {
+            const lista = projetoDB.automacao?.lista || projetoDB.campanha?.lista;
+            if (!lista) return alert("Configure a lista nos Dados do Projeto!");
             autoAtivo = true;
             document.getElementById('btn-start-auto').classList.add('hidden');
             document.getElementById('btn-stop-auto').classList.remove('hidden');
-            window.dispararProximo();
+            
+            // Aqui damos a ordem para o Bot começar
+            await window.dispararProximo();
+        };
+
+        window.dispararProximo = async () => {
+            if (!autoAtivo) return;
+
+            try {
+                // ATENÇÃO: Pegamos os valores que estão nos campos de texto (m1, m2, m3, m4)
+                // Se eles estiverem vazios no momento, o bot mandará mensagem vazia.
+                const m1 = document.getElementById('m1')?.value || projetoDB.campanha?.msg1 || "";
+                const m2 = document.getElementById('m2')?.value || projetoDB.campanha?.msg2 || "";
+                const m3 = document.getElementById('m3')?.value || projetoDB.campanha?.msg3 || "";
+                const m4 = document.getElementById('m4')?.value || projetoDB.campanha?.msg4 || "";
+                const lista = document.getElementById('pLista')?.value || projetoDB.campanha?.lista || "";
+
+                await update(ref(db, `projetos/${projId}/campanha`), {
+                    status: 'Iniciada',
+                    index_atual: projetoDB.campanha?.index_atual || 0,
+                    msg1: m1,
+                    msg2: m2,
+                    msg3: m3,
+                    msg4: m4,
+                    lista: lista
+                });
+
+                document.getElementById('status-automacao').innerText = "BOT ASSUMIU O CONTROLE 🤖";
+            } catch (err) {
+                console.error(err);
+            }
         };
 
         window.pararCampanha = async () => {
