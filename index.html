@@ -332,60 +332,25 @@
 
         window.dispararProximo = async () => {
             if (!autoAtivo) return;
-            const lista = projetoDB.automacao.lista.split('\n').filter(l => l.trim() !== "");
-            const idx = projetoDB.automacao.index_atual || 0;
-
-            if (idx >= lista.length) {
-                document.getElementById('status-automacao').innerText = "TAREFA CONCLUÍDA";
-                return window.pararCampanha();
-            }
-
-            const dados = lista[idx].split(',');
-            const nome = dados[0].trim();
-            const fone = dados[1].trim().replace(/\D/g, '');
-
-            const nomeEscola = projetoDB.escola || projetoDB.school || "Escola";
-            const msgN = (idx % 4) + 1;
-            let msgB = projetoDB.automacao[`msg${msgN}`] || projetoDB.automacao.msg1;
-
-            const msgFinal = msgB
-                .replace(/{crianca}/g, nome)
-                .replace(/{criança}/g, nome)
-                .replace(/{escola}/g, nomeEscola);
-
-            const prox = idx + 1;
 
             try {
-                await update(ref(db, `projetos/${projId}/automacao`), {
-                    index_atual: prox
+                // APENAS ATUALIZA O BANCO PARA O BOT ASSUMIR
+                await update(ref(db, `projetos/${projId}/campanha`), {
+                    status: 'Iniciada',
+                    index_atual: projetoDB.automacao.index_atual || 0,
+                    msg1: document.getElementById('m1').value,
+                    msg2: document.getElementById('m2').value,
+                    msg3: document.getElementById('m3').value,
+                    msg4: document.getElementById('m4').value,
+                    lista: projetoDB.automacao.lista // Envia a lista para o bot ler lá
                 });
-                projetoDB.automacao.index_atual = prox;
-                window.renderFila();
-                document.getElementById('status-automacao').innerText = `Enviando para: ${nome}`;
-                const urlZap = `https://web.whatsapp.com/send?phone=55${fone}&text=${encodeURIComponent(msgFinal)}`;
 
-                if (!abaWhats || abaWhats.closed) {
-                    abaWhats = window.open(urlZap, 'zapJanela');
-                } else {
-                    abaWhats.location.href = urlZap;
-                    abaWhats.focus();
-                }
+                document.getElementById('status-automacao').innerText = "DISPARANDO PELO BOT 🤖";
+                console.log("Ordem de disparo enviada para o Firebase.");
 
-                let delayAbertura = (idx === 0) ? 12000 : 7000;
-                await new Promise(r => setTimeout(r, delayAbertura));
-
-                if (prox >= lista.length) {
-                    setTimeout(() => {
-                        window.pararCampanha();
-                        document.getElementById('status-automacao').innerText = "FIM DA LISTA";
-                    }, 2000);
-                    return;
-                }
-                const randSeg = Math.floor(Math.random() * (660 - 180 + 1)) + 180;
-                window.iniciarContagem(randSeg);
             } catch (err) {
-                console.error(err);
-                window.pararCampanha();
+                console.error("Erro ao iniciar pelo Bot:", err);
+                alert("Erro ao avisar o Bot.");
             }
         };
 
