@@ -334,23 +334,35 @@
             if (!autoAtivo) return;
 
             try {
-                // APENAS ATUALIZA O BANCO PARA O BOT ASSUMIR
+                // Captura os valores dos campos de mensagem (m1, m2, m3, m4)
+                const msg1 = document.getElementById('m1')?.value || "";
+                const msg2 = document.getElementById('m2')?.value || "";
+                const msg3 = document.getElementById('m3')?.value || "";
+                const msg4 = document.getElementById('m4')?.value || "";
+                const listaContatos = projetoDB.automacao?.lista || "";
+
+                if (!listaContatos) {
+                    alert("A lista de contatos está vazia!");
+                    return window.pararCampanha();
+                }
+
+                // Envia a 'Ordem de Serviço' para o nó de campanha
                 await update(ref(db, `projetos/${projId}/campanha`), {
                     status: 'Iniciada',
                     index_atual: projetoDB.automacao.index_atual || 0,
-                    msg1: document.getElementById('m1').value,
-                    msg2: document.getElementById('m2').value,
-                    msg3: document.getElementById('m3').value,
-                    msg4: document.getElementById('m4').value,
-                    lista: projetoDB.automacao.lista // Envia a lista para o bot ler lá
+                    msg1: msg1,
+                    msg2: msg2,
+                    msg3: msg3,
+                    msg4: msg4,
+                    lista: listaContatos
                 });
 
-                document.getElementById('status-automacao').innerText = "DISPARANDO PELO BOT 🤖";
-                console.log("Ordem de disparo enviada para o Firebase.");
+                document.getElementById('status-automacao').innerText = "BOT ASSUMIU O CONTROLE 🤖";
+                console.log("Comando enviado com sucesso ao Firebase.");
 
             } catch (err) {
-                console.error("Erro ao iniciar pelo Bot:", err);
-                alert("Erro ao avisar o Bot.");
+                console.error("Erro completo:", err);
+                alert("Erro ao avisar o Bot. Verifique o console.");
             }
         };
 
