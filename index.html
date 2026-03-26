@@ -725,7 +725,7 @@ Data: ${dataRel}
             await set(ref(db, `dados/${projId}/agendamentos/${dt}/AG-${Date.now()}`), { nome_formando: n, telefone: t, endereco: ed, horario: h, resultado: "Pendente" });
             alert("✅ VISITA AGENDADA COM SUCESSO!");
             const txt = `Olá! Agendamento Elite.\nData: ${dt.split('-').reverse().join('/')}\nHora: ${h}\nFormando: ${n}\nEndereço: ${ed}`;
-            window.location.href = `https://wa.me/5516993291674?text=${encodeURIComponent(txt)}`;
+            window.location.href = `https://wa.me/5516992590916?text=${encodeURIComponent(txt)}`;
         };
 
         window.carregarRelatorio = async () => {
