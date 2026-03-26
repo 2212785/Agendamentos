@@ -465,26 +465,49 @@
             let vend = { Evanio: { v: 0, nq: 0, tot: 0, com: 0, ent: 0 }, Willian: { v: 0, nq: 0, tot: 0, com: 0, ent: 0 } };
             let chartData = {};
             list.forEach(i => {
-                const vn = i.vendedor || "Willian"; const d = i.data;
-                if (!chartData[d]) chartData[d] = { v: 0, nq: 0 };
-                if (i.resultado === "Venda") {
-                    m.v++; m.tot += Number(i.valor) || 0; vend[vn].v++; vend[vn].tot += Number(i.valor) || 0; chartData[d].v++;
-                    let cV = 0;
-                    if (i.pagamentos) i.pagamentos.forEach(p => {
-                        const vP = Number(p.valor) || 0;
-                        const t = p.tipo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                        if (t.includes("pix")) m.pix += vP;
-                        else if (t.includes("dinheiro")) m.din += vP;
-                        else if (t.includes("debito")) m.deb += vP;
-                        else if (t.includes("credito")) m.cre += vP;
-                        else if (t.includes("boleto")) m.bol += vP;
-                        if (t.includes("entrada")) {
-                            cV += vP * 0.12; if (t.includes("pix") || t.includes("dinheiro")) vend[vn].ent += vP;
-                        } else cV += vP * 0.08;
-                    });
-                    m.com += cV; vend[vn].com += cV;
-                } else if (i.resultado === "NQ") { m.nq++; vend[vn].nq++; chartData[d].nq++; }
-            });
+                // Localize dentro da função window.filtrarBI o loop list.forEach
+list.forEach(i => {
+    const vn = i.vendedor || "Willian";
+    if (i.resultado === "Venda") {
+        m.v++; 
+        m.tot += Number(i.valor) || 0; 
+        vend[vn].v++; 
+        vend[vn].tot += Number(i.valor) || 0;
+        
+        let cV = 0; // Variável da comissão da venda atual
+        
+        if (i.pagamentos) i.pagamentos.forEach(p => {
+            const vP = Number(p.valor) || 0;
+            const t = p.tipo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            
+            // Soma globais para o dashboard
+            if (t.includes("pix")) m.pix += vP; 
+            else if (t.includes("dinheiro")) m.din += vP;
+            else if (t.includes("debito")) m.deb += vP; 
+            else if (t.includes("credito")) m.cre += vP;
+            else if (t.includes("boleto")) m.bol += vP;
+
+            // LÓGICA DE COMISSÃO:
+            if (t.includes("entrada")) {
+                cV += vP * 0.12; // 12% sobre entradas
+                // ENTRADA É INDIVIDUAL: Debita apenas de quem vendeu
+                if (t.includes("pix") || t.includes("dinheiro")) vend[vn].ent += vP;
+            } else {
+                cV += vP * 0.08; // 8% sobre o restante
+            }
+        });
+
+        m.com += cV; // Soma no total bruto do projeto
+        
+        // DIVISÃO 50/50: Metade da comissão para cada, independente de quem vendeu
+        vend.Evanio.com += cV / 2;
+        vend.Willian.com += cV / 2;
+
+    } else if (i.resultado === "NQ") { 
+        m.nq++; 
+        vend[vn].nq++; 
+    }
+});
             const rI = (parseFloat(custosDB.km_valor) || 0.7) * (parseFloat(custosDB.km_total) || 0) + (parseFloat(custosDB.pedagio_total) || 0) + ((parseFloat(custosDB.hosp_valor) || 0) * parseInt(custosDB.hosp_qtd || 0)) + ((parseFloat(custosDB.alim_valor) || 0) * parseInt(custosDB.alim_qtd || 0));
             document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-4 rounded-3xl text-center"><p class="text-[8px] font-black text-emerald-400 uppercase">Faturamento</p><p class="text-xl font-black text-white">${fBR(m.tot)}</p></div><div class="card-bi p-4 rounded-3xl text-center border-blue-500"><p class="text-[8px] font-black text-blue-400 uppercase">Eficiência</p><p class="text-xl font-black text-white">${(m.v+m.nq)?(m.v/(m.v+m.nq)*100).toFixed(0):0}%</p></div><div class="card-bi p-4 rounded-3xl text-center"><p class="text-[8px] font-black uppercase">Vendas/NQ</p><p class="text-xl font-black text-white">${m.v}/${m.nq}</p></div><div class="card-bi p-4 rounded-3xl text-center"><p class="text-[8px] font-black uppercase text-white">Ticket Médio</p><p class="text-xl font-black text-white">${fBR(m.v?m.tot/m.v:0)}</p></div>`;
             document.getElementById('individual-performance').innerHTML = Object.keys(vend).map(v => `<div class="glass p-4 rounded-3xl border-t-2 ${v==='Evanio'?'border-blue-400':'border-cyan-400'}"><p class="font-black text-xs uppercase mb-2 text-white">${v}</p><div class="grid grid-cols-3 gap-2 text-center text-white"><div><p class="text-[7px] text-slate-400 uppercase">Venda</p><p class="text-xs font-bold">${fBR(vend[v].tot)}</p></div><div><p class="text-[7px] text-slate-400 uppercase">Efic.</p><p class="text-xs font-bold">${(vend[v].v+vend[v].nq)?(vend[v].v/(vend[v].v+vend[v].nq)*100).toFixed(0):0}%</p></div><div><p class="text-[7px] text-slate-400 uppercase">NQ</p><p class="text-xs font-bold">${vend[v].nq}</p></div></div></div>`).join('');
