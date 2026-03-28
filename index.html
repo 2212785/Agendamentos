@@ -356,15 +356,8 @@
             const f = document.getElementById('gestao-form');
             document.getElementById('gestao-menu').classList.add('hidden');
             f.classList.remove('hidden');
-            
-            // Buscar a data atual do item selecionado para preencher o input default
-            const itemOriginal = window.dadosCompletos.find(i => i.path === window.itemPath);
-            const dataPadrao = itemOriginal ? itemOriginal.data : new Date().toISOString().split('T')[0];
-
             f.innerHTML = `
                 <div class="space-y-3">
-                    <p class="text-[8px] text-slate-500 uppercase font-bold ml-1">Data da Venda</p>
-                    <input type="date" id="data_venda_gestao" value="${dataPadrao}" class="input-compact text-white">
                     <input type="text" id="num_album" placeholder="Nº Álbum" class="input-compact text-white">
                     <input type="number" id="valor_venda" placeholder="Valor Total" class="input-compact text-white">
                     <select id="vendedor_venda" class="input-compact text-white">
@@ -400,76 +393,34 @@
             const valorTotal = document.getElementById('valor_venda').value;
             const album = document.getElementById('num_album').value;
             const vendedor = document.getElementById('vendedor_venda').value;
-            const novaData = document.getElementById('data_venda_gestao').value;
-            
-            if (!valorTotal || !album || !novaData) return alert("Informe Data, Valor e Álbum!");
+            if (!valorTotal || !album) return alert("Informe Valor e Álbum!");
 
             const pagamentos = [];
             document.querySelectorAll('#pags-container > div').forEach(div => {
-                const val = div.querySelector('.p-valor').value;
-                if (val) {
-                    pagamentos.push({
-                        tipo: div.querySelector('.p-tipo').value,
-                        valor: val
-                    });
-                }
+                pagamentos.push({
+                    tipo: div.querySelector('.p-tipo').value,
+                    valor: div.querySelector('.p-valor').value
+                });
             });
 
             try {
-                // Pegamos o objeto atual para não perder os dados (como nome do formando)
-                const itemOriginal = window.dadosCompletos.find(i => i.path === window.itemPath);
-                
-                // Se a data mudou, precisamos mover o registro para a nova pasta de data
-                if (itemOriginal.data !== novaData) {
-                    const novoId = itemOriginal.id || `V-${Date.now()}`;
-                    const novaPastaBase = window.itemPath.split('/').slice(0, -2).join('/'); // Retorna 'vendas/proj/avulsos' ou 'dados/proj/agendamentos'
-                    const novoPath = `${novaPastaBase}/${novaData}/${novoId}`;
-
-                    const novosDados = {
-                        ...itemOriginal,
-                        resultado: "Venda",
-                        valor: valorTotal,
-                        num_album: album,
-                        vendedor: vendedor,
-                        pagamentos: pagamentos,
-                        data: novaData
-                    };
-
-                    await set(ref(db, novoPath), novosDados);
-                    await remove(ref(db, window.itemPath)); // Remove da data antiga
-                } else {
-                    // Se a data é a mesma, apenas atualizamos o registro atual
-                    await update(ref(db, window.itemPath), {
-                        resultado: "Venda",
-                        valor: valorTotal,
-                        num_album: album,
-                        vendedor: vendedor,
-                        pagamentos: pagamentos
-                    });
-                }
-
+                await update(ref(db, window.itemPath), {
+                    resultado: "Venda",
+                    valor: valorTotal,
+                    num_album: album,
+                    vendedor: vendedor,
+                    pagamentos: pagamentos
+                });
                 alert("Venda registrada com sucesso!");
                 window.fecharModalGestao();
                 window.carregarRelatorio();
-            } catch (e) { console.error(e); alert("Erro ao salvar venda."); }
+            } catch (e) { alert("Erro ao salvar venda."); }
         };
 
         window.fluxoNQ = async () => {
             const v = prompt("Vendedor do NQ (Evanio/Willian):", "Willian");
-            const dtNQ = prompt("Confirmar Data do NQ (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
-            
-            if (v && dtNQ) {
-                const itemOriginal = window.dadosCompletos.find(i => i.path === window.itemPath);
-                
-                if (itemOriginal.data !== dtNQ) {
-                    const novaPastaBase = window.itemPath.split('/').slice(0, -2).join('/');
-                    const novoPath = `${novaPastaBase}/${dtNQ}/${itemOriginal.id}`;
-                    await set(ref(db, novoPath), { ...itemOriginal, resultado: "NQ", vendedor: v, data: dtNQ });
-                    await remove(ref(db, window.itemPath));
-                } else {
-                    await update(ref(db, window.itemPath), { resultado: "NQ", vendedor: v });
-                }
-                
+            if (v) {
+                await update(ref(db, window.itemPath), { resultado: "NQ", vendedor: v });
                 alert("NQ registrado!");
                 window.fecharModalGestao();
                 window.carregarRelatorio();
@@ -509,6 +460,7 @@
                         else if (t.includes("credito")) r.cre += vP;
                         else if (t.includes("boleto")) r.bol += vP;
                         
+                        // Vales no relatório costumam ser a soma de Pix e Dinheiro (Entradas)
                         if (t.includes("pix") || t.includes("dinheiro")) r.vales_calc += vP;
                     });
                 } else if (i.resultado === "NQ") {
@@ -520,7 +472,22 @@
             const dataRel = fD ? fD.split('-').reverse().join('/') : "ACUMULADO GERAL";
             const ticketM = r.v ? (r.tot / r.v) : 0;
 
-            const texto = `Relatório de Vendas\nProjeto: ${projetoNome}\nData: ${dataRel}\n\n✅ Vendas: ${r.v}\n❌ NQ: ${r.nq}\n\n💵 Dinheiro: ${fBR(r.din)}\n💎 Pix: ${fBR(r.pix)}\n💳 Débito: ${fBR(r.deb)}\n💳 Crédito: ${fBR(r.cre)}\n📄 Boleto: ${fBR(r.bol)}\n💸 Vales: ${fBR(r.vales_calc)}\n\n💰 Total Vendido: ${fBR(r.tot)}\n🎯 Ticket Médio: ${fBR(ticketM)}`;
+            const texto = `Relatório de Vendas
+Projeto: ${projetoNome}
+Data: ${dataRel}
+
+✅ Vendas: ${r.v}
+❌ NQ: ${r.nq}
+
+💵 Dinheiro: ${fBR(r.din)}
+💎 Pix: ${fBR(r.pix)}
+💳 Débito: ${fBR(r.deb)}
+💳 Crédito: ${fBR(r.cre)}
+📄 Boleto: ${fBR(r.bol)}
+💸 Vales: ${fBR(r.vales_calc)}
+
+💰 Total Vendido: ${fBR(r.tot)}
+🎯 Ticket Médio: ${fBR(ticketM)}`;
 
             navigator.clipboard.writeText(texto).then(() => {
                 alert("Relatório copiado para o WhatsApp!");
@@ -553,17 +520,25 @@
                         const vP = Number(p.valor) || 0;
                         const t = p.tipo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                         
+                        // Soma globais para o dashboard
                         if (t.includes("pix")) m.pix += vP; 
                         else if (t.includes("dinheiro")) m.din += vP;
                         else if (t.includes("debito")) m.deb += vP; 
                         else if (t.includes("credito")) m.cre += vP;
                         else if (t.includes("boleto")) m.bol += vP;
 
-                        if (t.includes("entrada")) {
-                            cV += vP * 0.12; 
+                        // LÓGICA DE COMISSÃO CORRIGIDA:
+                        // Pix, Dinheiro e Cartão (Crédito/Débito) = 12%
+                        // Boleto = 8%
+                        if (t.includes("pix") || t.includes("dinheiro") || t.includes("credito") || t.includes("debito")) {
+                            cV += vP * 0.12;
+                            // Se for Pix ou Dinheiro (entradas/vales), debita do saldo individual
                             if (t.includes("pix") || t.includes("dinheiro")) vend[vn].ent += vP;
+                        } else if (t.includes("boleto")) {
+                            cV += vP * 0.08;
                         } else {
-                            cV += vP * 0.08; 
+                            // Caso haja algum tipo não mapeado, assume 8% por segurança
+                            cV += vP * 0.08;
                         }
                     });
 
@@ -650,7 +625,7 @@
                 options: {
                     responsive: true, 
                     maintainAspectRatio: false,
-                    layout: { padding: { top: 20 } },
+                    layout: { padding: { top: 25 } },
                     plugins: { 
                         legend: { display: false },
                         datalabels: {
