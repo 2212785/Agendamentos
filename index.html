@@ -356,8 +356,15 @@
             const f = document.getElementById('gestao-form');
             document.getElementById('gestao-menu').classList.add('hidden');
             f.classList.remove('hidden');
+            
+            // Buscar a data atual do item selecionado para preencher o input default
+            const itemOriginal = window.dadosCompletos.find(i => i.path === window.itemPath);
+            const dataPadrao = itemOriginal ? itemOriginal.data : new Date().toISOString().split('T')[0];
+
             f.innerHTML = `
                 <div class="space-y-3">
+                    <p class="text-[8px] text-slate-500 uppercase font-bold ml-1">Data da Venda</p>
+                    <input type="date" id="data_venda_gestao" value="${dataPadrao}" class="input-compact text-white">
                     <input type="text" id="num_album" placeholder="Nº Álbum" class="input-compact text-white">
                     <input type="number" id="valor_venda" placeholder="Valor Total" class="input-compact text-white">
                     <select id="vendedor_venda" class="input-compact text-white">
@@ -393,34 +400,76 @@
             const valorTotal = document.getElementById('valor_venda').value;
             const album = document.getElementById('num_album').value;
             const vendedor = document.getElementById('vendedor_venda').value;
-            if (!valorTotal || !album) return alert("Informe Valor e Álbum!");
+            const novaData = document.getElementById('data_venda_gestao').value;
+            
+            if (!valorTotal || !album || !novaData) return alert("Informe Data, Valor e Álbum!");
 
             const pagamentos = [];
             document.querySelectorAll('#pags-container > div').forEach(div => {
-                pagamentos.push({
-                    tipo: div.querySelector('.p-tipo').value,
-                    valor: div.querySelector('.p-valor').value
-                });
+                const val = div.querySelector('.p-valor').value;
+                if (val) {
+                    pagamentos.push({
+                        tipo: div.querySelector('.p-tipo').value,
+                        valor: val
+                    });
+                }
             });
 
             try {
-                await update(ref(db, window.itemPath), {
-                    resultado: "Venda",
-                    valor: valorTotal,
-                    num_album: album,
-                    vendedor: vendedor,
-                    pagamentos: pagamentos
-                });
+                // Pegamos o objeto atual para não perder os dados (como nome do formando)
+                const itemOriginal = window.dadosCompletos.find(i => i.path === window.itemPath);
+                
+                // Se a data mudou, precisamos mover o registro para a nova pasta de data
+                if (itemOriginal.data !== novaData) {
+                    const novoId = itemOriginal.id || `V-${Date.now()}`;
+                    const novaPastaBase = window.itemPath.split('/').slice(0, -2).join('/'); // Retorna 'vendas/proj/avulsos' ou 'dados/proj/agendamentos'
+                    const novoPath = `${novaPastaBase}/${novaData}/${novoId}`;
+
+                    const novosDados = {
+                        ...itemOriginal,
+                        resultado: "Venda",
+                        valor: valorTotal,
+                        num_album: album,
+                        vendedor: vendedor,
+                        pagamentos: pagamentos,
+                        data: novaData
+                    };
+
+                    await set(ref(db, novoPath), novosDados);
+                    await remove(ref(db, window.itemPath)); // Remove da data antiga
+                } else {
+                    // Se a data é a mesma, apenas atualizamos o registro atual
+                    await update(ref(db, window.itemPath), {
+                        resultado: "Venda",
+                        valor: valorTotal,
+                        num_album: album,
+                        vendedor: vendedor,
+                        pagamentos: pagamentos
+                    });
+                }
+
                 alert("Venda registrada com sucesso!");
                 window.fecharModalGestao();
                 window.carregarRelatorio();
-            } catch (e) { alert("Erro ao salvar venda."); }
+            } catch (e) { console.error(e); alert("Erro ao salvar venda."); }
         };
 
         window.fluxoNQ = async () => {
             const v = prompt("Vendedor do NQ (Evanio/Willian):", "Willian");
-            if (v) {
-                await update(ref(db, window.itemPath), { resultado: "NQ", vendedor: v });
+            const dtNQ = prompt("Confirmar Data do NQ (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
+            
+            if (v && dtNQ) {
+                const itemOriginal = window.dadosCompletos.find(i => i.path === window.itemPath);
+                
+                if (itemOriginal.data !== dtNQ) {
+                    const novaPastaBase = window.itemPath.split('/').slice(0, -2).join('/');
+                    const novoPath = `${novaPastaBase}/${dtNQ}/${itemOriginal.id}`;
+                    await set(ref(db, novoPath), { ...itemOriginal, resultado: "NQ", vendedor: v, data: dtNQ });
+                    await remove(ref(db, window.itemPath));
+                } else {
+                    await update(ref(db, window.itemPath), { resultado: "NQ", vendedor: v });
+                }
+                
                 alert("NQ registrado!");
                 window.fecharModalGestao();
                 window.carregarRelatorio();
@@ -460,7 +509,6 @@
                         else if (t.includes("credito")) r.cre += vP;
                         else if (t.includes("boleto")) r.bol += vP;
                         
-                        // Vales no relatório costumam ser a soma de Pix e Dinheiro (Entradas)
                         if (t.includes("pix") || t.includes("dinheiro")) r.vales_calc += vP;
                     });
                 } else if (i.resultado === "NQ") {
@@ -472,22 +520,7 @@
             const dataRel = fD ? fD.split('-').reverse().join('/') : "ACUMULADO GERAL";
             const ticketM = r.v ? (r.tot / r.v) : 0;
 
-            const texto = `Relatório de Vendas
-Projeto: ${projetoNome}
-Data: ${dataRel}
-
-✅ Vendas: ${r.v}
-❌ NQ: ${r.nq}
-
-💵 Dinheiro: ${fBR(r.din)}
-💎 Pix: ${fBR(r.pix)}
-💳 Débito: ${fBR(r.deb)}
-💳 Crédito: ${fBR(r.cre)}
-📄 Boleto: ${fBR(r.bol)}
-💸 Vales: ${fBR(r.vales_calc)}
-
-💰 Total Vendido: ${fBR(r.tot)}
-🎯 Ticket Médio: ${fBR(ticketM)}`;
+            const texto = `Relatório de Vendas\nProjeto: ${projetoNome}\nData: ${dataRel}\n\n✅ Vendas: ${r.v}\n❌ NQ: ${r.nq}\n\n💵 Dinheiro: ${fBR(r.din)}\n💎 Pix: ${fBR(r.pix)}\n💳 Débito: ${fBR(r.deb)}\n💳 Crédito: ${fBR(r.cre)}\n📄 Boleto: ${fBR(r.bol)}\n💸 Vales: ${fBR(r.vales_calc)}\n\n💰 Total Vendido: ${fBR(r.tot)}\n🎯 Ticket Médio: ${fBR(ticketM)}`;
 
             navigator.clipboard.writeText(texto).then(() => {
                 alert("Relatório copiado para o WhatsApp!");
@@ -535,7 +568,7 @@ Data: ${dataRel}
                     });
 
                     m.com += cV; 
-                    i.venda_comissao = cV; // Atribui comissão ao objeto para extrato
+                    i.venda_comissao = cV; 
                     vend.Evanio.com += cV / 2;
                     vend.Willian.com += cV / 2;
 
@@ -548,7 +581,7 @@ Data: ${dataRel}
 
             const rI = (parseFloat(custosDB.km_valor) || 0.7) * (parseFloat(custosDB.km_total) || 0) + (parseFloat(custosDB.pedagio_total) || 0) + ((parseFloat(custosDB.hosp_valor) || 0) * parseInt(custosDB.hosp_qtd || 0)) + ((parseFloat(custosDB.alim_valor) || 0) * parseInt(custosDB.alim_qtd || 0));
             
-            document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-4 rounded-3xl text-center"><p class="text-[8px] font-black text-emerald-400 uppercase">Faturamento</p><p class="text-xl font-black text-white">${fBR(m.tot)}</p></div><div class="card-bi p-4 rounded-3xl text-center border-blue-500"><p class="text-[8px] font-black text-blue-400 uppercase">Eficiência</p><p class="text-xl font-black text-white">${(m.v+m.nq)?(m.v/(m.v+m.nq)*100).toFixed(0):0}%</p></div><div class="card-bi p-4 rounded-3xl text-center"><p class="text-[8px] font-black uppercase">Vendas/NQ</p><p class="text-xl font-black text-white">${m.v}/${m.nq}</p></div><div class="card-bi p-4 rounded-3xl text-center"><p class="text-[8px] font-black uppercase text-white">Ticket Médio</p><p class="text-xl font-black text-white">${fBR(m.v?m.tot/m.v:0)}</p></div>`;
+            document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-4 rounded-3xl text-center"><p class="text-[8px] font-black text-emerald-400 uppercase">Faturamento</p><p class="text-xl font-black text-white">${fBR(m.tot)}</p></div><div class="card-bi p-4 rounded-3xl text-center border-blue-500"><p class="text-[8px] font-black text-blue-400 uppercase">Eficiência</p><p class="text-xl font-black text-white">${(m.v+m.nq)?(m.v/(m.v+m.nq)*100).toFixed(0):0}%</p></div><div class="card-bi p-4 rounded-3xl text-center"><p class="text-[8px] font-black uppercase text-slate-400">Vendas/NQ</p><p class="text-xl font-black text-white">${m.v}/${m.nq}</p></div><div class="card-bi p-4 rounded-3xl text-center"><p class="text-[8px] font-black uppercase text-white">Ticket Médio</p><p class="text-xl font-black text-white">${fBR(m.v?m.tot/m.v:0)}</p></div>`;
             
             document.getElementById('individual-performance').innerHTML = Object.keys(vend).map(v => `<div class="glass p-4 rounded-3xl border-t-2 ${v==='Evanio'?'border-blue-400':'border-cyan-400'}"><p class="font-black text-xs uppercase mb-2 text-white">${v}</p><div class="grid grid-cols-3 gap-2 text-center text-white"><div><p class="text-[7px] text-slate-400 uppercase">Venda</p><p class="text-xs font-bold">${fBR(vend[v].tot)}</p></div><div><p class="text-[7px] text-slate-400 uppercase">Efic.</p><p class="text-xs font-bold">${(vend[v].v+vend[v].nq)?(vend[v].v/(vend[v].v+vend[v].nq)*100).toFixed(0):0}%</p></div><div><p class="text-[7px] text-slate-400 uppercase">NQ</p><p class="text-xs font-bold">${vend[v].nq}</p></div></div></div>`).join('');
             
@@ -591,8 +624,6 @@ Data: ${dataRel}
             const nData = sortedDates.map(d => data[d].nq);
 
             if (weeklyChart) weeklyChart.destroy();
-            
-            // Registro do plugin para números no topo
             Chart.register(ChartDataLabels);
 
             weeklyChart = new Chart(ctx, {
