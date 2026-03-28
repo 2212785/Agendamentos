@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>  
 <html lang="pt-BR">
 
 <head>
@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -195,7 +196,7 @@
         <div id="finance-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 mb-6 text-white"></div>
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div id="comissao-card" class="lg:col-span-1 glass rounded-[2rem] p-5 border-l-4 border-blue-500 text-white"></div>
-            <div class="lg:col-span-2 glass rounded-[2rem] p-4 min-h-[250px] text-white">
+            <div class="lg:col-span-2 glass rounded-[2rem] p-4 min-h-[250px] text-white overflow-hidden">
                 <canvas id="weeklyChart"></canvas>
             </div>
         </div>
@@ -204,7 +205,7 @@
             <div class="glass p-4 rounded-2xl border border-white/5 text-white">
                 <div class="flex justify-between items-center mb-3 text-white">
                     <h4 class="text-emerald-400 font-black text-[10px] uppercase">Extrato Vendas</h4>
-                    <span class="text-[8px] text-slate-500 text-white">VALOR</span>
+                    <span class="text-[8px] text-slate-500 text-white uppercase">Nome / Comissão / Pagto</span>
                 </div>
                 <div id="extrato-tabela" class="text-xs text-white"></div>
             </div>
@@ -435,43 +436,43 @@
         };
 
         window.copyRel = (tipo) => {
-    const fD = document.getElementById('filtro-bi').value;
-    let list = fD ? window.dadosCompletos.filter(i => i.data === fD) : window.dadosCompletos;
-    if (tipo !== 'Geral') list = list.filter(i => i.vendedor === tipo);
-    
-    let r = { 
-        v: 0, nq: 0, tot: 0, 
-        pix: 0, din: 0, deb: 0, cre: 0, bol: 0, 
-        vales_calc: 0 
-    };
+            const fD = document.getElementById('filtro-bi').value;
+            let list = fD ? window.dadosCompletos.filter(i => i.data === fD) : window.dadosCompletos;
+            if (tipo !== 'Geral') list = list.filter(i => i.vendedor === tipo);
+            
+            let r = { 
+                v: 0, nq: 0, tot: 0, 
+                pix: 0, din: 0, deb: 0, cre: 0, bol: 0, 
+                vales_calc: 0 
+            };
 
-    list.forEach(i => {
-        if (i.resultado === "Venda") {
-            r.v++; 
-            r.tot += Number(i.valor) || 0;
-            if (i.pagamentos) i.pagamentos.forEach(p => {
-                const vP = Number(p.valor) || 0;
-                const t = p.tipo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                
-                if (t.includes("pix")) r.pix += vP;
-                else if (t.includes("dinheiro")) r.din += vP;
-                else if (t.includes("debito")) r.deb += vP;
-                else if (t.includes("credito")) r.cre += vP;
-                else if (t.includes("boleto")) r.bol += vP;
-                
-                // Vales no relatório costumam ser a soma de Pix e Dinheiro (Entradas)
-                if (t.includes("pix") || t.includes("dinheiro")) r.vales_calc += vP;
+            list.forEach(i => {
+                if (i.resultado === "Venda") {
+                    r.v++; 
+                    r.tot += Number(i.valor) || 0;
+                    if (i.pagamentos) i.pagamentos.forEach(p => {
+                        const vP = Number(p.valor) || 0;
+                        const t = p.tipo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                        
+                        if (t.includes("pix")) r.pix += vP;
+                        else if (t.includes("dinheiro")) r.din += vP;
+                        else if (t.includes("debito")) r.deb += vP;
+                        else if (t.includes("credito")) r.cre += vP;
+                        else if (t.includes("boleto")) r.bol += vP;
+                        
+                        // Vales no relatório costumam ser a soma de Pix e Dinheiro (Entradas)
+                        if (t.includes("pix") || t.includes("dinheiro")) r.vales_calc += vP;
+                    });
+                } else if (i.resultado === "NQ") {
+                    r.nq++;
+                }
             });
-        } else if (i.resultado === "NQ") {
-            r.nq++;
-        }
-    });
 
-    const projetoNome = `${projetoDB.cidade} - ${projetoDB.escola || projetoDB.school}`;
-    const dataRel = fD ? fD.split('-').reverse().join('/') : "ACUMULADO GERAL";
-    const ticketM = r.v ? (r.tot / r.v) : 0;
+            const projetoNome = `${projetoDB.cidade} - ${projetoDB.escola || projetoDB.school}`;
+            const dataRel = fD ? fD.split('-').reverse().join('/') : "ACUMULADO GERAL";
+            const ticketM = r.v ? (r.tot / r.v) : 0;
 
-    const texto = `Relatório de Vendas
+            const texto = `Relatório de Vendas
 Projeto: ${projetoNome}
 Data: ${dataRel}
 
@@ -488,11 +489,11 @@ Data: ${dataRel}
 💰 Total Vendido: ${fBR(r.tot)}
 🎯 Ticket Médio: ${fBR(ticketM)}`;
 
-    navigator.clipboard.writeText(texto).then(() => {
-        alert("Relatório copiado para o WhatsApp!");
-        window.fecharModalGestao();
-    });
-};
+            navigator.clipboard.writeText(texto).then(() => {
+                alert("Relatório copiado para o WhatsApp!");
+                window.fecharModalGestao();
+            });
+        };
 
         window.filtrarBI = () => {
             const fD = document.getElementById('filtro-bi').value;
@@ -500,73 +501,136 @@ Data: ${dataRel}
             let m = { v: 0, nq: 0, tot: 0, pix: 0, din: 0, deb: 0, cre: 0, bol: 0, com: 0 };
             let vend = { Evanio: { v: 0, nq: 0, tot: 0, com: 0, ent: 0 }, Willian: { v: 0, nq: 0, tot: 0, com: 0, ent: 0 } };
             let chartData = {};
-            list.forEach(i => {
-    const vn = i.vendedor || "Willian";
-    if (i.resultado === "Venda") {
-        m.v++; 
-        m.tot += Number(i.valor) || 0; 
-        vend[vn].v++; 
-        vend[vn].tot += Number(i.valor) || 0;
-        
-        let cV = 0; // Variável da comissão da venda atual
-        
-        if (i.pagamentos) i.pagamentos.forEach(p => {
-            const vP = Number(p.valor) || 0;
-            const t = p.tipo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             
-            // Soma globais para o dashboard
-            if (t.includes("pix")) m.pix += vP; 
-            else if (t.includes("dinheiro")) m.din += vP;
-            else if (t.includes("debito")) m.deb += vP; 
-            else if (t.includes("credito")) m.cre += vP;
-            else if (t.includes("boleto")) m.bol += vP;
+            list.forEach(i => {
+                const vn = i.vendedor || "Willian";
+                const dKey = i.data || "Sem Data";
+                if (!chartData[dKey]) chartData[dKey] = { v: 0, nq: 0 };
 
-            // LÓGICA DE COMISSÃO:
-            if (t.includes("entrada")) {
-                cV += vP * 0.12; // 12% sobre entradas
-                // ENTRADA É INDIVIDUAL: Debita apenas de quem vendeu
-                if (t.includes("pix") || t.includes("dinheiro")) vend[vn].ent += vP;
-            } else {
-                cV += vP * 0.08; // 8% sobre o restante
-            }
-        });
+                if (i.resultado === "Venda") {
+                    m.v++; 
+                    m.tot += Number(i.valor) || 0; 
+                    vend[vn].v++; 
+                    vend[vn].tot += Number(i.valor) || 0;
+                    chartData[dKey].v++;
+                    
+                    let cV = 0; 
+                    
+                    if (i.pagamentos) i.pagamentos.forEach(p => {
+                        const vP = Number(p.valor) || 0;
+                        const t = p.tipo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                        
+                        if (t.includes("pix")) m.pix += vP; 
+                        else if (t.includes("dinheiro")) m.din += vP;
+                        else if (t.includes("debito")) m.deb += vP; 
+                        else if (t.includes("credito")) m.cre += vP;
+                        else if (t.includes("boleto")) m.bol += vP;
 
-        m.com += cV; // Soma no total bruto do projeto
-        
-        // DIVISÃO 50/50: Metade da comissão para cada, independente de quem vendeu
-        vend.Evanio.com += cV / 2;
-        vend.Willian.com += cV / 2;
+                        if (t.includes("entrada")) {
+                            cV += vP * 0.12; 
+                            if (t.includes("pix") || t.includes("dinheiro")) vend[vn].ent += vP;
+                        } else {
+                            cV += vP * 0.08; 
+                        }
+                    });
 
-    } else if (i.resultado === "NQ") { 
-        m.nq++; 
-        vend[vn].nq++; 
-    }
-});
+                    m.com += cV; 
+                    i.venda_comissao = cV; // Atribui comissão ao objeto para extrato
+                    vend.Evanio.com += cV / 2;
+                    vend.Willian.com += cV / 2;
+
+                } else if (i.resultado === "NQ") { 
+                    m.nq++; 
+                    vend[vn].nq++; 
+                    chartData[dKey].nq++;
+                }
+            });
+
             const rI = (parseFloat(custosDB.km_valor) || 0.7) * (parseFloat(custosDB.km_total) || 0) + (parseFloat(custosDB.pedagio_total) || 0) + ((parseFloat(custosDB.hosp_valor) || 0) * parseInt(custosDB.hosp_qtd || 0)) + ((parseFloat(custosDB.alim_valor) || 0) * parseInt(custosDB.alim_qtd || 0));
+            
             document.getElementById('kpi-grid').innerHTML = `<div class="card-bi p-4 rounded-3xl text-center"><p class="text-[8px] font-black text-emerald-400 uppercase">Faturamento</p><p class="text-xl font-black text-white">${fBR(m.tot)}</p></div><div class="card-bi p-4 rounded-3xl text-center border-blue-500"><p class="text-[8px] font-black text-blue-400 uppercase">Eficiência</p><p class="text-xl font-black text-white">${(m.v+m.nq)?(m.v/(m.v+m.nq)*100).toFixed(0):0}%</p></div><div class="card-bi p-4 rounded-3xl text-center"><p class="text-[8px] font-black uppercase">Vendas/NQ</p><p class="text-xl font-black text-white">${m.v}/${m.nq}</p></div><div class="card-bi p-4 rounded-3xl text-center"><p class="text-[8px] font-black uppercase text-white">Ticket Médio</p><p class="text-xl font-black text-white">${fBR(m.v?m.tot/m.v:0)}</p></div>`;
+            
             document.getElementById('individual-performance').innerHTML = Object.keys(vend).map(v => `<div class="glass p-4 rounded-3xl border-t-2 ${v==='Evanio'?'border-blue-400':'border-cyan-400'}"><p class="font-black text-xs uppercase mb-2 text-white">${v}</p><div class="grid grid-cols-3 gap-2 text-center text-white"><div><p class="text-[7px] text-slate-400 uppercase">Venda</p><p class="text-xs font-bold">${fBR(vend[v].tot)}</p></div><div><p class="text-[7px] text-slate-400 uppercase">Efic.</p><p class="text-xs font-bold">${(vend[v].v+vend[v].nq)?(vend[v].v/(vend[v].v+vend[v].nq)*100).toFixed(0):0}%</p></div><div><p class="text-[7px] text-slate-400 uppercase">NQ</p><p class="text-xs font-bold">${vend[v].nq}</p></div></div></div>`).join('');
-            document.getElementById('finance-grid').innerHTML = `<div class="glass p-2 rounded-xl text-center text-[8px] text-white">PIX<br><b>${fBR(m.pix)}</b></div><div class="glass p-2 rounded-xl text-center text-emerald-400 text-[8px]">CRÉDITO<br><b>${fBR(m.cre)}</b></div><div class="glass p-2 rounded-xl text-center border-rose-500/30 text-rose-500 text-[8px] text-white">VALES<br><b>${fBR(parseFloat(valesDB.evanio||0) + parseFloat(valesDB.willian||0) + vend.Evanio.ent + vend.Willian.ent)}</b></div><div class="glass p-2 rounded-xl text-center border-blue-500/30 text-blue-400 text-[8px] text-white">REEMB.<br><b>${fBR(rI)}</b></div>`;
+            
+            const perc = (v) => m.tot > 0 ? ((v / m.tot) * 100).toFixed(1) + "%" : "0%";
+            document.getElementById('finance-grid').innerHTML = `
+                <div class="glass p-2 rounded-xl text-center text-[8px] text-white">PIX<br><b>${fBR(m.pix)}</b><br><span class="text-[7px] text-blue-400 opacity-70">${perc(m.pix)}</span></div>
+                <div class="glass p-2 rounded-xl text-center text-[8px] text-white uppercase">Dinheiro<br><b>${fBR(m.din)}</b><br><span class="text-[7px] text-blue-400 opacity-70">${perc(m.din)}</span></div>
+                <div class="glass p-2 rounded-xl text-center text-emerald-400 text-[8px]">CARTÃO<br><b>${fBR(m.cre + m.deb)}</b><br><span class="text-[7px] text-white opacity-70">${perc(m.cre + m.deb)}</span></div>
+                <div class="glass p-2 rounded-xl text-center border-rose-500/30 text-rose-500 text-[8px] text-white">VALES<br><b>${fBR(parseFloat(valesDB.evanio||0) + parseFloat(valesDB.willian||0) + vend.Evanio.ent + vend.Willian.ent)}</b></div>
+                <div class="glass p-2 rounded-xl text-center border-blue-500/30 text-blue-400 text-[8px] text-white">REEMB.<br><b>${fBR(rI)}</b></div>
+                <div class="glass p-2 rounded-xl text-center text-[8px] text-white uppercase">Boleto<br><b>${fBR(m.bol)}</b><br><span class="text-[7px] text-blue-400 opacity-70">${perc(m.bol)}</span></div>`;
+            
             document.getElementById('comissao-card').innerHTML = `<h5 class="text-[10px] font-black text-blue-400 mb-3 uppercase text-center text-white">Resumo</h5><div class="flex flex-col items-center justify-center h-full text-white"><p class="text-[8px] text-slate-500 uppercase">Total Comissões</p><p class="text-2xl font-black text-white">${fBR(m.com)}</p></div>`;
+            
             document.getElementById('saldo-card').innerHTML = `<div class="text-center mb-4 border-b border-white/10 pb-2 font-black text-[10px] uppercase text-white">Acerto Individual</div><div class="grid grid-cols-2 gap-4"><div class="bg-white/5 p-4 rounded-2xl text-white"><p class="text-[10px] font-black text-blue-400 uppercase mb-2">EVANIO</p><div class="text-[9px] space-y-1"><div>Comis: <b>+ ${fBR(vend.Evanio.com)}</b></div><div>Reemb: <b>+ ${fBR(rI)}</b></div><div class="text-rose-400">Vales: <b>- ${fBR(parseFloat(valesDB.evanio||0))}</b></div><div class="text-orange-400">Entr: <b>- ${fBR(vend.Evanio.ent)}</b></div><div class="text-xs font-black pt-1 border-t border-white/5">Saldo: <span class="text-emerald-400">${fBR(vend.Evanio.com + rI - (parseFloat(valesDB.evanio)||0) - vend.Evanio.ent)}</span></div></div></div><div class="bg-white/5 p-4 rounded-2xl text-white"><p class="text-[10px] font-black text-cyan-400 uppercase mb-2">WILLIAN</p><div class="text-[9px] space-y-1"><div>Comis: <b>+ ${fBR(vend.Willian.com)}</b></div><div>Reemb: <b>+ ${fBR(rI)}</b></div><div class="text-rose-400">Vales: <b>- ${fBR(parseFloat(valesDB.willian||0))}</b></div><div class="text-orange-400">Entr: <b>- ${fBR(vend.Willian.ent)}</b></div><div class="text-xs font-black pt-1 border-t border-white/5">Saldo: <span class="text-emerald-400">${fBR(vend.Willian.com + rI - (parseFloat(valesDB.willian)||0) - vend.Willian.ent)}</span></div></div></div></div>`;
-            document.getElementById('extrato-tabela').innerHTML = list.filter(i => i.resultado === "Venda").map(i => `<div class="flex justify-between py-1.5 border-b border-white/5 text-white"><span class="truncate max-w-[120px] font-bold">#${i.vendedor?.charAt(0)||'W'} ${i.nome_formando}</span><b class="text-emerald-400">${fBR(i.valor)}</b></div>`).join('');
-            document.getElementById('nq-tabela').innerHTML = list.filter(i => i.resultado === "NQ").map(i => `<div class="py-1 border-b border-white/5 text-slate-500 text-white">${i.nome_formando}</div>`).join('');
+            
+            document.getElementById('extrato-tabela').innerHTML = list.filter(i => i.resultado === "Venda").map(i => {
+                const pagtos = i.pagamentos ? i.pagamentos.map(p => p.tipo).join(' | ') : 'S/I';
+                return `<div class="py-2 border-b border-white/5 text-white">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-blue-400 truncate pr-2">#${i.vendedor?.charAt(0)||'W'} ${i.nome_formando}</span>
+                        <b class="text-emerald-400">${fBR(i.valor)}</b>
+                    </div>
+                    <div class="flex justify-between text-[7px] font-black uppercase text-slate-500 italic">
+                        <span>${pagtos}</span>
+                        <span class="text-cyan-500">Comis: ${fBR(i.venda_comissao || 0)}</span>
+                    </div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('nq-tabela').innerHTML = list.filter(i => i.resultado === "NQ").map(i => `<div class="py-1 border-b border-white/5 text-slate-500 text-white uppercase font-bold italic">${i.nome_formando}</div>`).join('');
             window.updateChart(chartData);
         };
 
         window.updateChart = (data) => {
             const ctx = document.getElementById('weeklyChart').getContext('2d');
-            const labels = Object.keys(data).sort().map(d => d.split('-').reverse().slice(0, 2).join('/'));
+            const sortedDates = Object.keys(data).sort();
+            const labels = sortedDates.map(d => d.split('-').reverse().slice(0, 2).join('/'));
+            const vData = sortedDates.map(d => data[d].v);
+            const nData = sortedDates.map(d => data[d].nq);
+
             if (weeklyChart) weeklyChart.destroy();
+            
+            // Registro do plugin para números no topo
+            Chart.register(ChartDataLabels);
+
             weeklyChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [{ label: 'V', data: Object.keys(data).sort().map(d => data[d].v), backgroundColor: '#10b981', borderRadius: 5 }, { label: 'N', data: Object.keys(data).sort().map(d => data[d].nq), backgroundColor: '#f43f5e', borderRadius: 5 }]
+                    datasets: [
+                        { 
+                            label: 'Vendas', 
+                            data: vData, 
+                            backgroundColor: '#10b981', 
+                            borderRadius: 6,
+                            datalabels: { color: '#10b981', anchor: 'end', align: 'top', font: { weight: '800', size: 10 } }
+                        }, 
+                        { 
+                            label: 'NQ', 
+                            data: nData, 
+                            backgroundColor: '#f43f5e', 
+                            borderRadius: 6,
+                            datalabels: { color: '#f43f5e', anchor: 'end', align: 'top', font: { weight: '800', size: 10 } }
+                        }
+                    ]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { display: false }, x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 8 } } } }
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 20 } },
+                    plugins: { 
+                        legend: { display: false },
+                        datalabels: {
+                            display: true,
+                            formatter: (value) => value > 0 ? value : ''
+                        }
+                    },
+                    scales: { 
+                        y: { display: false, beginAtZero: true }, 
+                        x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 9, weight: 'bold' } } } 
+                    }
                 }
             });
         };
