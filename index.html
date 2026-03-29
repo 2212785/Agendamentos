@@ -1,4 +1,4 @@
-<!DOCTYPE html>   
+<!DOCTYPE html>    
 <html lang="pt-BR">
 
 <head>
@@ -498,6 +498,7 @@
                     chartData[dKey].v++;
                     
                     let cV = 0; 
+                    let totalPixDin = 0;
                     
                     if (i.pagamentos) i.pagamentos.forEach(p => {
                         const vP = Number(p.valor) || 0;
@@ -511,10 +512,8 @@
 
                         if (t.includes("pix") || t.includes("dinheiro") || t.includes("credito") || t.includes("debito")) {
                             cV += vP * 0.12;
-                            // Alteração Crucial: Valor de Pix/Dinheiro dividido por 2 e somado ao vale de AMBOS
                             if (t.includes("pix") || t.includes("dinheiro")) {
-                                vend.Evanio.ent += (vP / 2);
-                                vend.Willian.ent += (vP / 2);
+                                totalPixDin += vP;
                             }
                         } else if (t.includes("boleto")) {
                             cV += vP * 0.08;
@@ -523,8 +522,14 @@
                         }
                     });
 
+                    // Divisão para vales (Pix e Dinheiro)
+                    vend.Evanio.ent += (totalPixDin / 2);
+                    vend.Willian.ent += (totalPixDin / 2);
+
                     m.com += cV; 
                     i.venda_comissao = cV; 
+                    i.total_pix_din = totalPixDin; // Salva para o extrato
+
                     vend.Evanio.com += cV / 2;
                     vend.Willian.com += cV / 2;
 
@@ -556,19 +561,33 @@
             
             document.getElementById('extrato-tabela').innerHTML = list.filter(i => i.resultado === "Venda").map(i => {
                 const pagtos = i.pagamentos ? i.pagamentos.map(p => p.tipo).join(' | ') : 'S/I';
+                const totalVenda = Number(i.valor) || 0;
+                let tipoDestaque = "";
+                
+                if (i.total_pix_din > 0) {
+                    if (Math.abs(i.total_pix_din - totalVenda) < 0.01) {
+                        tipoDestaque = `<br><span class="text-emerald-400 font-black">À VISTA: ${fBR(i.total_pix_din)}</span>`;
+                    } else {
+                        tipoDestaque = `<br><span class="text-amber-400 font-black">ENTRADA: ${fBR(i.total_pix_din)}</span>`;
+                    }
+                }
+
                 return `<div class="py-2 border-b border-white/5 text-white">
                     <div class="flex justify-between items-center mb-1">
-                        <span class="font-bold text-blue-400 truncate pr-2">#${i.vendedor?.charAt(0)||'W'} ${i.nome_formando}</span>
+                        <span class="font-bold text-blue-400 truncate pr-2">#${vn} - ${i.nome_formando}</span>
                         <b class="text-emerald-400">${fBR(i.valor)}</b>
                     </div>
-                    <div class="flex justify-between text-[7px] font-black uppercase text-slate-500 italic">
-                        <span>${pagtos}</span>
-                        <span class="text-cyan-500">Comis: ${fBR(i.venda_comissao || 0)}</span>
+                    <div class="text-[7px] font-black uppercase text-slate-500 italic leading-tight">
+                        <div class="flex justify-between">
+                            <span>${pagtos}</span>
+                            <span class="text-cyan-500">Comis: ${fBR(i.venda_comissao || 0)}</span>
+                        </div>
+                        ${tipoDestaque}
                     </div>
                 </div>`;
             }).join('');
             
-            document.getElementById('nq-tabela').innerHTML = list.filter(i => i.resultado === "NQ").map(i => `<div class="py-1 border-b border-white/5 text-slate-500 text-white uppercase font-bold italic">${i.nome_formando}</div>`).join('');
+            document.getElementById('nq-tabela').innerHTML = list.filter(i => i.resultado === "NQ").map(i => `<div class="py-1 border-b border-white/5 text-slate-500 text-white uppercase font-bold italic">${i.vendedor || 'W'} - ${i.nome_formando}</div>`).join('');
             window.updateChart(chartData);
         };
 
