@@ -205,7 +205,7 @@
             <div class="glass p-4 rounded-2xl border border-white/5 text-white">
                 <div class="flex justify-between items-center mb-3 text-white">
                     <h4 class="text-emerald-400 font-black text-[10px] uppercase">Extrato Vendas</h4>
-                    <span class="text-[8px] text-slate-500 text-white uppercase">Nome / Comissão / Pagto</span>
+                    <span class="text-[8px] text-slate-500 text-white uppercase">Dados Detalhados</span>
                 </div>
                 <div id="extrato-tabela" class="text-xs text-white"></div>
             </div>
@@ -355,8 +355,15 @@
             const f = document.getElementById('gestao-form');
             document.getElementById('gestao-menu').classList.add('hidden');
             f.classList.remove('hidden');
+            
+            // i.data comentada conforme a regra:
+            const itemOriginal = window.dadosCompletos.find(i => i.path === window.itemPath);
+            const dataPadrao = itemOriginal ? itemOriginal.data : new Date().toISOString().split('T')[0];
+
             f.innerHTML = `
                 <div class="space-y-3">
+                    <p class="text-[8px] text-slate-500 uppercase font-bold ml-1">Data da Venda</p>
+                    <input type="date" id="data_venda_gestao" value="${dataPadrao}" class="input-compact text-white">
                     <input type="text" id="num_album" placeholder="Nº Álbum" class="input-compact text-white">
                     <input type="number" id="valor_venda" placeholder="Valor Total" class="input-compact text-white">
                     <select id="vendedor_venda" class="input-compact text-white">
@@ -392,7 +399,9 @@
             const valorTotal = document.getElementById('valor_venda').value;
             const album = document.getElementById('num_album').value;
             const vendedor = document.getElementById('vendedor_venda').value;
-            if (!valorTotal || !album) return alert("Informe Valor e Álbum!");
+            const novaData = document.getElementById('data_venda_gestao').value;
+            
+            if (!valorTotal || !album || !novaData) return alert("Informe Data, Valor e Álbum!");
 
             const pagamentos = [];
             document.querySelectorAll('#pags-container > div').forEach(div => {
@@ -402,13 +411,18 @@
             });
 
             try {
-                await update(ref(db, window.itemPath), {
-                    resultado: "Venda",
-                    valor: valorTotal,
-                    num_album: album,
-                    vendedor: vendedor,
-                    pagamentos: pagamentos
-                });
+                // await update(ref(db, window.itemPath), { resultado: "Venda", valor: valorTotal, num_album: album, vendedor: vendedor, pagamentos: pagamentos });
+                // Bloco de mudança de data restaurado com comentários:
+                const itemOriginal = window.dadosCompletos.find(i => i.path === window.itemPath);
+                if (itemOriginal.data !== novaData) {
+                    const novoId = itemOriginal.id || `V-${Date.now()}`;
+                    const basePasta = window.itemPath.split('/').slice(0, -2).join('/');
+                    const novoPath = `${basePasta}/${novaData}/${novoId}`;
+                    await set(ref(db, novoPath), { ...itemOriginal, resultado: "Venda", valor: valorTotal, num_album: album, vendedor: vendedor, pagamentos: pagamentos, data: novaData });
+                    await remove(ref(db, window.itemPath));
+                } else {
+                    await update(ref(db, window.itemPath), { resultado: "Venda", valor: valorTotal, num_album: album, vendedor: vendedor, pagamentos: pagamentos });
+                }
                 alert("Venda registrada!");
                 window.fecharModalGestao();
                 window.carregarRelatorio();
@@ -417,8 +431,19 @@
 
         window.fluxoNQ = async () => {
             const v = prompt("Vendedor do NQ (Evanio/Willian):", "Willian");
-            if (v) {
-                await update(ref(db, window.itemPath), { resultado: "NQ", vendedor: v });
+            const dtNQ = prompt("Confirmar Data do NQ (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
+            if (v && dtNQ) {
+                // await update(ref(db, window.itemPath), { resultado: "NQ", vendedor: v });
+                // Mudança de data no NQ restaurada:
+                const itemOriginal = window.dadosCompletos.find(i => i.path === window.itemPath);
+                if (itemOriginal.data !== dtNQ) {
+                    const basePasta = window.itemPath.split('/').slice(0, -2).join('/');
+                    const novoPath = `${basePasta}/${dtNQ}/${itemOriginal.id}`;
+                    await set(ref(db, novoPath), { ...itemOriginal, resultado: "NQ", vendedor: v, data: dtNQ });
+                    await remove(ref(db, window.itemPath));
+                } else {
+                    await update(ref(db, window.itemPath), { resultado: "NQ", vendedor: v });
+                }
                 alert("NQ registrado!");
                 window.fecharModalGestao();
                 window.carregarRelatorio();
@@ -510,14 +535,15 @@
             
             document.getElementById('individual-performance').innerHTML = Object.keys(vend).map(v => `<div class="glass p-4 rounded-3xl border-t-2 ${v==='Evanio'?'border-blue-400':'border-cyan-400'}"><p class="font-black text-xs uppercase mb-2 text-white">${v}</p><div class="grid grid-cols-3 gap-2 text-center text-white"><div><p class="text-[7px] text-slate-400 uppercase">Venda</p><p class="text-xs font-bold">${fBR(vend[v].tot)}</p></div><div><p class="text-[7px] text-slate-400 uppercase">Efic.</p><p class="text-xs font-bold">${(vend[v].v+vend[v].nq)?(vend[v].v/(vend[v].v+vend[v].nq)*100).toFixed(0):0}%</p></div><div><p class="text-[7px] text-slate-400 uppercase">NQ</p><p class="text-xs font-bold">${vend[v].nq}</p></div></div></div>`).join('');
             
-            const perc = (v) => m.tot > 0 ? ((v / m.tot) * 100).toFixed(1) + "%" : "0%";
+            const pC = (val) => m.tot > 0 ? ((val / m.tot) * 100).toFixed(1) : 0;
+            // Fontes aumentadas conforme solicitado:
             document.getElementById('finance-grid').innerHTML = `
-                <div class="glass p-2 rounded-xl text-center text-[8px] text-white">PIX<br><b>${fBR(m.pix)}</b><br><span class="text-[7px] text-blue-400 opacity-70">${perc(m.pix)}</span></div>
-                <div class="glass p-2 rounded-xl text-center text-[8px] text-white uppercase">Dinheiro<br><b>${fBR(m.din)}</b><br><span class="text-[7px] text-blue-400 opacity-70">${perc(m.din)}</span></div>
-                <div class="glass p-2 rounded-xl text-center text-emerald-400 text-[8px]">CARTÃO<br><b>${fBR(m.cre + m.deb)}</b><br><span class="text-[7px] text-white opacity-70">${perc(m.cre + m.deb)}</span></div>
-                <div class="glass p-2 rounded-xl text-center border-rose-500/30 text-rose-500 text-[8px]">VALES<br><b>${fBR(parseFloat(valesDB.evanio||0) + parseFloat(valesDB.willian||0) + vend.Evanio.ent + vend.Willian.ent)}</b></div>
-                <div class="glass p-2 rounded-xl text-center border-blue-500/30 text-blue-400 text-[8px]">REEMB.<br><b>${fBR(rI)}</b></div>
-                <div class="glass p-2 rounded-xl text-center text-[8px] text-white uppercase">Boleto<br><b>${fBR(m.bol)}</b><br><span class="text-[7px] text-blue-400 opacity-70">${perc(m.bol)}</span></div>`;
+                <div class="glass p-2 rounded-xl text-center text-[10px] text-white">PIX<br><b class="text-xs">${fBR(m.pix)}</b><br><span class="text-[8px] text-blue-400">${pC(m.pix)}%</span></div>
+                <div class="glass p-2 rounded-xl text-center text-[10px] text-white uppercase">Dinheiro<br><b class="text-xs">${fBR(m.din)}</b><br><span class="text-[8px] text-blue-400">${pC(m.din)}%</span></div>
+                <div class="glass p-2 rounded-xl text-center text-emerald-400 text-[10px]">CARTÃO<br><b class="text-xs">${fBR(m.cre + m.deb)}</b><br><span class="text-[8px] text-white opacity-50">${pC(m.cre + m.deb)}%</span></div>
+                <div class="glass p-2 rounded-xl text-center border-rose-500/30 text-rose-500 text-[10px]">VALES<br><b class="text-xs">${fBR(parseFloat(valesDB.evanio||0) + parseFloat(valesDB.willian||0) + vend.Evanio.ent + vend.Willian.ent)}</b></div>
+                <div class="glass p-2 rounded-xl text-center border-blue-500/30 text-blue-400 text-[10px]">REEMB.<br><b class="text-xs">${fBR(rI)}</b></div>
+                <div class="glass p-2 rounded-xl text-center text-[10px] text-white uppercase">Boleto<br><b class="text-xs">${fBR(m.bol)}</b><br><span class="text-[8px] text-blue-400">${pC(m.bol)}%</span></div>`;
             
             document.getElementById('comissao-card').innerHTML = `<h5 class="text-[10px] font-black text-blue-400 mb-3 uppercase text-center text-white">Resumo</h5><div class="flex flex-col items-center justify-center h-full text-white"><p class="text-[8px] text-slate-500 uppercase">Total Comissões</p><p class="text-2xl font-black text-white">${fBR(m.com)}</p></div>`;
             
@@ -540,8 +566,8 @@
 
         window.updateChart = (data) => {
             const ctx = document.getElementById('weeklyChart').getContext('2d');
-            const sD = Object.keys(data).sort();
-            const labels = sD.map(d => d.split('-').reverse().slice(0, 2).join('/'));
+            const sortedDates = Object.keys(data).sort();
+            const labels = sortedDates.map(d => d.split('-').reverse().slice(0, 2).join('/'));
             if (weeklyChart) weeklyChart.destroy();
             Chart.register(ChartDataLabels);
             weeklyChart = new Chart(ctx, {
@@ -549,8 +575,8 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: 'Vendas', data: sD.map(d => data[d].v), backgroundColor: '#10b981', borderRadius: 6, datalabels: { color: '#10b981', anchor: 'end', align: 'top', font: { weight: '800', size: 10 } } }, 
-                        { label: 'NQ', data: sD.map(d => data[d].nq), backgroundColor: '#f43f5e', borderRadius: 6, datalabels: { color: '#f43f5e', anchor: 'end', align: 'top', font: { weight: '800', size: 10 } } }
+                        { label: 'Vendas', data: sortedDates.map(d => data[d].v), backgroundColor: '#10b981', borderRadius: 6, datalabels: { color: '#10b981', anchor: 'end', align: 'top', font: { weight: '800', size: 10 } } }, 
+                        { label: 'NQ', data: sortedDates.map(d => data[d].nq), backgroundColor: '#f43f5e', borderRadius: 6, datalabels: { color: '#f43f5e', anchor: 'end', align: 'top', font: { weight: '800', size: 10 } } }
                     ]
                 },
                 options: {
@@ -583,12 +609,12 @@
             list.sort((a, b) => new Date(`${a.data}T${a.horario || '23:59'}`) - new Date(`${b.data}T${b.horario || '23:59'}`));
             list.forEach(i => {
                 let status = i.resultado || "PENDENTE"; let cor = status === "Venda" ? "text-emerald-500" : status === "NQ" ? "text-rose-500" : "text-slate-400";
-                // i.nome_formando completo garantido nas torres e no dashboard
-                cont.innerHTML += `<div class="glass p-4 rounded-3xl flex flex-col gap-3 border border-white/5"><div class="flex justify-between items-start"><div class="flex flex-col text-left"><span class="text-xs text-slate-400 font-bold">📅 ${i.data?.split('-').reverse().join('/')}</span><span class="text-xl font-black text-blue-400">⏰ ${i.horario || '--:--'}</span></div><div class="flex flex-col items-end text-right"><span class="text-[10px] font-black uppercase ${cor}">${status === "Venda" ? "VENDIDO" : status}</span><span class="text-sm font-black uppercase text-white">${i.nome_formando}</span></div></div><div class="bg-white/5 p-3 rounded-2xl"><p class="text-[10px] text-slate-400 uppercase font-black mb-1">📍 Endereço</p><p class="text-xs font-bold text-slate-200 break-words">${i.endereco || 'S/I'}</p></div><div class="flex gap-2"><button onclick="window.gerenciarItem('${i.path}')" class="btn-primary flex-grow py-3 rounded-xl text-[10px] font-black uppercase">Gerenciar</button><a href="https://wa.me/55${(i.telefone || '').replace(/\D/g,'')}" target="_blank" class="bg-emerald-600/20 border border-emerald-500/30 px-5 py-3 rounded-xl text-emerald-400 text-[10px] font-black uppercase">Zap</a><a href="https://www.waze.com/ul?q=${encodeURIComponent(i.endereco || '')}&navigate=yes" target="_blank" class="bg-blue-600/20 border border-blue-500/30 px-5 py-3 rounded-xl text-blue-400 text-[10px] font-black uppercase">Waze</a></div></div>`;
+                // i.nome_formando completo garantido
+                cont.innerHTML += `<div class="glass p-4 rounded-3xl flex flex-col gap-3 border border-white/5"><div class="flex justify-between items-start"><div class="flex flex-col text-left"><span class="text-xs text-slate-400 font-bold">📅 ${i.data?.split('-').reverse().join('/')}</span><span class="text-xl font-black text-blue-400">⏰ ${i.horario || '--:--'}</span></div><div class="flex flex-col items-end text-right"><span class="text-[10px] font-black uppercase ${cor}">${status === "Venda" ? "VENDIDO" : status}</span><span class="text-sm font-black uppercase text-white">${i.nome_formando}</span></div></div><div class="bg-white/5 p-3 rounded-2xl"><p class="text-[10px] text-slate-400 uppercase font-black mb-1">📍 Endereço</p><p class="text-xs font-bold text-slate-200 break-words">${i.endereco || 'Endereço não informado'}</p></div><div class="flex gap-2"><button onclick="window.gerenciarItem('${i.path}')" class="btn-primary flex-grow py-3 rounded-xl text-[10px] font-black uppercase">Gerenciar</button><a href="https://wa.me/55${(i.telefone || '').replace(/\D/g,'')}" target="_blank" class="bg-emerald-600/20 border border-emerald-500/30 px-5 py-3 rounded-xl text-emerald-400 text-[10px] font-black uppercase">Zap</a><a href="https://www.waze.com/ul?q=${encodeURIComponent(i.endereco || '')}&navigate=yes" target="_blank" class="bg-blue-600/20 border border-blue-500/30 px-5 py-3 rounded-xl text-blue-400 text-[10px] font-black uppercase">Waze</a></div></div>`;
             });
         };
 
-        window.switchView = function(viewId) { document.querySelectorAll('.view-section').forEach(v => v.classList.remove('view-active')); document.getElementById(viewId).classList.add('view-active'); };
+        window.switchView = function(viewId) { document.querySelectorAll('.view-section').forEach(view => view.classList.remove('view-active')); document.getElementById(viewId).classList.add('view-active'); };
         window.renderFila = () => { const cont = document.getElementById('lista-fila'); if (!cont) return; const lista = projetoDB.automacao?.lista?.split('\n').filter(l => l.trim() !== "") || []; const atual = projetoDB.automacao?.index_atual || 0; cont.innerHTML = lista.map((l, i) => `<div class="flex justify-between p-2 rounded-lg ${i < atual ? 'bg-emerald-500/10 text-emerald-500' : 'bg-white/5'}"><span>${i+1}. ${l.split(',')[0]}</span><b>${i < atual ? 'OK' : 'PENDENTE'}</b></div>`).join(''); };
         window.acessoAdmin = () => { if (sessionStorage.getItem('isAdm') === 'true') { window.switchView('view-logistica'); return; } const s = prompt("Senha:"); if (s === "2025") { sessionStorage.setItem('isAdm', 'true'); document.getElementById('controles-admin').classList.remove('hidden'); window.switchView('view-logistica'); } };
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
@@ -621,7 +647,7 @@
                 const ag = snapshot.exists() ? snapshot.val() : {};
                 const tH = window.obterHorariosArray(iso, false);
                 selectH.innerHTML = '<option value="">Selecione o Horário</option>';
-                tH.forEach(h => { let cont = 0; Object.values(ag).forEach(a => { if (a.horario === h) cont++; }); if (cont < 2) selectH.innerHTML += `<option value="${h}">${h}</option>`; });
+                tH.forEach(h => { let contagem = 0; Object.values(ag).forEach(a => { if (a.horario === h) contagem++; }); if (contagem < 2) selectH.innerHTML += `<option value="${h}">${h}</option>`; });
             } catch (error) { selectH.innerHTML = '<option value="">Erro!</option>'; }
         };
 
@@ -645,7 +671,7 @@
             } catch (e) { console.error(e); }
         };
 
-        window.resetIndex = async () => { if (confirm("Reiniciar?")) { await update(ref(db, `projetos/${projId}/automacao`), { index_atual: 0 }); location.reload(); } };
+        window.resetIndex = async () => { if (confirm("Reiniciar fila?")) { await update(ref(db, `projetos/${projId}/automacao`), { index_atual: 0 }); location.reload(); } };
         window.confirmarExclusao = async () => { if (confirm("Excluir?")) { await remove(ref(db, window.itemPath)); window.carregarRelatorio(); window.fecharModalGestao(); } };
         window.limparRegistroVisita = async () => { if (confirm("Zerar?")) await update(ref(db, window.itemPath), { resultado: "Pendente", valor: 0, pagamentos: null, num_album: "" }); window.carregarRelatorio(); window.fecharModalGestao(); };
         window.abrirNovoProjeto = () => { document.getElementById('modalGestao').style.display = 'flex'; document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-emerald-400 font-black text-[10px] uppercase mb-4 text-white">Novo Projeto</h3><input type="text" id="pC" placeholder="Cidade" class="input-compact mb-2 text-white"><input type="text" id="pS" placeholder="Escola" class="input-compact mb-2 text-white"><div class="flex gap-2 mb-4 text-white"><input type="date" id="pSt" class="input-compact flex-grow text-white"><input type="date" id="pEd" class="input-compact flex-grow text-white"></div><button onclick="window.salvarNovoProjeto()" class="btn-primary w-full py-4 rounded-xl font-black uppercase text-xs text-white">Criar</button>`; };
@@ -653,7 +679,7 @@
         window.abrirGestaoVales = () => { document.getElementById('modalGestao').style.display = 'flex'; document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-rose-400 font-black text-[10px] uppercase mb-4 text-center text-white">Lançar Vales</h3><div class="space-y-4 text-white"><div class="bg-white/5 p-3 rounded-2xl text-white"><p class="text-[8px] text-blue-400 font-bold uppercase mb-1 text-white">EVANIO</p><input type="number" id="vEva" value="${valesDB.evanio||0}" class="input-compact text-white"></div><div class="bg-white/5 p-3 rounded-2xl text-white"><p class="text-[8px] text-cyan-400 font-bold uppercase mb-1 text-white">WILLIAN</p><input type="number" id="vWil" value="${valesDB.willian||0}" class="input-compact text-white"></div></div><button onclick="window.salvarVales()" class="btn-primary w-full py-4 rounded-xl font-black uppercase text-xs mt-4 text-white">Salvar</button>`; };
         window.salvarVales = async () => { await update(ref(db, `vales/${projId}`), { evanio: document.getElementById('vEva').value, willian: document.getElementById('vWil').value }); await window.carregarRelatorio(); window.fecharModalGestao(); };
         window.abrirAvulso = () => { document.getElementById('modalGestao').style.display = 'flex'; document.getElementById('gestao-menu').classList.add('hidden'); const f = document.getElementById('gestao-form'); f.classList.remove('hidden'); f.innerHTML = `<h3 class="text-white font-black text-xs uppercase mb-3 text-white">Novo Avulso</h3><input type="text" id="avN" placeholder="Nome" class="input-compact mb-2 text-white"><input type="date" id="avD" class="input-compact mb-2 text-white"><button onclick="window.salvarAvulso()" class="btn-primary w-full p-3 rounded-xl text-[10px] font-black uppercase text-white">Salvar</button>`; };
-        window.salvarAvulso = async () => { const nome = document.getElementById('avN').value; const data = document.getElementById('avD').value; if (!nome || !data) return alert("Preencha!"); try { await set(ref(db, `vendas/${projId}/avulsos/${data}/AV-${Date.now()}`), { nome_formando: nome, data: data, resultado: "Pendente", vendedor: "Willian" }); alert("Salvo!"); window.carregarRelatorio(); window.fecharModalGestao(); } catch (e) { alert("Erro!"); } };
+        window.salvarAvulso = async () => { const nome = document.getElementById('avN').value; const data = document.getElementById('avD').value; if (!nome || !data) return alert("Preencha nome e data!"); try { await set(ref(db, `vendas/${projId}/avulsos/${data}/AV-${Date.now()}`), { nome_formando: nome, data: data, resultado: "Pendente", vendedor: "Willian" }); alert("Avulso Salvo!"); window.carregarRelatorio(); window.fecharModalGestao(); } catch (e) { alert("Erro ao salvar!"); } };
     </script>
 </body>
 
