@@ -247,4 +247,4 @@ setInterval(async () => {
 }, 30000);
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Elite Bot Rodando na porta ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Elite Bot Rodando na porta ${PORT}`));/
