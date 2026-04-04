@@ -1,5 +1,5 @@
 require('dotenv').config();
-const express = require('express');
+const express = require('express'); // Adicionado (essencial para o app funcionar)
 const axios = require('axios');
 const cors = require('cors');
 const { initializeApp } = require("firebase/app");
@@ -216,7 +216,6 @@ app.post('/webhook', async (req, res) => {
     const changes = entry?.changes?.[0]?.value;
     const msg = changes?.messages?.[0];
     
-    // 🛡️ SEGURANÇA: Se não houver mensagem válida, retorna OK e não tenta processar
     if (!msg || !msg.from) {
         return res.sendStatus(200);
     }
@@ -243,9 +242,9 @@ setInterval(async () => {
                 lastPing: Date.now(),
                 status: "online"
             });
-        } catch (err) { console.error("Erro no Heartbeat (Firebase pode estar offline ou regras travadas)"); }
+        } catch (err) { console.error("Erro no Heartbeat"); }
     }
 }, 30000);
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Elite Bot Rodando na porta ${PORT}`)); //////
+app.listen(PORT, () => console.log(`🚀 Elite Bot Rodando na porta ${PORT}`));
