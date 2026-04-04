@@ -1,4 +1,4 @@
-<!DOCTYPE html>  
+<!DOCTYPE html> 
 <html lang="pt-BR">
 
 <head>
@@ -314,36 +314,33 @@
         let projetoDB = {};
         let weeklyChart = null;
 
-        // --- CONEXÃO FIREBASE (CORRIGIDA) ---
-        onValue(ref(db, "config/projeto_ativo"), async (snap) => {
-            projId = snap.val();
-            if (projId) {
-                const pS = await get(ref(db, `projetos/${projId}`));
-                if (pS.exists()) {
-                    projetoDB = pS.val();
-                    // --- CORREÇÃO: Puxa o nome da escola e cidade do cadastro real do projeto ativo ---
-                    document.getElementById('escola-titulo').innerText = projetoDB.cidade || "Cidade";
-                    document.getElementById('sub-escola').innerText = projetoDB.escola || "Escola";
-                    
-                    if (projetoDB.data_inicio) window.gerarBotoesDatas(projetoDB.data_inicio, projetoDB.data_fim);
-                    window.carregarRelatorio();
-                    if (sessionStorage.getItem('isAdm') === 'true') document.getElementById('controles-admin').classList.remove('hidden');
-                    
-                    onValue(ref(db, `projetos/${projId}/bot`), (botSnap) => {
-                        const led = document.getElementById('bot-led');
-                        const txt = document.getElementById('bot-status-text');
-                        const botData = botSnap.val();
-                        if (botData && (botData.status === 'Online' || botData.status === 'online')) {
-                            led.className = 'led-bot led-online';
-                            txt.innerText = 'Bot Ativo';
-                        } else {
-                            led.className = 'led-bot led-offline';
-                            txt.innerText = 'Bot Offline';
-                        }
-                    });
-                }
+        // --- INICIALIZAÇÃO MULTIPROJETO DINÂMICA ---
+const urlParams = new URLSearchParams(window.location.search);
+const idDaUrl = urlParams.get('id');
+
+onValue(ref(db, "config/projeto_ativo"), async (snap) => {
+    const globalId = snap.val();
+    // Prioridade máxima para o ID na URL, depois localstorage, depois global
+    projId = idDaUrl || localStorage.getItem('currentProject') || globalId;
+    
+    if (projId) {
+        const pS = await get(ref(db, `projetos/${projId}`));
+        if (pS.exists()) {
+            projetoDB = pS.val();
+            document.getElementById('escola-titulo').innerText = projetoDB.cidade || "Cidade";
+            document.getElementById('sub-escola').innerText = projetoDB.escola || "Escola";
+            if (projetoDB.data_inicio) window.gerarBotoesDatas(projetoDB.data_inicio, projetoDB.data_fim);
+            window.carregarRelatorio();
+            
+            // Exibe quem está logado
+            const user = localStorage.getItem('userType');
+            if(user) {
+                document.getElementById('user-display').innerText = `| ${user}`;
+                document.getElementById('controles-admin').classList.remove('hidden');
             }
-        });
+        }
+    }
+});
 
         let autoAtivo = false;
         let timerInterval = null;
@@ -971,6 +968,23 @@
             }
         };
 
+        window.acessoAdmin = () => {
+    const user = prompt("Usuário:");
+    if (!user) return;
+    const pass = prompt("Senha:");
+
+    if (pass === "2025") {
+        localStorage.setItem('userType', 'Evanio');
+        localStorage.setItem('isAdmin', 'true');
+        window.switchView('view-logistica');
+        location.reload();
+    } else if (pass === "elite") {
+        localStorage.setItem('userType', 'Willian');
+        localStorage.setItem('isAdmin', 'false');
+        window.switchView('view-logistica');
+        location.reload();
+    } else { alert("Acesso Negado!"); }
+};
         window.acessoAdmin = () => { if (sessionStorage.getItem('isAdm') === 'true') { window.switchView('view-logistica'); return; } const s = prompt("Senha:"); if (s === "2025") { sessionStorage.setItem('isAdm', 'true'); document.getElementById('controles-admin').classList.remove('hidden'); window.switchView('view-logistica'); } else { alert("Senha Incorreta!"); } };
         window.switchView = function(viewId) { document.querySelectorAll('.view-section').forEach(view => view.classList.remove('view-active')); document.getElementById(viewId).classList.add('view-active'); };
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display = 'none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
