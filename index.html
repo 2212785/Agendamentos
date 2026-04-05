@@ -358,7 +358,6 @@
 
         // --- LOGIN E PERMISSÕES ---
         window.acessoAdmin = () => {
-            // Se já estiver logado, abre o menu de logout e navegação
             if (localStorage.getItem('userType')) {
                 document.getElementById('modalGestao').style.display = 'flex';
                 document.getElementById('gestao-menu').classList.add('hidden');
@@ -392,31 +391,10 @@
             location.reload();
         };
 
-        /*
         window.confirmarLogin = () => {
             const user = document.getElementById('login-user').value;
             const pass = document.getElementById('login-pass').value;
 
-            if (pass === "2025") {
-                localStorage.setItem('userType', 'Evanio');
-                localStorage.setItem('isAdmin', 'true');
-                window.fecharModalGestao();
-                location.reload();
-            } else if (pass === "elite") {
-                localStorage.setItem('userType', user);
-                localStorage.setItem('isAdmin', 'false');
-                window.fecharModalGestao();
-                location.reload();
-            } else {
-                alert("Senha Incorreta!");
-            }
-        };
-        */
-        window.confirmarLogin = () => {
-            const user = document.getElementById('login-user').value;
-            const pass = document.getElementById('login-pass').value;
-
-            // Nova lógica de senhas: Evanio = elite | Willian = 2025
             if (user === "Evanio" && pass === "elite") {
                 localStorage.setItem('userType', 'Evanio');
                 localStorage.setItem('isAdmin', 'true');
@@ -1032,6 +1010,7 @@
             location.reload();
         };
 
+        /*
         window.consultarProjetosAnteriores = async () => {
             const f = document.getElementById('gestao-form');
             f.innerHTML = `<h3 class="text-amber-400 font-black text-xs uppercase mb-4 text-center">Escolher Projeto</h3><div id="lista-projs-db" class="space-y-2 max-h-80 overflow-y-auto"></div>`;
@@ -1049,6 +1028,47 @@
                         document.getElementById('lista-projs-db').appendChild(btn);
                     }
                 });
+            }
+        };
+        */
+        window.consultarProjetosAnteriores = async () => {
+            const f = document.getElementById('gestao-form');
+            // Primeiro criamos a estrutura do título e o container da lista
+            f.innerHTML = `
+                <h3 class="text-amber-400 font-black text-xs uppercase mb-4 text-center">Escolher Projeto</h3>
+                <div id="lista-projs-db" class="space-y-2 max-h-80 overflow-y-auto">
+                    <p class="text-[10px] text-center text-slate-500">Carregando...</p>
+                </div>
+            `;
+            
+            const listContainer = document.getElementById('lista-projs-db');
+            const snap = await get(ref(db, "projetos"));
+            const user = localStorage.getItem('userType');
+            const isAdmin = localStorage.getItem('isAdmin') === 'true';
+            
+            if (snap.exists()) {
+                listContainer.innerHTML = ""; // Limpa o "Carregando"
+                const projs = snap.val();
+                Object.keys(projs).forEach(key => {
+                    const p = projs[key];
+                    // Regra: Admin vê tudo, usuário comum vê apenas o que criou
+                    if (isAdmin || p.criador === user) {
+                        const btn = document.createElement('button');
+                        btn.className = "w-full glass p-4 rounded-xl text-left text-[10px] border border-white/5 mb-2";
+                        btn.innerHTML = `<b class="text-blue-400 uppercase">${p.escola}</b><br><span class="text-slate-400">${p.cidade}</span><br><span class="text-[8px] opacity-50">Criador: ${p.criador}</span>`;
+                        btn.onclick = () => { 
+                            localStorage.setItem('currentProject', key); 
+                            location.reload(); 
+                        };
+                        listContainer.appendChild(btn);
+                    }
+                });
+                
+                if(listContainer.innerHTML === "") {
+                    listContainer.innerHTML = `<p class="text-[10px] text-center text-rose-400">Nenhum projeto encontrado.</p>`;
+                }
+            } else {
+                listContainer.innerHTML = `<p class="text-[10px] text-center text-rose-400">Erro ao carregar do banco.</p>`;
             }
         };
 
