@@ -334,15 +334,13 @@
             }
         });
 
-        // --- MIGRACAO DE ESTRUTURA REVISADA (CORREÇÃO FIREBASE v28) ---
-        // Agora separa os custos e dados cadastrais no nó guaratingueta-guilherme
+        // --- MIGRACAO DE ESTRUTURA REVISADA ---
         const realizarMigracaoEstrutura = async () => {
             const snapRaiz = await get(ref(db, "guaratingueta-guilherme"));
             if (snapRaiz.exists()) {
                 console.log("Migrando estrutura completa de Dr. Guilherme Filippo...");
                 const d = snapRaiz.val();
                 
-                // 1. Move dados financeiros para a pasta /custos/
                 await set(ref(db, `custos/guaratingueta-guilherme`), {
                     alim_qtd: d.alim_qtd || 0,
                     alim_valor: d.alim_valor || 0,
@@ -353,7 +351,6 @@
                     pedagio_total: d.pedagio_total || 0
                 });
 
-                // 2. Move dados cadastrais para /projetos/ com estrutura completa
                 await set(ref(db, `projetos/guaratingueta-guilherme`), {
                     cidade: d.cidade || "Guaratinguetá",
                     escola: d.escola || "Dr. Guilherme Filippo",
@@ -365,7 +362,6 @@
                     bot: { status: "offline" }
                 });
 
-                // 3. Remove da raiz
                 await remove(ref(db, "guaratingueta-guilherme"));
                 console.log("Migração de estrutura v28 concluída com sucesso!");
             }
@@ -376,16 +372,24 @@
         const idDaUrl = urlParams.get('id');
 
         onValue(ref(db, "config/projeto_ativo"), async (snap) => {
-            await realizarMigracaoEstrutura(); // Executa a verificação estrutural
+            await realizarMigracaoEstrutura(); 
             
             const globalId = snap.val();
-            // Prioriza o ID da URL para não misturar projetos
             projId = idDaUrl || localStorage.getItem('currentProject') || globalId;
             
             if (projId) {
                 const pS = await get(ref(db, `projetos/${projId}`));
                 if (pS.exists()) {
                     projetoDB = pS.val();
+                    
+                    const userLogado = localStorage.getItem('userType');
+                    const isAdmin = localStorage.getItem('isAdmin') === 'true';
+                    if(!isAdmin && userLogado && projetoDB.criador !== userLogado && idDaUrl) {
+                        alert("Acesso Negado: Este projeto pertence a outro usuário.");
+                        window.location.href = window.location.origin + window.location.pathname;
+                        return;
+                    }
+
                     document.getElementById('escola-titulo').innerText = projetoDB.escola || "Projeto";
                     document.getElementById('sub-escola').innerText = projetoDB.cidade || "Cidade";
                     if (projetoDB.data_inicio) window.gerarBotoesDatas(projetoDB.data_inicio, projetoDB.data_fim);
@@ -505,6 +509,10 @@
         };
 
         window.abrirGestaoVales = () => {
+            const user = localStorage.getItem('userType');
+            const isAdmin = localStorage.getItem('isAdmin') === 'true';
+            if(!isAdmin && projetoDB.criador !== user) return alert("Apenas o criador do projeto pode lançar vales.");
+
             document.getElementById('modalGestao').style.display = 'flex';
             document.getElementById('gestao-menu').classList.add('hidden');
             const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
@@ -626,6 +634,10 @@
 
         // --- GESTÃO DE RESULTADOS ---
         window.fluxoResultado = () => {
+            const user = localStorage.getItem('userType');
+            const isAdmin = localStorage.getItem('isAdmin') === 'true';
+            if(!isAdmin && projetoDB.criador !== user) return alert("Apenas o criador deste projeto pode registrar vendas.");
+
             const f = document.getElementById('gestao-form');
             document.getElementById('gestao-menu').classList.add('hidden');
             f.classList.remove('hidden');
@@ -706,6 +718,10 @@
         };
 
         window.fluxoNQ = async () => {
+            const user = localStorage.getItem('userType');
+            const isAdmin = localStorage.getItem('isAdmin') === 'true';
+            if(!isAdmin && projetoDB.criador !== user) return alert("Apenas o criador do projeto pode marcar NQ.");
+
             const v = prompt("Vendedor do NQ (Evanio/Willian):", "Willian");
             const dtNQ = prompt("Confirmar Data do NQ (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
             if (v && dtNQ) {
@@ -721,6 +737,19 @@
                     await update(ref(db, window.itemPath), { resultado: "NQ", vendedor: v });
                 }
                 alert("NQ registrado!");
+                window.fecharModalGestao();
+                window.carregarRelatorio();
+            }
+        };
+
+        window.confirmarExclusao = async () => {
+            const user = localStorage.getItem('userType');
+            const isAdmin = localStorage.getItem('isAdmin') === 'true';
+            if(!isAdmin && projetoDB.criador !== user) return alert("Apenas o criador pode excluir registros.");
+
+            if(confirm("Deseja realmente EXCLUIR este registro permanentemente?")) {
+                await remove(ref(db, window.itemPath));
+                alert("Registro Excluído!");
                 window.fecharModalGestao();
                 window.carregarRelatorio();
             }
@@ -836,7 +865,6 @@
             m.com = Number(m.com) || 0;
             const ticketMedio = m.v > 0 ? (m.tot / m.v) : 0;
             
-            // CÁLCULO SEGURO E DINÂMICO DOS CUSTOS
             const c = custosDB;
             const rI = (Number(c.km_valor) || 0.7) * (Number(c.km_total) || 0) + (Number(c.pedagio_total) || 0) + ((Number(c.hosp_valor) || 0) * Number(c.hosp_qtd || 0)) + ((Number(c.alim_valor) || 0) * Number(c.alim_qtd || 0));
             
@@ -994,35 +1022,41 @@
             document.getElementById('modalGestao').style.display = 'flex';
             document.getElementById('gestao-menu').classList.add('hidden');
             const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
+            
+            const user = localStorage.getItem('userType');
+            const isAdmin = localStorage.getItem('isAdmin') === 'true';
+            const podeSalvar = isAdmin || p.criador === user;
+
             f.innerHTML = `
                 <h3 class="text-blue-400 font-black text-[12px] uppercase mb-4 text-white text-center">Configurações Projeto</h3>
                 <button onclick="window.consultarProjetosAnteriores()" class="bg-amber-600/20 w-full py-3 rounded-xl text-[10px] mb-4 uppercase font-black">Mudar Projeto</button>
                 <div class="space-y-3">
                     <p class="text-[8px] font-black text-slate-500 uppercase ml-2">Dados Básicos</p>
-                    <input type="text" id="pEsc" value="${p.escola || ''}" class="input-compact" placeholder="Nome da Escola">
-                    <input type="date" id="pDi" value="${p.data_inicio}" class="input-compact">
+                    <input type="text" id="pEsc" value="${p.escola || ''}" class="input-compact" placeholder="Nome da Escola" ${!podeSalvar ? 'disabled' : ''}>
+                    <input type="date" id="pDi" value="${p.data_inicio}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}>
                     <div class="flex justify-between items-center glass p-3 rounded-xl">
                         <span class="text-[10px]">COMISSÃO INDIVIDUAL</span>
-                        <label class="switch"><input type="checkbox" id="pComInd" ${p.comissao_individual ? 'checked' : ''}><span class="slider"></span></label>
+                        <label class="switch"><input type="checkbox" id="pComInd" ${p.comissao_individual ? 'checked' : ''} ${!podeSalvar ? 'disabled' : ''}><span class="slider"></span></label>
                     </div>
-                    <textarea id="pLista" placeholder="Lista" class="input-compact h-20">${p.automacao?.lista || ''}</textarea>
+                    <textarea id="pLista" placeholder="Lista" class="input-compact h-20" ${!podeSalvar ? 'disabled' : ''}>${p.automacao?.lista || ''}</textarea>
                     
                     <p class="text-[8px] font-black text-slate-500 uppercase ml-2 mt-4">Custos de Viagem</p>
                     <div class="grid grid-cols-2 gap-2">
-                        <div class="space-y-1"><span class="label-custo">KM R$</span><input type="number" id="cKv" value="${c.km_valor}" class="input-compact"></div>
-                        <div class="space-y-1"><span class="label-custo">KM Total</span><input type="number" id="cKt" value="${c.km_total}" class="input-compact"></div>
+                        <div class="space-y-1"><span class="label-custo">KM R$</span><input type="number" id="cKv" value="${c.km_valor}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}></div>
+                        <div class="space-y-1"><span class="label-custo">KM Total</span><input type="number" id="cKt" value="${c.km_total}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}></div>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <div class="space-y-1"><span class="label-custo">Hospedagem R$</span><input type="number" id="cHv" value="${c.hosp_valor}" class="input-compact"></div>
-                        <div class="space-y-1"><span class="label-custo">Qtd Noites</span><input type="number" id="cHq" value="${c.hosp_qtd}" class="input-compact"></div>
+                        <div class="space-y-1"><span class="label-custo">Hospedagem R$</span><input type="number" id="cHv" value="${c.hosp_valor}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}></div>
+                        <div class="space-y-1"><span class="label-custo">Qtd Noites</span><input type="number" id="cHq" value="${c.hosp_qtd}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}></div>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <div class="space-y-1"><span class="label-custo">Alimentação R$</span><input type="number" id="cAv" value="${c.alim_valor}" class="input-compact"></div>
-                        <div class="space-y-1"><span class="label-custo">Qtd Refeições</span><input type="number" id="cAq" value="${c.alim_qtd}" class="input-compact"></div>
+                        <div class="space-y-1"><span class="label-custo">Alimentação R$</span><input type="number" id="cAv" value="${c.alim_valor}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}></div>
+                        <div class="space-y-1"><span class="label-custo">Qtd Refeições</span><input type="number" id="cAq" value="${c.alim_qtd}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}></div>
                     </div>
-                    <div class="space-y-1"><span class="label-custo">Total Pedágios R$</span><input type="number" id="cPt" value="${c.pedagio_total}" class="input-compact"></div>
+                    <div class="space-y-1"><span class="label-custo">Total Pedágios R$</span><input type="number" id="cPt" value="${c.pedagio_total}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}></div>
                 </div>
-                <button onclick="window.salvarTudoProjeto()" class="btn-primary w-full py-4 rounded-xl mt-4 font-black uppercase">Gravar Tudo</button>`;
+                ${podeSalvar ? '<button onclick="window.salvarTudoProjeto()" class="btn-primary w-full py-4 rounded-xl mt-4 font-black uppercase">Gravar Tudo</button>' : '<p class="text-[9px] text-center text-slate-500 mt-4 italic">Apenas o criador pode alterar estes dados.</p>'}
+                ${podeSalvar ? '<button onclick="window.deletarProjetoCompleto()" class="bg-rose-900/40 border border-rose-500/30 text-rose-500 w-full py-4 rounded-xl mt-4 text-[10px] font-black uppercase">Deletar Projeto Completo 🗑️</button>' : ''}`;
         };
 
         window.salvarTudoProjeto = async () => {
@@ -1041,7 +1075,33 @@
                 alim_qtd: document.getElementById('cAq').value,
                 pedagio_total: document.getElementById('cPt').value
             });
+            alert("Dados Salvos!");
             location.reload();
+        };
+
+        window.deletarProjetoCompleto = async () => {
+            const user = localStorage.getItem('userType');
+            const passConfirm = prompt(`⚠️ ATENÇÃO: Isso apagará TODOS os dados do projeto permanentemente. Confirme sua senha (${user}) para continuar:`);
+            
+            // Validação de senha baseada nos usuários definidos no sistema
+            let passValida = false;
+            if (user === "Evanio" && passConfirm === "elite") passValida = true;
+            else if (user === "Willian" && passConfirm === "2025") passValida = true;
+
+            if(passValida) {
+                await Promise.all([
+                    remove(ref(db, `projetos/${projId}`)),
+                    remove(ref(db, `dados/${projId}`)),
+                    remove(ref(db, `vendas/${projId}`)),
+                    remove(ref(db, `custos/${projId}`)),
+                    remove(ref(db, `vales/${projId}`))
+                ]);
+                alert("Projeto excluído com sucesso!");
+                localStorage.removeItem('currentProject');
+                window.location.href = window.location.origin + window.location.pathname;
+            } else {
+                alert("Senha incorreta. Operação cancelada.");
+            }
         };
 
         window.abrirNovoProjeto = () => {
@@ -1072,7 +1132,6 @@
             });
             
             localStorage.setItem('currentProject', id);
-            // Redireciona para o link com ID para isolar o trabalho do Willian
             const newUrl = window.location.origin + window.location.pathname + '?id=' + id;
             window.location.href = newUrl;
         };
