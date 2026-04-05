@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="pt-BR">
 
 <head>
@@ -1107,7 +1107,13 @@
             }
         };
 
-        window.switchView = (v) => { document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active')); document.getElementById(v).classList.add('view-active'); };
+        // Modificado para garantir que a fila seja renderizada ao trocar de tela
+        window.switchView = (v) => { 
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active')); 
+            document.getElementById(v).classList.add('view-active'); 
+            if (v === 'view-automacao') window.renderFila(); // Adicionado para forçar renderização da fila
+        };
+        
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display='none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
         window.gerenciarItem = (p) => { window.itemPath = p; document.getElementById('modalGestao').style.display='flex'; };
         
