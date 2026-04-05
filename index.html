@@ -545,8 +545,13 @@
         let autoAtivo = false;
         let timerInterval = null;
 
-        window.iniciarCampanha = () => {
+        window.iniciarCampanha = async () => {
             if (!projetoDB || !projetoDB.automacao?.lista) return alert("Configure a lista no botão 'Dados Projeto'!");
+            
+            // CORREÇÃO: Avisa ao Bot qual é o projeto ativo DESTE usuário no momento
+            const user = localStorage.getItem('userType') || 'Evanio';
+            await update(ref(db, `config/ultimo_projeto_usuario`), { [user]: projId });
+            
             autoAtivo = true;
             document.getElementById('btn-start-auto').classList.add('hidden');
             document.getElementById('btn-stop-auto').classList.remove('hidden');
@@ -561,7 +566,6 @@
             document.getElementById('timer-display').innerText = "00:00";
         };
 
-        // CORREÇÃO: Forçando o envio do projId correto para o BOT
         window.dispararProximoAPI = async () => {
             if (!autoAtivo) return;
             if (typeof db === 'undefined' || !projId) {
@@ -599,7 +603,8 @@
                         telefone: fone,
                         nome_formando: nome,
                         escola: projetoDB.escola || "Escola",
-                        projeto_id: projId // ENVIANDO O ID DO PROJETO CORRETO
+                        projeto_id: projId,
+                        usuario: localStorage.getItem('userType') || 'Evanio' // Enviando quem está disparando
                     })
                 });
 
