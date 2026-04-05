@@ -392,6 +392,7 @@
             location.reload();
         };
 
+        /*
         window.confirmarLogin = () => {
             const user = document.getElementById('login-user').value;
             const pass = document.getElementById('login-pass').value;
@@ -403,6 +404,26 @@
                 location.reload();
             } else if (pass === "elite") {
                 localStorage.setItem('userType', user);
+                localStorage.setItem('isAdmin', 'false');
+                window.fecharModalGestao();
+                location.reload();
+            } else {
+                alert("Senha Incorreta!");
+            }
+        };
+        */
+        window.confirmarLogin = () => {
+            const user = document.getElementById('login-user').value;
+            const pass = document.getElementById('login-pass').value;
+
+            // Nova lógica de senhas: Evanio = elite | Willian = 2025
+            if (user === "Evanio" && pass === "elite") {
+                localStorage.setItem('userType', 'Evanio');
+                localStorage.setItem('isAdmin', 'true');
+                window.fecharModalGestao();
+                location.reload();
+            } else if (user === "Willian" && pass === "2025") {
+                localStorage.setItem('userType', 'Willian');
                 localStorage.setItem('isAdmin', 'false');
                 window.fecharModalGestao();
                 location.reload();
