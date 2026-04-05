@@ -577,15 +577,24 @@
                 return window.pararCampanha();
             }
 
-            const dados = lista[idx].split(',');
+            let dados = lista[idx].includes(';') ? lista[idx].split(';') : lista[idx].split(',');
+            
             if (dados.length < 2) {
-                await update(ref(db, `projetos/${projId}/automacao`), { index_atual: idx + 1 });
-                projetoDB.automacao.index_atual = idx + 1;
+                const prox = idx + 1;
+                await update(ref(db, `projetos/${projId}/automacao`), { index_atual: prox });
+                projetoDB.automacao.index_atual = prox;
                 return window.dispararProximoAPI();
             }
 
             const nome = dados[0].trim();
             const fone = dados[1].trim().replace(/\D/g, '');
+
+            if (!fone) {
+                const prox = idx + 1;
+                await update(ref(db, `projetos/${projId}/automacao`), { index_atual: prox });
+                projetoDB.automacao.index_atual = prox;
+                return window.dispararProximoAPI();
+            }
 
             try {
                 document.getElementById('status-automacao').innerText = `Enviando para: ${nome}...`;
@@ -612,8 +621,13 @@
                 }
             } catch (err) {
                 console.error("Erro no disparo:", err);
-                document.getElementById('status-automacao').innerText = "ERRO NO DISPARO";
-                window.pararCampanha();
+                document.getElementById('status-automacao').innerText = "ERRO NO DISPARO - TENTANDO PRÓXIMO...";
+                setTimeout(async () => {
+                    const prox = idx + 1;
+                    await update(ref(db, `projetos/${projId}/automacao`), { index_atual: prox });
+                    projetoDB.automacao.index_atual = prox;
+                    window.dispararProximoAPI();
+                }, 3000);
             }
         };
 
@@ -1083,7 +1097,6 @@
             const user = localStorage.getItem('userType');
             const passConfirm = prompt(`⚠️ ATENÇÃO: Isso apagará TODOS os dados do projeto permanentemente. Confirme sua senha (${user}) para continuar:`);
             
-            // Validação de senha baseada nos usuários definidos no sistema
             let passValida = false;
             if (user === "Evanio" && passConfirm === "elite") passValida = true;
             else if (user === "Willian" && passConfirm === "2025") passValida = true;
@@ -1270,7 +1283,14 @@
             alert("✅ AGENDADO!"); window.location.href = `https://wa.me/55${zapAviso.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`;
         };
 
-        window.renderFila = () => { const cont = document.getElementById('lista-fila'); if (!cont) return; const lista = projetoDB.automacao?.lista?.split('\n').filter(l => l.trim() !== "") || []; const atual = projetoDB.automacao?.index_atual || 0; cont.innerHTML = lista.map((l, i) => `<div class="flex justify-between p-2 rounded-lg ${i < atual ? 'bg-emerald-500/10 text-emerald-500' : 'bg-white/5'}"><span>${i+1}. ${l.split(',')[0]}</span><b>${i < atual ? 'OK' : 'PENDENTE'}</b></div>`).join(''); };
+        window.renderFila = () => { 
+            const cont = document.getElementById('lista-fila'); 
+            if (!cont) return; 
+            const lista = projetoDB.automacao?.lista?.split('\n').filter(l => l.trim() !== "") || []; 
+            const atual = projetoDB.automacao?.index_atual || 0; 
+            cont.innerHTML = lista.map((l, i) => `<div class="flex justify-between p-2 rounded-lg ${i < atual ? 'bg-emerald-500/10 text-emerald-500' : 'bg-white/5'}"><span>${i+1}. ${l.split(',')[0].split(';')[0]}</span><b>${i < atual ? 'OK' : 'PENDENTE'}</b></div>`).join(''); 
+        };
+
         window.obterHorariosArray = (d) => {
             const doB = new Date(d + "T00:00:00"); const fds = (doB.getDay() === 0 || doB.getDay() === 6);
             let hL = []; const f = fds ? 17 : 20.5;
@@ -1279,6 +1299,29 @@
             }
             return hL;
         };
+
+        // CORREÇÃO: Função reinicializar exportada para o objeto global window
+        window.resetIndex = async () => {
+            const user = localStorage.getItem('userType');
+            const isAdmin = localStorage.getItem('isAdmin') === 'true';
+            
+            // TRAVA DE SEGURANÇA: Somente criador ou Admin
+            if(!isAdmin && projetoDB.criador !== user) {
+                return alert("Apenas o criador do projeto pode reiniciar esta fila.");
+            }
+
+            if(confirm("Reiniciar a fila de disparos do início?")) {
+                try {
+                    await update(ref(db, `projetos/${projId}/automacao`), { index_atual: 0 });
+                    projetoDB.automacao.index_atual = 0;
+                    window.renderFila();
+                    alert("Fila reiniciada!");
+                } catch (e) {
+                    alert("Erro ao reiniciar fila.");
+                }
+            }
+        };
+
     </script>
 </body>
 </html>
