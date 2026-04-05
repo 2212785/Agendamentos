@@ -561,6 +561,7 @@
             document.getElementById('timer-display').innerText = "00:00";
         };
 
+        // CORREÇÃO: Forçando o envio do projId correto para o BOT
         window.dispararProximoAPI = async () => {
             if (!autoAtivo) return;
             if (typeof db === 'undefined' || !projId) {
@@ -589,13 +590,6 @@
             const nome = dados[0].trim();
             const fone = dados[1].trim().replace(/\D/g, '');
 
-            if (!fone) {
-                const prox = idx + 1;
-                await update(ref(db, `projetos/${projId}/automacao`), { index_atual: prox });
-                projetoDB.automacao.index_atual = prox;
-                return window.dispararProximoAPI();
-            }
-
             try {
                 document.getElementById('status-automacao').innerText = `Enviando para: ${nome}...`;
                 const response = await fetch("https://agendamentos-4zxv.onrender.com/disparar-template", {
@@ -605,7 +599,7 @@
                         telefone: fone,
                         nome_formando: nome,
                         escola: projetoDB.escola || "Escola",
-                        projeto_id: projId
+                        projeto_id: projId // ENVIANDO O ID DO PROJETO CORRETO
                     })
                 });
 
@@ -1291,37 +1285,16 @@
             cont.innerHTML = lista.map((l, i) => `<div class="flex justify-between p-2 rounded-lg ${i < atual ? 'bg-emerald-500/10 text-emerald-500' : 'bg-white/5'}"><span>${i+1}. ${l.split(',')[0].split(';')[0]}</span><b>${i < atual ? 'OK' : 'PENDENTE'}</b></div>`).join(''); 
         };
 
-        window.obterHorariosArray = (d) => {
-            const doB = new Date(d + "T00:00:00"); const fds = (doB.getDay() === 0 || doB.getDay() === 6);
-            let hL = []; const f = fds ? 17 : 20.5;
-            for (let h = 9; h <= f; h += 0.5) { 
-                const hh = Math.floor(h).toString().padStart(2, '0'); const mm = (h % 1 === 0) ? '00' : '30'; hL.push(`${hh}:${mm}`); 
-            }
-            return hL;
-        };
-
-        // CORREÇÃO: Função reinicializar exportada para o objeto global window
         window.resetIndex = async () => {
             const user = localStorage.getItem('userType');
             const isAdmin = localStorage.getItem('isAdmin') === 'true';
-            
-            // TRAVA DE SEGURANÇA: Somente criador ou Admin
-            if(!isAdmin && projetoDB.criador !== user) {
-                return alert("Apenas o criador do projeto pode reiniciar esta fila.");
-            }
-
-            if(confirm("Reiniciar a fila de disparos do início?")) {
-                try {
-                    await update(ref(db, `projetos/${projId}/automacao`), { index_atual: 0 });
-                    projetoDB.automacao.index_atual = 0;
-                    window.renderFila();
-                    alert("Fila reiniciada!");
-                } catch (e) {
-                    alert("Erro ao reiniciar fila.");
-                }
+            if(!isAdmin && projetoDB.criador !== user) return alert("Apenas o criador pode reiniciar a fila.");
+            if(confirm("Reiniciar a fila?")) {
+                await update(ref(db, `projetos/${projId}/automacao`), { index_atual: 0 });
+                projetoDB.automacao.index_atual = 0;
+                window.renderFila();
             }
         };
-
     </script>
 </body>
 </html>
