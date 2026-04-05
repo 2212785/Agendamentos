@@ -379,6 +379,7 @@
             await realizarMigracaoEstrutura(); // Executa a verificação estrutural
             
             const globalId = snap.val();
+            // Prioriza o ID da URL para não misturar projetos
             projId = idDaUrl || localStorage.getItem('currentProject') || globalId;
             
             if (projId) {
@@ -1057,15 +1058,23 @@
 
         window.salvarNovoProjeto = async () => {
             const sch = document.getElementById('pS').value;
-            const id = sch.toLowerCase().replace(/\s+/g, '-');
+            const cid = document.getElementById('pC').value;
+            if(!sch || !cid) return alert("Preencha Cidade e Escola!");
+            
+            const id = sch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
             const user = localStorage.getItem('userType') || 'Evanio';
+            
             await set(ref(db, `projetos/${id}`), {
-                cidade: document.getElementById('pC').value, escola: sch, criador: user,
+                cidade: cid, escola: sch, criador: user,
                 data_inicio: document.getElementById('pSt').value, data_fim: document.getElementById('pEd').value,
-                comissao_individual: true
+                comissao_individual: true,
+                automacao: { lista: "", msg1: "", msg2: "", msg3: "", msg4: "", index_atual: 0 }
             });
+            
             localStorage.setItem('currentProject', id);
-            location.reload();
+            // Redireciona para o link com ID para isolar o trabalho do Willian
+            const newUrl = window.location.origin + window.location.pathname + '?id=' + id;
+            window.location.href = newUrl;
         };
 
         window.consultarProjetosAnteriores = async () => {
@@ -1093,7 +1102,7 @@
                         btn.innerHTML = `<b class="text-blue-400 uppercase">${p.escola}</b><br><span class="text-slate-400">${p.cidade}</span><br><span class="text-[8px] opacity-50">Criador: ${p.criador}</span>`;
                         btn.onclick = () => { 
                             localStorage.setItem('currentProject', key); 
-                            location.reload(); 
+                            window.location.href = window.location.origin + window.location.pathname + '?id=' + key; 
                         };
                         listContainer.appendChild(btn);
                     }
@@ -1107,11 +1116,10 @@
             }
         };
 
-        // Modificado para garantir que a fila seja renderizada ao trocar de tela
         window.switchView = (v) => { 
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active')); 
             document.getElementById(v).classList.add('view-active'); 
-            if (v === 'view-automacao') window.renderFila(); // Adicionado para forçar renderização da fila
+            if (v === 'view-automacao') window.renderFila(); 
         };
         
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display='none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
@@ -1128,7 +1136,6 @@
             
             window.dadosCompletos = [];
             
-            // RESET E CARGA DE CUSTOS GARANTIDA
             custosDB = sC.exists() ? sC.val() : { km_valor: 0.7, km_total: 0, hosp_valor: 0, hosp_qtd: 0, alim_valor: 0, alim_qtd: 0, pedagio_total: 0 };
             valesDB = sVales.exists() ? sVales.val() : {};
             
