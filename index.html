@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Master - v28.00 PLATINUM</title>
+    <title>Elite Sales Master - v28.01 PLATINUM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -340,27 +340,27 @@
             const snapRaiz = await get(ref(db, "guaratingueta-guilherme"));
             if (snapRaiz.exists()) {
                 console.log("Migrando estrutura completa de Dr. Guilherme Filippo...");
-                const dadosOriginais = snapRaiz.val();
+                const d = snapRaiz.val();
                 
                 // 1. Move dados financeiros para a pasta /custos/
                 await set(ref(db, `custos/guaratingueta-guilherme`), {
-                    alim_qtd: dadosOriginais.alim_qtd || 0,
-                    alim_valor: dadosOriginais.alim_valor || 0,
-                    hosp_qtd: dadosOriginais.hosp_qtd || 0,
-                    hosp_valor: dadosOriginais.hosp_valor || 0,
-                    km_total: dadosOriginais.km_total || 0,
-                    km_valor: dadosOriginais.km_valor || 0.7,
-                    pedagio_total: dadosOriginais.pedagio_total || 0
+                    alim_qtd: d.alim_qtd || 0,
+                    alim_valor: d.alim_valor || 0,
+                    hosp_qtd: d.hosp_qtd || 0,
+                    hosp_valor: d.hosp_valor || 0,
+                    km_total: d.km_total || 0,
+                    km_valor: d.km_valor || 0.7,
+                    pedagio_total: d.pedagio_total || 0
                 });
 
                 // 2. Move dados cadastrais para /projetos/ com estrutura completa
                 await set(ref(db, `projetos/guaratingueta-guilherme`), {
-                    cidade: dadosOriginais.cidade || "Guaratinguetá",
-                    escola: dadosOriginais.escola || "Dr. Guilherme Filippo",
+                    cidade: d.cidade || "Guaratinguetá",
+                    escola: d.escola || "Dr. Guilherme Filippo",
                     criador: "Evanio",
                     comissao_individual: false,
-                    data_inicio: dadosOriginais.data_inicio || "",
-                    data_fim: dadosOriginais.data_fim || "",
+                    data_inicio: d.data_inicio || "",
+                    data_fim: d.data_fim || "",
                     automacao: { lista: "", msg1: "", msg2: "", msg3: "", msg4: "" },
                     bot: { status: "offline" }
                 });
@@ -725,6 +725,7 @@
             }
         };
 
+        // --- RELATÓRIOS E BI ---
         window.menuRelatorio = () => {
             document.getElementById('modalGestao').style.display = 'flex';
             document.getElementById('gestao-menu').classList.add('hidden');
@@ -834,26 +835,29 @@
             m.com = Number(m.com) || 0;
             const ticketMedio = m.v > 0 ? (m.tot / m.v) : 0;
             
-            const rI = (parseFloat(custosDB.km_valor) || 0.7) * (parseFloat(custosDB.km_total) || 0) + (parseFloat(custosDB.pedagio_total) || 0) + ((parseFloat(custosDB.hosp_valor) || 0) * parseInt(custosDB.hosp_qtd || 0)) + ((parseFloat(custosDB.alim_valor) || 0) * parseInt(custosDB.alim_qtd || 0));
+            // CÁLCULO SEGURO E DINÂMICO DOS CUSTOS
+            const c = custosDB;
+            const rI = (Number(c.km_valor) || 0.7) * (Number(c.km_total) || 0) + (Number(c.pedagio_total) || 0) + ((Number(c.hosp_valor) || 0) * Number(c.hosp_qtd || 0)) + ((Number(c.alim_valor) || 0) * Number(c.alim_qtd || 0));
             
             let diffDias = 1;
             let dataInicioRaw = projetoDB.data_inicio;
             if (dataInicioRaw) {
                 let inicio = new Date(dataInicioRaw + "T00:00:00");
-                let ontem = new Date(); ontem.setDate(ontem.getDate() - 1);
-                diffDias = Math.floor((ontem - inicio) / (1000 * 60 * 60 * 24)) + 1;
+                let hoje = new Date(); hoje.setHours(0,0,0,0);
+                diffDias = Math.floor((hoje - inicio) / 86400000) + 1;
                 if (diffDias <= 0) diffDias = 1;
             }
 
             let totalValesEvanio = 0;
             let totalValesWillian = 0;
             Object.values(valesDB || {}).forEach(v => {
+                const val = Number(v.valor) || 0;
                 if (isIndividual) {
-                    if (v.vendedor === "Evanio") totalValesEvanio += Number(v.valor) || 0;
-                    if (v.vendedor === "Willian") totalValesWillian += Number(v.valor) || 0;
+                    if (v.vendedor === "Evanio") totalValesEvanio += val;
+                    if (v.vendedor === "Willian") totalValesWillian += val;
                 } else {
-                    totalValesEvanio += (Number(v.valor) || 0) / 2;
-                    totalValesWillian += (Number(v.valor) || 0) / 2;
+                    totalValesEvanio += val / 2;
+                    totalValesWillian += val / 2;
                 }
             });
 
@@ -1001,6 +1005,7 @@
                         <label class="switch"><input type="checkbox" id="pComInd" ${p.comissao_individual ? 'checked' : ''}><span class="slider"></span></label>
                     </div>
                     <textarea id="pLista" placeholder="Lista" class="input-compact h-20">${p.automacao?.lista || ''}</textarea>
+                    
                     <p class="text-[8px] font-black text-slate-500 uppercase ml-2 mt-4">Custos de Viagem</p>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="space-y-1"><span class="label-custo">KM R$</span><input type="number" id="cKv" value="${c.km_valor}" class="input-compact"></div>
@@ -1071,10 +1076,12 @@
                     <p class="text-[10px] text-center text-slate-500">Carregando...</p>
                 </div>
             `;
+            
             const listContainer = document.getElementById('lista-projs-db');
             const snap = await get(ref(db, "projetos"));
             const user = localStorage.getItem('userType');
             const isAdmin = localStorage.getItem('isAdmin') === 'true';
+            
             if (snap.exists()) {
                 listContainer.innerHTML = "";
                 const projs = snap.val();
@@ -1084,12 +1091,20 @@
                         const btn = document.createElement('button');
                         btn.className = "w-full glass p-4 rounded-xl text-left text-[10px] border border-white/5 mb-2";
                         btn.innerHTML = `<b class="text-blue-400 uppercase">${p.escola}</b><br><span class="text-slate-400">${p.cidade}</span><br><span class="text-[8px] opacity-50">Criador: ${p.criador}</span>`;
-                        btn.onclick = () => { localStorage.setItem('currentProject', key); location.reload(); };
+                        btn.onclick = () => { 
+                            localStorage.setItem('currentProject', key); 
+                            location.reload(); 
+                        };
                         listContainer.appendChild(btn);
                     }
                 });
-                if(listContainer.innerHTML === "") listContainer.innerHTML = `<p class="text-[10px] text-center text-rose-400">Nenhum projeto encontrado.</p>`;
-            } else listContainer.innerHTML = `<p class="text-[10px] text-center text-rose-400">Erro ao carregar do banco.</p>`;
+                
+                if(listContainer.innerHTML === "") {
+                    listContainer.innerHTML = `<p class="text-[10px] text-center text-rose-400">Nenhum projeto encontrado.</p>`;
+                }
+            } else {
+                listContainer.innerHTML = `<p class="text-[10px] text-center text-rose-400">Erro ao carregar do banco.</p>`;
+            }
         };
 
         window.switchView = (v) => { document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active')); document.getElementById(v).classList.add('view-active'); };
@@ -1097,14 +1112,26 @@
         window.gerenciarItem = (p) => { window.itemPath = p; document.getElementById('modalGestao').style.display='flex'; };
         
         window.carregarRelatorio = async () => {
-            const [sA, sV, sC, sVales] = await Promise.all([ get(ref(db, `dados/${projId}/agendamentos`)), get(ref(db, `vendas/${projId}`)), get(ref(db, `custos/${projId}`)), get(ref(db, `vales/${projId}`)) ]);
+            if(!projId) return;
+            const [sA, sV, sC, sVales] = await Promise.all([ 
+                get(ref(db, `dados/${projId}/agendamentos`)), 
+                get(ref(db, `vendas/${projId}`)), 
+                get(ref(db, `custos/${projId}`)), 
+                get(ref(db, `vales/${projId}`)) 
+            ]);
+            
             window.dadosCompletos = [];
-            custosDB = sC.exists() ? sC.val() : custosDB;
+            
+            // RESET E CARGA DE CUSTOS GARANTIDA
+            custosDB = sC.exists() ? sC.val() : { km_valor: 0.7, km_total: 0, hosp_valor: 0, hosp_qtd: 0, alim_valor: 0, alim_qtd: 0, pedagio_total: 0 };
             valesDB = sVales.exists() ? sVales.val() : {};
+            
             const proc = (p, b) => { if(!p) return; Object.keys(p).forEach(k => { if(p[k].nome_formando) window.dadosCompletos.push({...p[k], path: `${b}/${k}`, id: k}); else Object.keys(p[k]).forEach(sK => window.dadosCompletos.push({...p[k][sK], path: `${b}/${k}/${sK}`, id: sK, data: k})); }); };
             if(sA.exists()) proc(sA.val(), `dados/${projId}/agendamentos`);
             if(sV.exists()) { if(sV.val().agendamentos) proc(sV.val().agendamentos, `vendas/${projId}/agendamentos`); if(sV.val().avulsos) proc(sV.val().avulsos, `vendas/${projId}/avulsos`); }
-            window.filtrarLogistica(); window.filtrarBI();
+            
+            window.filtrarLogistica(); 
+            window.filtrarBI();
         };
 
         window.filtrarLogistica = () => {
@@ -1114,11 +1141,18 @@
             list.forEach(i => {
                 let status = i.resultado || "PENDENTE";
                 let statusColor = status === "Venda" ? "text-emerald-400" : (status === "NQ" ? "text-rose-500" : "text-blue-500");
+                
                 cont.innerHTML += `
                 <div class="glass p-4 rounded-3xl mb-3 border border-white/5">
                     <div class="flex justify-between items-start">
-                        <div><span class="text-xs text-slate-400">📅 ${i.data?.split('-').reverse().join('/')}</span><br><b class="text-blue-400">⏰ ${i.horario || '--:--'}</b></div>
-                        <div class="text-right"><span class="text-[12px] uppercase font-black ${statusColor}">${status}</span><br><span class="text-[10px] text-white uppercase font-black">${i.nome_formando}</span></div>
+                        <div>
+                            <span class="text-xs text-slate-400">📅 ${i.data?.split('-').reverse().join('/')}</span><br>
+                            <b class="text-blue-400">⏰ ${i.horario || '--:--'}</b>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[12px] uppercase font-black ${statusColor}">${status}</span><br>
+                            <span class="text-[10px] text-white uppercase font-black">${i.nome_formando}</span>
+                        </div>
                     </div>
                     <div class="text-[13px] mt-2 text-slate-300 font-semibold italic">${i.endereco||'S/E'}</div>
                     <button onclick="window.gerenciarItem('${i.path}')" class="btn-primary w-full py-3 rounded-xl mt-3 text-[10px] font-black uppercase">Gerenciar</button>
