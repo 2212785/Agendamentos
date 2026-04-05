@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
@@ -329,8 +329,7 @@
                 const pS = await get(ref(db, `projetos/${projId}`));
                 if (pS.exists()) {
                     projetoDB = pS.val();
-                    /* document.getElementById('escola-titulo').innerText = projetoDB.cidade || "Cidade"; */
-                    document.getElementById('escola-titulo').innerText = "Conselheiro Rodrigues Alves";
+                    document.getElementById('escola-titulo').innerText = projetoDB.cidade || "Cidade";
                     document.getElementById('sub-escola').innerText = projetoDB.escola || "Escola";
                     if (projetoDB.data_inicio) window.gerarBotoesDatas(projetoDB.data_inicio, projetoDB.data_fim);
                     window.carregarRelatorio();
@@ -1011,8 +1010,30 @@
             location.reload();
         };
 
+        /*
         window.consultarProjetosAnteriores = async () => {
             const f = document.getElementById('gestao-form');
+            f.innerHTML = `<h3 class="text-amber-400 font-black text-xs uppercase mb-4 text-center">Escolher Projeto</h3><div id="lista-projs-db" class="space-y-2 max-h-80 overflow-y-auto"></div>`;
+            const snap = await get(ref(db, "projetos"));
+            const user = localStorage.getItem('userType');
+            const isAdmin = localStorage.getItem('isAdmin') === 'true';
+            if (snap.exists()) {
+                Object.keys(snap.val()).forEach(key => {
+                    const p = snap.val()[key];
+                    if (isAdmin || p.criador === user) {
+                        const btn = document.createElement('button');
+                        btn.className = "w-full glass p-4 rounded-xl text-left text-[10px]";
+                        btn.innerHTML = `<b class="text-blue-400">${p.escola}</b><br>${p.cidade} (Dono: ${p.criador})`;
+                        btn.onclick = () => { localStorage.setItem('currentProject', key); location.reload(); };
+                        document.getElementById('lista-projs-db').appendChild(btn);
+                    }
+                });
+            }
+        };
+        */
+        window.consultarProjetosAnteriores = async () => {
+            const f = document.getElementById('gestao-form');
+            // Primeiro criamos a estrutura do título e o container da lista
             f.innerHTML = `
                 <h3 class="text-amber-400 font-black text-xs uppercase mb-4 text-center">Escolher Projeto</h3>
                 <div id="lista-projs-db" class="space-y-2 max-h-80 overflow-y-auto">
@@ -1026,10 +1047,11 @@
             const isAdmin = localStorage.getItem('isAdmin') === 'true';
             
             if (snap.exists()) {
-                listContainer.innerHTML = "";
+                listContainer.innerHTML = ""; // Limpa o "Carregando"
                 const projs = snap.val();
                 Object.keys(projs).forEach(key => {
                     const p = projs[key];
+                    // Regra: Admin vê tudo, usuário comum vê apenas o que criou
                     if (isAdmin || p.criador === user) {
                         const btn = document.createElement('button');
                         btn.className = "w-full glass p-4 rounded-xl text-left text-[10px] border border-white/5 mb-2";
@@ -1050,6 +1072,7 @@
             }
         };
 
+        // Funções de Suporte (Manutenção da integridade v27.96/97)
         window.switchView = (v) => { document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active')); document.getElementById(v).classList.add('view-active'); };
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display='none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
         window.gerenciarItem = (p) => { window.itemPath = p; document.getElementById('modalGestao').style.display='flex'; };
