@@ -202,7 +202,7 @@
                         <option value="">Selecione o Dia</option>
                     </select>
                     <textarea id="endereco" required placeholder="Endereço Completo" class="input-compact text-white" rows="2"></textarea>
-                    <button type="submit" class="btn-primary w-full py-4 rounded-xl font-black uppercase text-sm">Agendar Visita</button>
+                    <button type="submit" id="btn-agendar-visita" class="btn-primary w-full py-4 rounded-xl font-black uppercase text-sm">Agendar Visita</button>
                 </form>
             </div>
         </div>
@@ -317,6 +317,28 @@
         let projetoDB = {};
         let weeklyChart = null;
 
+        // --- ACÃO GLOBAL DO ENTER ---
+        // Implementação para que a tecla Enter dispare o botão principal visível
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                // Prioridade 1: Botão de Login no Modal
+                const btnLogin = document.getElementById('btn-confirmar-login');
+                if (btnLogin && document.getElementById('modalGestao').style.display === 'flex') {
+                    return btnLogin.click();
+                }
+                // Prioridade 2: Botões de confirmação de formulários dinâmicos (Venda, Vale, Avulso)
+                const btnAcaoForm = document.querySelector('#gestao-form button.btn-primary');
+                if (btnAcaoForm && !btnAcaoForm.closest('.hidden')) {
+                    return btnAcaoForm.click();
+                }
+                // Prioridade 3: Agendamento Principal
+                const btnAgendar = document.getElementById('btn-agendar-visita');
+                if (btnAgendar && document.activeElement.closest('#form-agendamento')) {
+                    return btnAgendar.click();
+                }
+            }
+        });
+
         // --- INICIALIZAÇÃO MULTIPROJETO DINÂMICA ---
         const urlParams = new URLSearchParams(window.location.search);
         const idDaUrl = urlParams.get('id');
@@ -381,7 +403,7 @@
                     <option value="Willian">Willian</option>
                 </select>
                 <input type="password" id="login-pass" placeholder="Senha" class="input-compact mb-4 text-white">
-                <button onclick="window.confirmarLogin()" class="btn-primary w-full py-4 rounded-xl text-[10px] font-black uppercase">Entrar</button>
+                <button id="btn-confirmar-login" onclick="window.confirmarLogin()" class="btn-primary w-full py-4 rounded-xl text-[10px] font-black uppercase">Entrar</button>
             `;
         };
 
@@ -391,6 +413,26 @@
             location.reload();
         };
 
+        /*
+        window.confirmarLogin = () => {
+            const user = document.getElementById('login-user').value;
+            const pass = document.getElementById('login-pass').value;
+
+            if (user === "Evanio" && pass === "elite") {
+                localStorage.setItem('userType', 'Evanio');
+                localStorage.setItem('isAdmin', 'true');
+                window.fecharModalGestao();
+                location.reload();
+            } else if (user === "Willian" && pass === "2025") {
+                localStorage.setItem('userType', 'Willian');
+                localStorage.setItem('isAdmin', 'false');
+                window.fecharModalGestao();
+                location.reload();
+            } else {
+                alert("Senha Incorreta!");
+            }
+        };
+        */
         window.confirmarLogin = () => {
             const user = document.getElementById('login-user').value;
             const pass = document.getElementById('login-pass').value;
@@ -1010,30 +1052,8 @@
             location.reload();
         };
 
-        /*
         window.consultarProjetosAnteriores = async () => {
             const f = document.getElementById('gestao-form');
-            f.innerHTML = `<h3 class="text-amber-400 font-black text-xs uppercase mb-4 text-center">Escolher Projeto</h3><div id="lista-projs-db" class="space-y-2 max-h-80 overflow-y-auto"></div>`;
-            const snap = await get(ref(db, "projetos"));
-            const user = localStorage.getItem('userType');
-            const isAdmin = localStorage.getItem('isAdmin') === 'true';
-            if (snap.exists()) {
-                Object.keys(snap.val()).forEach(key => {
-                    const p = snap.val()[key];
-                    if (isAdmin || p.criador === user) {
-                        const btn = document.createElement('button');
-                        btn.className = "w-full glass p-4 rounded-xl text-left text-[10px]";
-                        btn.innerHTML = `<b class="text-blue-400">${p.escola}</b><br>${p.cidade} (Dono: ${p.criador})`;
-                        btn.onclick = () => { localStorage.setItem('currentProject', key); location.reload(); };
-                        document.getElementById('lista-projs-db').appendChild(btn);
-                    }
-                });
-            }
-        };
-        */
-        window.consultarProjetosAnteriores = async () => {
-            const f = document.getElementById('gestao-form');
-            // Primeiro criamos a estrutura do título e o container da lista
             f.innerHTML = `
                 <h3 class="text-amber-400 font-black text-xs uppercase mb-4 text-center">Escolher Projeto</h3>
                 <div id="lista-projs-db" class="space-y-2 max-h-80 overflow-y-auto">
@@ -1047,11 +1067,10 @@
             const isAdmin = localStorage.getItem('isAdmin') === 'true';
             
             if (snap.exists()) {
-                listContainer.innerHTML = ""; // Limpa o "Carregando"
+                listContainer.innerHTML = "";
                 const projs = snap.val();
                 Object.keys(projs).forEach(key => {
                     const p = projs[key];
-                    // Regra: Admin vê tudo, usuário comum vê apenas o que criou
                     if (isAdmin || p.criador === user) {
                         const btn = document.createElement('button');
                         btn.className = "w-full glass p-4 rounded-xl text-left text-[10px] border border-white/5 mb-2";
@@ -1072,7 +1091,6 @@
             }
         };
 
-        // Funções de Suporte (Manutenção da integridade v27.96/97)
         window.switchView = (v) => { document.querySelectorAll('.view-section').forEach(s => s.classList.remove('view-active')); document.getElementById(v).classList.add('view-active'); };
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display='none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
         window.gerenciarItem = (p) => { window.itemPath = p; document.getElementById('modalGestao').style.display='flex'; };
