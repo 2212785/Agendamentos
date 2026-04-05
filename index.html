@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Master - v27.97 PLATINUM</title>
+    <title>Elite Sales Master - v27.98 PLATINUM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -318,20 +318,16 @@
         let weeklyChart = null;
 
         // --- ACÃO GLOBAL DO ENTER ---
-        // Implementação para que a tecla Enter dispare o botão principal visível
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                // Prioridade 1: Botão de Login no Modal
                 const btnLogin = document.getElementById('btn-confirmar-login');
                 if (btnLogin && document.getElementById('modalGestao').style.display === 'flex') {
                     return btnLogin.click();
                 }
-                // Prioridade 2: Botões de confirmação de formulários dinâmicos (Venda, Vale, Avulso)
                 const btnAcaoForm = document.querySelector('#gestao-form button.btn-primary');
                 if (btnAcaoForm && !btnAcaoForm.closest('.hidden')) {
                     return btnAcaoForm.click();
                 }
-                // Prioridade 3: Agendamento Principal
                 const btnAgendar = document.getElementById('btn-agendar-visita');
                 if (btnAgendar && document.activeElement.closest('#form-agendamento')) {
                     return btnAgendar.click();
@@ -351,8 +347,9 @@
                 const pS = await get(ref(db, `projetos/${projId}`));
                 if (pS.exists()) {
                     projetoDB = pS.val();
-                    document.getElementById('escola-titulo').innerText = projetoDB.cidade || "Cidade";
-                    document.getElementById('sub-escola').innerText = projetoDB.escola || "Escola";
+                    /* document.getElementById('escola-titulo').innerText = "Conselheiro Rodrigues Alves"; */
+                    document.getElementById('escola-titulo').innerText = projetoDB.escola || "Projeto";
+                    document.getElementById('sub-escola').innerText = projetoDB.cidade || "Cidade";
                     if (projetoDB.data_inicio) window.gerarBotoesDatas(projetoDB.data_inicio, projetoDB.data_fim);
                     window.carregarRelatorio();
                     
@@ -413,26 +410,6 @@
             location.reload();
         };
 
-        /*
-        window.confirmarLogin = () => {
-            const user = document.getElementById('login-user').value;
-            const pass = document.getElementById('login-pass').value;
-
-            if (user === "Evanio" && pass === "elite") {
-                localStorage.setItem('userType', 'Evanio');
-                localStorage.setItem('isAdmin', 'true');
-                window.fecharModalGestao();
-                location.reload();
-            } else if (user === "Willian" && pass === "2025") {
-                localStorage.setItem('userType', 'Willian');
-                localStorage.setItem('isAdmin', 'false');
-                window.fecharModalGestao();
-                location.reload();
-            } else {
-                alert("Senha Incorreta!");
-            }
-        };
-        */
         window.confirmarLogin = () => {
             const user = document.getElementById('login-user').value;
             const pass = document.getElementById('login-pass').value;
@@ -984,6 +961,8 @@
                 <h3 class="text-blue-400 font-black text-[12px] uppercase mb-4 text-white text-center">Configurações Projeto</h3>
                 <button onclick="window.consultarProjetosAnteriores()" class="bg-amber-600/20 w-full py-3 rounded-xl text-[10px] mb-4 uppercase font-black">Mudar Projeto</button>
                 <div class="space-y-3">
+                    <p class="text-[8px] font-black text-slate-500 uppercase ml-2">Dados Básicos</p>
+                    <input type="text" id="pEsc" value="${p.escola || ''}" class="input-compact" placeholder="Nome da Escola">
                     <input type="date" id="pDi" value="${p.data_inicio}" class="input-compact">
                     <div class="flex justify-between items-center glass p-3 rounded-xl">
                         <span class="text-[10px]">COMISSÃO INDIVIDUAL</span>
@@ -1011,6 +990,7 @@
 
         window.salvarTudoProjeto = async () => {
             await update(ref(db, `projetos/${projId}`), { 
+                escola: document.getElementById('pEsc').value,
                 data_inicio: document.getElementById('pDi').value,
                 comissao_individual: document.getElementById('pComInd').checked,
                 automacao: { ...projetoDB.automacao, lista: document.getElementById('pLista').value }
