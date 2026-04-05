@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Master - v27.98 PLATINUM</title>
+    <title>Elite Sales Master - v27.99 PLATINUM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -335,11 +335,29 @@
             }
         });
 
+        // --- MIGRACAO DE ESTRUTURA (CORREÇÃO FIREBASE) ---
+        // Esta função move o projeto guaratingueta-guilherme da raiz para /projetos/
+        const realizarMigracaoEstrutura = async () => {
+            const snap = await get(ref(db, "guaratingueta-guilherme"));
+            if (snap.exists()) {
+                console.log("Migrando projeto guaratingueta-guilherme para a pasta projetos...");
+                const dados = snap.val();
+                await set(ref(db, `projetos/guaratingueta-guilherme`), {
+                    ...dados,
+                    criador: dados.criador || "Evanio" // Garante um criador padrão
+                });
+                await remove(ref(db, "guaratingueta-guilherme"));
+                console.log("Migração concluída!");
+            }
+        };
+
         // --- INICIALIZAÇÃO MULTIPROJETO DINÂMICA ---
         const urlParams = new URLSearchParams(window.location.search);
         const idDaUrl = urlParams.get('id');
 
         onValue(ref(db, "config/projeto_ativo"), async (snap) => {
+            await realizarMigracaoEstrutura(); // Verifica migração ao iniciar
+            
             const globalId = snap.val();
             projId = idDaUrl || localStorage.getItem('currentProject') || globalId;
             
@@ -347,7 +365,6 @@
                 const pS = await get(ref(db, `projetos/${projId}`));
                 if (pS.exists()) {
                     projetoDB = pS.val();
-                    /* document.getElementById('escola-titulo').innerText = "Conselheiro Rodrigues Alves"; */
                     document.getElementById('escola-titulo').innerText = projetoDB.escola || "Projeto";
                     document.getElementById('sub-escola').innerText = projetoDB.cidade || "Cidade";
                     if (projetoDB.data_inicio) window.gerarBotoesDatas(projetoDB.data_inicio, projetoDB.data_fim);
