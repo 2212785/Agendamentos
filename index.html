@@ -1,4 +1,4 @@
-<!DOCTYPE html>  
+<!DOCTYPE html>   
 <html lang="pt-BR">
 
 <head>
@@ -319,6 +319,9 @@
         // --- ACÃO GLOBAL DO ENTER ---
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
+                // CORREÇÃO: Impede o Enter de disparar o botão se estiver no textarea da lista
+                if (document.activeElement.id === 'pLista') return;
+
                 const btnLogin = document.getElementById('btn-confirmar-login');
                 if (btnLogin && document.getElementById('modalGestao').style.display === 'flex') {
                     return btnLogin.click();
@@ -375,6 +378,8 @@
             await realizarMigracaoEstrutura(); 
             
             const globalId = snap.val();
+            // projId = idDaUrl || localStorage.getItem('currentProject') || globalId;
+            // CORREÇÃO: Mantido aqui apenas para inicialização, o redirecionamento ocorre no login agora.
             projId = idDaUrl || localStorage.getItem('currentProject') || globalId;
             
             if (projId) {
@@ -452,22 +457,34 @@
             location.reload();
         };
 
-        window.confirmarLogin = () => {
+        window.confirmarLogin = async () => {
             const user = document.getElementById('login-user').value;
             const pass = document.getElementById('login-pass').value;
 
+            let logado = false;
             if (user === "Evanio" && pass === "elite") {
                 localStorage.setItem('userType', 'Evanio');
                 localStorage.setItem('isAdmin', 'true');
-                window.fecharModalGestao();
-                location.reload();
+                logado = true;
             } else if (user === "Willian" && pass === "2025") {
                 localStorage.setItem('userType', 'Willian');
                 localStorage.setItem('isAdmin', 'false');
-                window.fecharModalGestao();
-                location.reload();
+                logado = true;
             } else {
                 alert("Senha Incorreta!");
+                return;
+            }
+
+            if (logado) {
+                // CORREÇÃO: Busca o último projeto operado pelo usuário para entrar direto
+                const snapUltimo = await get(ref(db, `config/ultimo_projeto_usuario/${user}`));
+                if (snapUltimo.exists()) {
+                    const idUltimo = snapUltimo.val();
+                    localStorage.setItem('currentProject', idUltimo);
+                    window.location.href = window.location.origin + window.location.pathname + '?id=' + idUltimo;
+                } else {
+                    location.reload();
+                }
             }
         };
 
@@ -958,20 +975,25 @@
 
         window.renderExtrato = (list) => {
             const agrupadoVendas = {};
-            const agrupadoNQs = [];
+            const agrupadoNQs = {}; // CORREÇÃO: Agora agrupa NQs por data e vendedor
 
             list.forEach(i => {
+                const data = i.data || "Sem Data";
+                const vendedor = i.vendedor || "Sem Vendedor";
+
                 if (i.resultado === "Venda") {
-                    const data = i.data || "Sem Data";
-                    const vendedor = i.vendedor || "Sem Vendedor";
                     if (!agrupadoVendas[data]) agrupadoVendas[data] = {};
                     if (!agrupadoVendas[data][vendedor]) agrupadoVendas[data][vendedor] = [];
                     agrupadoVendas[data][vendedor].push(i);
                 } else if (i.resultado === "NQ") {
-                    agrupadoNQs.push(i);
+                    // CORREÇÃO: Lógica para agrupar NQs igual as vendas
+                    if (!agrupadoNQs[data]) agrupadoNQs[data] = {};
+                    if (!agrupadoNQs[data][vendedor]) agrupadoNQs[data][vendedor] = [];
+                    agrupadoNQs[data][vendedor].push(i);
                 }
             });
 
+            // Render Extrato Vendas
             document.getElementById('extrato-tabela').innerHTML = Object.keys(agrupadoVendas)
                 .sort((a,b)=> b.localeCompare(a))
                 .map(data => {
@@ -996,15 +1018,29 @@
                     </div>`;
                 }).join('');
 
-            document.getElementById('nq-tabela').innerHTML = agrupadoNQs.length > 0 ? agrupadoNQs.map(i => `
-                <div class="flex justify-between py-2 border-b border-white/5">
-                    <div class="flex flex-col">
-                        <span class="text-[10px] font-bold text-white">${i.nome_formando}</span>
-                        <span class="text-[8px] text-slate-500 uppercase">${i.data?.split('-').reverse().join('/')} | ${i.vendedor}</span>
-                    </div>
-                    <span class="text-[9px] font-black text-rose-500 uppercase">NQ</span>
-                </div>
-            `).join('') : '<p class="text-[10px] text-slate-600 italic">Nenhum NQ registrado.</p>';
+            // Render Extrato NQs
+            // CORREÇÃO: Tabela de NQs agora agrupada por Data e Vendedor
+            document.getElementById('nq-tabela').innerHTML = Object.keys(agrupadoNQs).length > 0 ? 
+                Object.keys(agrupadoNQs)
+                .sort((a,b)=> b.localeCompare(a))
+                .map(data => {
+                    const dataBR = data.split('-').reverse().join('/');
+                    return `
+                    <div class="mb-4">
+                        <div class="text-sm font-black text-white mb-2 border-b border-white/10 pb-1">📅 ${dataBR}</div>
+                        ${Object.keys(agrupadoNQs[data]).map(vendName => `
+                            <div class="ml-2 mb-3">
+                                <div class="text-xs font-bold text-rose-400 mb-1">👤 ${vendName}</div>
+                                ${agrupadoNQs[data][vendName].map(i => `
+                                    <div class="flex justify-between py-1 border-b border-white/5">
+                                        <span class="text-[10px] font-bold text-white">${i.nome_formando}</span>
+                                        <span class="text-[9px] font-black text-rose-500 uppercase">NQ</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `).join('')}
+                    </div>`;
+                }).join('') : '<p class="text-[10px] text-slate-600 italic">Nenhum NQ registrado.</p>';
         };
 
         window.updateChart = (data) => {
