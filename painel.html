@@ -13,7 +13,7 @@
 
         /* Coluna Esquerda */
         .sidebar { width: 35%; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; min-width: 300px; }
-        .sidebar-header { background: #f0f2f5; padding: 15px; font-weight: bold; color: #075e54; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; min-height: 60px; }
+        .sidebar-header { background: #f0f2f5; padding: 15px; font-weight: bold; color: #075e54; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; min-height: 65px; width: 100%; }
         .contact-list { flex: 1; overflow-y: auto; background: #fff; }
         
         .contact-item { padding: 15px; border-bottom: 1px solid #f2f2f2; cursor: pointer; display: flex; align-items: center; transition: 0.2s; border-left: 4px solid transparent; position: relative; }
@@ -28,8 +28,8 @@
 
         .btn-delete-contact { 
             background: #fee2e2; border: 1px solid #fecaca; color: #ef4444; cursor: pointer; 
-            padding: 6px; border-radius: 6px; margin-left: 10px; transition: 0.2s;
-            display: flex; align-items: center; justify-content: center;
+            padding: 8px; border-radius: 8px; margin-left: 10px; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; min-width: 35px;
         }
         .btn-delete-contact:hover { background: #ef4444; color: white; }
 
@@ -44,9 +44,10 @@
         .msg-meta { font-size: 0.7em; margin-top: 4px; display: block; text-align: right; opacity: 0.5; }
 
         .btn-clear-all { 
-            background: #ef4444; color: white; border: none; padding: 8px 14px; 
-            border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 800; 
+            background: #ef4444; color: white; border: none; padding: 10px 15px; 
+            border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: 900; 
             text-transform: uppercase; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: block !important; visibility: visible !important;
         }
         .btn-clear-all:hover { background: #dc2626; transform: translateY(-1px); }
 
@@ -59,11 +60,11 @@
 
 <div class="app-container">
     <div class="sidebar">
-        <div class="sidebar-header" id="header-container">
+        <div class="sidebar-header">
             <div>
-                <span id="user-badge" style="font-size: 11px; background: #075e54; color: white; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; font-weight: 900;">...</span>
+                <span id="user-badge" style="font-size: 11px; background: #075e54; color: white; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; font-weight: 900;">AGUARDE</span>
             </div>
-            <button onclick="window.limparTudo()" class="btn-clear-all">Limpar Tudo</button>
+            <button id="main-clear-btn" onclick="window.limparTudo()" class="btn-clear-all">Limpar Tudo</button>
         </div>
         <div id="contact-list" class="contact-list"></div>
     </div>
@@ -87,10 +88,17 @@
     let conversaAtiva = null;
     let conversasUnificadas = {}; 
 
-    // Identifica o usuário logado
+    // Captura o usuário logado com prioridade absoluta
     const urlParams = new URLSearchParams(window.location.search);
-    const usuarioLogado = urlParams.get('user') || localStorage.getItem('userType') || 'Evanio';
+    const userFromUrl = urlParams.get('user');
+    const userFromStorage = localStorage.getItem('userType');
+    
+    // CORREÇÃO: Garante que o usuarioLogado seja definido antes de qualquer consulta
+    const usuarioLogado = userFromUrl || userFromStorage || 'Evanio';
+    
+    // Atualiza o crachá do usuário imediatamente
     document.getElementById('user-badge').innerText = usuarioLogado;
+    console.log("Sessão Ativa:", usuarioLogado);
 
     function normalizarNumero(num) {
         let limpo = num.replace(/\D/g, '');
@@ -116,6 +124,8 @@
         });
 
         renderizarContatos();
+        
+        // Se houver conversa aberta, atualiza ela
         if (conversaAtiva && conversasUnificadas[conversaAtiva]) {
             atualizarJanelaChat(conversaAtiva);
         }
@@ -132,6 +142,7 @@
             return { phone, lastTimestamp: lastId, lastMsg: msgs[lastId] };
         });
 
+        // Ordena pela mensagem mais recente
         listaParaOrdenada.sort((a, b) => b.lastTimestamp - a.lastTimestamp);
 
         listaParaOrdenada.forEach(contato => {
@@ -150,7 +161,7 @@
                     <div class="contact-last-msg">${contato.lastMsg.mensagem || "[Mensagem]"}</div>
                 </div>
                 <button class="btn-delete-contact" title="Excluir" onclick="window.deletarConversa('${contato.phone}', event)">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                 </button>
             `;
             listContainer.appendChild(item);
@@ -160,7 +171,8 @@
     function abrirConversa(phone) {
         conversaAtiva = phone;
         atualizarJanelaChat(phone);
-        // Atualiza a classe active visualmente sem rebuild total
+        
+        // Atualiza a classe active visualmente
         document.querySelectorAll('.contact-item').forEach(i => i.classList.remove('active'));
         const labels = Array.from(document.querySelectorAll('.contact-phone'));
         const target = labels.find(el => el.innerText === phone);
@@ -207,6 +219,7 @@
                     conversaAtiva = null;
                     document.getElementById('main-chat').innerHTML = '<div class="empty-state"><h3>Conversa removida</h3></div>';
                 }
+                alert("Contato removido.");
             });
         }
     };
@@ -216,8 +229,10 @@
         const confirmacao = prompt(`⚠️ AVISO: Isso apagará TODAS as conversas de ${usuarioLogado}. Digite sua senha para confirmar:`);
         
         let validado = false;
-        if (usuarioLogado === "Evanio" && confirmacao === "elite") validado = true;
-        if (usuarioLogado === "Willian" && confirmacao === "2025") validado = true;
+        // Normaliza para comparação minúscula para evitar erros de digitação
+        const userCheck = usuarioLogado.toLowerCase();
+        if (userCheck === "evanio" && confirmacao === "elite") validado = true;
+        if (userCheck === "willian" && confirmacao === "2025") validado = true;
 
         if (validado) {
             db.ref('respostas/' + usuarioLogado).remove().then(() => {
