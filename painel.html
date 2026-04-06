@@ -13,7 +13,7 @@
 
         /* Coluna Esquerda */
         .sidebar { width: 35%; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; min-width: 300px; }
-        .sidebar-header { background: #f0f2f5; padding: 15px; font-weight: bold; color: #075e54; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; min-height: 65px; width: 100%; }
+        .sidebar-header { background: #f0f2f5; padding: 15px; font-weight: bold; color: #075e54; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; min-height: 65px; }
         .contact-list { flex: 1; overflow-y: auto; background: #fff; }
         
         .contact-item { padding: 15px; border-bottom: 1px solid #f2f2f2; cursor: pointer; display: flex; align-items: center; transition: 0.2s; border-left: 4px solid transparent; position: relative; }
@@ -47,7 +47,6 @@
             background: #ef4444; color: white; border: none; padding: 10px 15px; 
             border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: 900; 
             text-transform: uppercase; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: block !important; visibility: visible !important;
         }
         .btn-clear-all:hover { background: #dc2626; transform: translateY(-1px); }
 
@@ -62,16 +61,16 @@
     <div class="sidebar">
         <div class="sidebar-header">
             <div>
-                <span id="user-badge" style="font-size: 11px; background: #075e54; color: white; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; font-weight: 900;">AGUARDE</span>
+                <span id="user-badge" style="font-size: 11px; background: #075e54; color: white; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; font-weight: 900;">...</span>
             </div>
-            <button id="main-clear-btn" onclick="window.limparTudo()" class="btn-clear-all">Limpar Tudo</button>
+            <button onclick="window.limparTudo()" class="btn-clear-all">Limpar Tudo</button>
         </div>
         <div id="contact-list" class="contact-list"></div>
     </div>
     <div class="main-chat" id="main-chat">
         <div class="empty-state">
             <h3>Selecione uma conversa</h3>
-            <p>Painel de monitoramento multiusuário Elite.</p>
+            <p>Painel Elite v28 - Monitoramento Unificado.</p>
         </div>
     </div>
 </div>
@@ -88,17 +87,12 @@
     let conversaAtiva = null;
     let conversasUnificadas = {}; 
 
-    // Captura o usuário logado com prioridade absoluta
+    // Pega o usuário e garante a primeira letra maiúscula (Case Sensitive do Firebase)
     const urlParams = new URLSearchParams(window.location.search);
-    const userFromUrl = urlParams.get('user');
-    const userFromStorage = localStorage.getItem('userType');
+    let userRaw = urlParams.get('user') || localStorage.getItem('userType') || 'Evanio';
+    const usuarioLogado = userRaw.charAt(0).toUpperCase() + userRaw.slice(1).toLowerCase();
     
-    // CORREÇÃO: Garante que o usuarioLogado seja definido antes de qualquer consulta
-    const usuarioLogado = userFromUrl || userFromStorage || 'Evanio';
-    
-    // Atualiza o crachá do usuário imediatamente
     document.getElementById('user-badge').innerText = usuarioLogado;
-    console.log("Sessão Ativa:", usuarioLogado);
 
     function normalizarNumero(num) {
         let limpo = num.replace(/\D/g, '');
@@ -106,7 +100,7 @@
         return limpo;
     }
 
-    // Escuta em tempo real as mensagens do usuário logado
+    // Escuta as respostas do usuário logado
     db.ref('respostas/' + usuarioLogado).on('value', (snapshot) => {
         const dadosBrutos = snapshot.val() || {};
         conversasUnificadas = {};
@@ -124,11 +118,7 @@
         });
 
         renderizarContatos();
-        
-        // Se houver conversa aberta, atualiza ela
-        if (conversaAtiva && conversasUnificadas[conversaAtiva]) {
-            atualizarJanelaChat(conversaAtiva);
-        }
+        if (conversaAtiva) atualizarJanelaChat(conversaAtiva);
     });
 
     function renderizarContatos() {
@@ -142,7 +132,6 @@
             return { phone, lastTimestamp: lastId, lastMsg: msgs[lastId] };
         });
 
-        // Ordena pela mensagem mais recente
         listaParaOrdenada.sort((a, b) => b.lastTimestamp - a.lastTimestamp);
 
         listaParaOrdenada.forEach(contato => {
@@ -160,8 +149,8 @@
                     </div>
                     <div class="contact-last-msg">${contato.lastMsg.mensagem || "[Mensagem]"}</div>
                 </div>
-                <button class="btn-delete-contact" title="Excluir" onclick="window.deletarConversa('${contato.phone}', event)">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                <button class="btn-delete-contact" onclick="window.deletarConversa('${contato.phone}', event)">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                 </button>
             `;
             listContainer.appendChild(item);
@@ -171,12 +160,9 @@
     function abrirConversa(phone) {
         conversaAtiva = phone;
         atualizarJanelaChat(phone);
-        
-        // Atualiza a classe active visualmente
         document.querySelectorAll('.contact-item').forEach(i => i.classList.remove('active'));
-        const labels = Array.from(document.querySelectorAll('.contact-phone'));
-        const target = labels.find(el => el.innerText === phone);
-        if(target) target.closest('.contact-item').classList.add('active');
+        const activeItem = Array.from(document.querySelectorAll('.contact-phone')).find(el => el.innerText === phone);
+        if(activeItem) activeItem.closest('.contact-item').classList.add('active');
     }
 
     function atualizarJanelaChat(phone) {
@@ -185,11 +171,7 @@
         if (!data) return;
 
         const sortedIds = Object.keys(data.mensagens).sort();
-
-        let chatHtml = `
-            <div class="chat-header">📱 ${phone}</div>
-            <div class="chat-messages" id="chat-messages">
-        `;
+        let chatHtml = `<div class="chat-header">📱 ${phone}</div><div class="chat-messages" id="chat-messages">`;
 
         sortedIds.forEach(id => {
             const m = data.mensagens[id];
@@ -207,40 +189,31 @@
         if (msgDiv) msgDiv.scrollTop = msgDiv.scrollHeight;
     }
 
-    // FUNÇÃO: Deletar contato individual
     window.deletarConversa = function(phone, event) {
         if (event) event.stopPropagation();
-        if (confirm(`Excluir permanentemente as mensagens de ${phone}?`)) {
-            const chaves = conversasUnificadas[phone].originalKeys;
-            const deletarPromessas = chaves.map(k => db.ref(`respostas/${usuarioLogado}/${k}`).remove());
-            
-            Promise.all(deletarPromessas).then(() => {
-                if (conversaAtiva === phone) {
-                    conversaAtiva = null;
-                    document.getElementById('main-chat').innerHTML = '<div class="empty-state"><h3>Conversa removida</h3></div>';
-                }
-                alert("Contato removido.");
-            });
+        if (confirm(`Excluir conversa com ${phone}?`)) {
+            const keys = conversasUnificadas[phone].originalKeys;
+            keys.forEach(k => db.ref(`respostas/${usuarioLogado}/${k}`).remove());
+            if (conversaAtiva === phone) {
+                conversaAtiva = null;
+                document.getElementById('main-chat').innerHTML = '<div class="empty-state"><h3>Conversa removida</h3></div>';
+            }
         }
     };
 
-    // FUNÇÃO: Limpar painel completo do usuário logado
     window.limparTudo = function() {
-        const confirmacao = prompt(`⚠️ AVISO: Isso apagará TODAS as conversas de ${usuarioLogado}. Digite sua senha para confirmar:`);
-        
+        const confirmacao = prompt(`⚠️ Digite sua senha para apagar TODAS as conversas de ${usuarioLogado}:`);
         let validado = false;
-        // Normaliza para comparação minúscula para evitar erros de digitação
-        const userCheck = usuarioLogado.toLowerCase();
-        if (userCheck === "evanio" && confirmacao === "elite") validado = true;
-        if (userCheck === "willian" && confirmacao === "2025") validado = true;
+        if (usuarioLogado === "Evanio" && confirmacao === "elite") validado = true;
+        if (usuarioLogado === "Willian" && confirmacao === "2025") validado = true;
 
         if (validado) {
             db.ref('respostas/' + usuarioLogado).remove().then(() => {
-                alert("Painel zerado com sucesso!");
+                alert("Painel limpo!");
                 location.reload();
             });
         } else {
-            alert("Operação cancelada ou senha incorreta.");
+            alert("Senha incorreta ou cancelado.");
         }
     };
 </script>
