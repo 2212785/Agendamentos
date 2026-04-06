@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>  
 <html lang="pt-BR">
 
 <head>
@@ -1042,7 +1042,10 @@
 
             f.innerHTML = `
                 <h3 class="text-blue-400 font-black text-[12px] uppercase mb-4 text-white text-center">Configurações Projeto</h3>
-                <button onclick="window.consultarProjetosAnteriores()" class="bg-amber-600/20 w-full py-3 rounded-xl text-[10px] mb-4 uppercase font-black">Mudar Projeto</button>
+                <div class="grid grid-cols-1 gap-2 mb-4">
+                    <button onclick="window.consultarProjetosAnteriores()" class="bg-amber-600/20 w-full py-3 rounded-xl text-[10px] uppercase font-black">Mudar Projeto</button>
+                    <button onclick="window.location.href='painel.html?user=${user}'" class="bg-blue-600/20 border border-blue-500/30 w-full py-3 rounded-xl text-[10px] uppercase font-black text-blue-400">Ver Conversas (Chat)</button>
+                </div>
                 <div class="space-y-3">
                     <p class="text-[8px] font-black text-slate-500 uppercase ml-2">Dados Básicos</p>
                     <input type="text" id="pEsc" value="${p.escola || ''}" class="input-compact" placeholder="Nome da Escola" ${!podeSalvar ? 'disabled' : ''}>
