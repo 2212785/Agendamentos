@@ -1,4 +1,4 @@
-<!DOCTYPE html>   
+<!DOCTYPE html>    
 <html lang="pt-BR">
 
 <head>
@@ -319,8 +319,10 @@
         // --- ACÃO GLOBAL DO ENTER ---
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                // CORREÇÃO: Impede o Enter de disparar o botão se estiver no textarea da lista
-                if (document.activeElement.id === 'pLista') return;
+                // CORREÇÃO: Impede o Enter de disparar o botão "Gravar Tudo" se estiver no textarea da lista (pLista)
+                if (document.activeElement && document.activeElement.id === 'pLista') {
+                    return; 
+                }
 
                 const btnLogin = document.getElementById('btn-confirmar-login');
                 if (btnLogin && document.getElementById('modalGestao').style.display === 'flex') {
@@ -378,8 +380,7 @@
             await realizarMigracaoEstrutura(); 
             
             const globalId = snap.val();
-            // projId = idDaUrl || localStorage.getItem('currentProject') || globalId;
-            // CORREÇÃO: Mantido aqui apenas para inicialização, o redirecionamento ocorre no login agora.
+            // CORREÇÃO: Mantido aqui apenas para inicialização inicial da página
             projId = idDaUrl || localStorage.getItem('currentProject') || globalId;
             
             if (projId) {
@@ -461,28 +462,33 @@
             const user = document.getElementById('login-user').value;
             const pass = document.getElementById('login-pass').value;
 
-            let logado = false;
+            let loginValido = false;
             if (user === "Evanio" && pass === "elite") {
                 localStorage.setItem('userType', 'Evanio');
                 localStorage.setItem('isAdmin', 'true');
-                logado = true;
+                loginValido = true;
             } else if (user === "Willian" && pass === "2025") {
                 localStorage.setItem('userType', 'Willian');
                 localStorage.setItem('isAdmin', 'false');
-                logado = true;
+                loginValido = true;
             } else {
                 alert("Senha Incorreta!");
                 return;
             }
 
-            if (logado) {
-                // CORREÇÃO: Busca o último projeto operado pelo usuário para entrar direto
-                const snapUltimo = await get(ref(db, `config/ultimo_projeto_usuario/${user}`));
-                if (snapUltimo.exists()) {
-                    const idUltimo = snapUltimo.val();
-                    localStorage.setItem('currentProject', idUltimo);
-                    window.location.href = window.location.origin + window.location.pathname + '?id=' + idUltimo;
-                } else {
+            if (loginValido) {
+                // CORREÇÃO: Busca no banco de dados qual foi o último projeto operado pelo usuário para entrar direto nele
+                try {
+                    const snapUltimo = await get(ref(db, `config/ultimo_projeto_usuario/${user}`));
+                    if (snapUltimo.exists()) {
+                        const idUltimo = snapUltimo.val();
+                        localStorage.setItem('currentProject', idUltimo);
+                        window.location.href = window.location.origin + window.location.pathname + '?id=' + idUltimo;
+                    } else {
+                        window.fecharModalGestao();
+                        location.reload();
+                    }
+                } catch (e) {
                     location.reload();
                 }
             }
@@ -565,7 +571,7 @@
         window.iniciarCampanha = async () => {
             if (!projetoDB || !projetoDB.automacao?.lista) return alert("Configure a lista no botão 'Dados Projeto'!");
             
-            // CORREÇÃO: Avisa ao Bot qual é o projeto ativo DESTE usuário no momento
+            // Avisa ao Bot qual é o projeto ativo DESTE usuário no momento
             const user = localStorage.getItem('userType') || 'Evanio';
             await update(ref(db, `config/ultimo_projeto_usuario`), { [user]: projId });
             
@@ -975,7 +981,7 @@
 
         window.renderExtrato = (list) => {
             const agrupadoVendas = {};
-            const agrupadoNQs = {}; // CORREÇÃO: Agora agrupa NQs por data e vendedor
+            const agrupadoNQs = {}; // CORREÇÃO: Agrupado por Data e Vendedor igual as vendas
 
             list.forEach(i => {
                 const data = i.data || "Sem Data";
@@ -986,14 +992,14 @@
                     if (!agrupadoVendas[data][vendedor]) agrupadoVendas[data][vendedor] = [];
                     agrupadoVendas[data][vendedor].push(i);
                 } else if (i.resultado === "NQ") {
-                    // CORREÇÃO: Lógica para agrupar NQs igual as vendas
+                    // CORREÇÃO: Lógica para agrupar NQs
                     if (!agrupadoNQs[data]) agrupadoNQs[data] = {};
                     if (!agrupadoNQs[data][vendedor]) agrupadoNQs[data][vendedor] = [];
                     agrupadoNQs[data][vendedor].push(i);
                 }
             });
 
-            // Render Extrato Vendas
+            // Tabela Vendas
             document.getElementById('extrato-tabela').innerHTML = Object.keys(agrupadoVendas)
                 .sort((a,b)=> b.localeCompare(a))
                 .map(data => {
@@ -1018,8 +1024,8 @@
                     </div>`;
                 }).join('');
 
-            // Render Extrato NQs
-            // CORREÇÃO: Tabela de NQs agora agrupada por Data e Vendedor
+            // Tabela NQs
+            // CORREÇÃO: Exibe NQs agrupados por data e vendedor
             document.getElementById('nq-tabela').innerHTML = Object.keys(agrupadoNQs).length > 0 ? 
                 Object.keys(agrupadoNQs)
                 .sort((a,b)=> b.localeCompare(a))
@@ -1033,7 +1039,9 @@
                                 <div class="text-xs font-bold text-rose-400 mb-1">👤 ${vendName}</div>
                                 ${agrupadoNQs[data][vendName].map(i => `
                                     <div class="flex justify-between py-1 border-b border-white/5">
-                                        <span class="text-[10px] font-bold text-white">${i.nome_formando}</span>
+                                        <div class="flex flex-col">
+                                            <span class="text-[10px] font-bold text-white">${i.nome_formando}</span>
+                                        </div>
                                         <span class="text-[9px] font-black text-rose-500 uppercase">NQ</span>
                                     </div>
                                 `).join('')}
@@ -1085,12 +1093,15 @@
                 <div class="space-y-3">
                     <p class="text-[8px] font-black text-slate-500 uppercase ml-2">Dados Básicos</p>
                     <input type="text" id="pEsc" value="${p.escola || ''}" class="input-compact" placeholder="Nome da Escola" ${!podeSalvar ? 'disabled' : ''}>
-                    <input type="date" id="pDi" value="${p.data_inicio}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="space-y-1"><span class="label-custo">Data Início</span><input type="date" id="pDi" value="${p.data_inicio}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}></div>
+                        <div class="space-y-1"><span class="label-custo">Data Fim</span><input type="date" id="pDf" value="${p.data_fim}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}></div>
+                    </div>
                     <div class="flex justify-between items-center glass p-3 rounded-xl">
                         <span class="text-[10px]">COMISSÃO INDIVIDUAL</span>
                         <label class="switch"><input type="checkbox" id="pComInd" ${p.comissao_individual ? 'checked' : ''} ${!podeSalvar ? 'disabled' : ''}><span class="slider"></span></label>
                     </div>
-                    <textarea id="pLista" placeholder="Lista" class="input-compact h-20" ${!podeSalvar ? 'disabled' : ''}>${p.automacao?.lista || ''}</textarea>
+                    <textarea id="pLista" placeholder="Lista de Nomes e Telefones" class="input-compact h-24" ${!podeSalvar ? 'disabled' : ''}>${p.automacao?.lista || ''}</textarea>
                     
                     <p class="text-[8px] font-black text-slate-500 uppercase ml-2 mt-4">Custos de Viagem</p>
                     <div class="grid grid-cols-2 gap-2">
@@ -1115,6 +1126,7 @@
             await update(ref(db, `projetos/${projId}`), { 
                 escola: document.getElementById('pEsc').value,
                 data_inicio: document.getElementById('pDi').value,
+                data_fim: document.getElementById('pDf').value, // CORREÇÃO: Salva data_fim também
                 comissao_individual: document.getElementById('pComInd').checked,
                 automacao: { ...projetoDB.automacao, lista: document.getElementById('pLista').value }
             });
@@ -1182,6 +1194,9 @@
                 automacao: { lista: "", msg1: "", msg2: "", msg3: "", msg4: "", index_atual: 0 }
             });
             
+            // CORREÇÃO: Salva como último projeto do usuário logo na criação
+            await update(ref(db, `config/ultimo_projeto_usuario`), { [user]: id });
+
             localStorage.setItem('currentProject', id);
             const newUrl = window.location.origin + window.location.pathname + '?id=' + id;
             window.location.href = newUrl;
@@ -1210,8 +1225,10 @@
                         const btn = document.createElement('button');
                         btn.className = "w-full glass p-4 rounded-xl text-left text-[10px] border border-white/5 mb-2";
                         btn.innerHTML = `<b class="text-blue-400 uppercase">${p.escola}</b><br><span class="text-slate-400">${p.cidade}</span><br><span class="text-[8px] opacity-50">Criador: ${p.criador}</span>`;
-                        btn.onclick = () => { 
+                        btn.onclick = async () => { 
                             localStorage.setItem('currentProject', key); 
+                            // CORREÇÃO: Salva no banco que este é o projeto ativo do usuário antes de redirecionar
+                            await update(ref(db, `config/ultimo_projeto_usuario`), { [user]: key });
                             window.location.href = window.location.origin + window.location.pathname + '?id=' + key; 
                         };
                         listContainer.appendChild(btn);
