@@ -380,7 +380,6 @@
             await realizarMigracaoEstrutura(); 
             
             const globalId = snap.val();
-            // CORREÇÃO: Mantido aqui apenas para inicialização inicial da página
             projId = idDaUrl || localStorage.getItem('currentProject') || globalId;
             
             if (projId) {
@@ -981,7 +980,7 @@
 
         window.renderExtrato = (list) => {
             const agrupadoVendas = {};
-            const agrupadoNQs = {}; // CORREÇÃO: Agrupado por Data e Vendedor igual as vendas
+            const agrupadoNQs = {}; // Agrupamento corrigido para NQs
 
             list.forEach(i => {
                 const data = i.data || "Sem Data";
@@ -992,14 +991,13 @@
                     if (!agrupadoVendas[data][vendedor]) agrupadoVendas[data][vendedor] = [];
                     agrupadoVendas[data][vendedor].push(i);
                 } else if (i.resultado === "NQ") {
-                    // CORREÇÃO: Lógica para agrupar NQs
+                    // CORREÇÃO: Tabela de NQs agora agrupa igual às Vendas
                     if (!agrupadoNQs[data]) agrupadoNQs[data] = {};
                     if (!agrupadoNQs[data][vendedor]) agrupadoNQs[data][vendedor] = [];
                     agrupadoNQs[data][vendedor].push(i);
                 }
             });
 
-            // Tabela Vendas
             document.getElementById('extrato-tabela').innerHTML = Object.keys(agrupadoVendas)
                 .sort((a,b)=> b.localeCompare(a))
                 .map(data => {
@@ -1024,8 +1022,7 @@
                     </div>`;
                 }).join('');
 
-            // Tabela NQs
-            // CORREÇÃO: Exibe NQs agrupados por data e vendedor
+            // CORREÇÃO: Renderização de NQs agrupada por Data e Vendedor
             document.getElementById('nq-tabela').innerHTML = Object.keys(agrupadoNQs).length > 0 ? 
                 Object.keys(agrupadoNQs)
                 .sort((a,b)=> b.localeCompare(a))
@@ -1039,9 +1036,7 @@
                                 <div class="text-xs font-bold text-rose-400 mb-1">👤 ${vendName}</div>
                                 ${agrupadoNQs[data][vendName].map(i => `
                                     <div class="flex justify-between py-1 border-b border-white/5">
-                                        <div class="flex flex-col">
-                                            <span class="text-[10px] font-bold text-white">${i.nome_formando}</span>
-                                        </div>
+                                        <span class="text-[10px] font-bold text-white">${i.nome_formando}</span>
                                         <span class="text-[9px] font-black text-rose-500 uppercase">NQ</span>
                                     </div>
                                 `).join('')}
@@ -1093,10 +1088,12 @@
                 <div class="space-y-3">
                     <p class="text-[8px] font-black text-slate-500 uppercase ml-2">Dados Básicos</p>
                     <input type="text" id="pEsc" value="${p.escola || ''}" class="input-compact" placeholder="Nome da Escola" ${!podeSalvar ? 'disabled' : ''}>
+                    
                     <div class="grid grid-cols-2 gap-2">
-                        <div class="space-y-1"><span class="label-custo">Data Início</span><input type="date" id="pDi" value="${p.data_inicio}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}></div>
-                        <div class="space-y-1"><span class="label-custo">Data Fim</span><input type="date" id="pDf" value="${p.data_fim}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}></div>
+                        <div class="space-y-1"><span class="label-custo">Início Visitas</span><input type="date" id="pDi" value="${p.data_inicio}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}></div>
+                        <div class="space-y-1"><span class="label-custo">Fim Visitas</span><input type="date" id="pDf" value="${p.data_fim}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}></div>
                     </div>
+
                     <div class="flex justify-between items-center glass p-3 rounded-xl">
                         <span class="text-[10px]">COMISSÃO INDIVIDUAL</span>
                         <label class="switch"><input type="checkbox" id="pComInd" ${p.comissao_individual ? 'checked' : ''} ${!podeSalvar ? 'disabled' : ''}><span class="slider"></span></label>
@@ -1126,7 +1123,7 @@
             await update(ref(db, `projetos/${projId}`), { 
                 escola: document.getElementById('pEsc').value,
                 data_inicio: document.getElementById('pDi').value,
-                data_fim: document.getElementById('pDf').value, // CORREÇÃO: Salva data_fim também
+                data_fim: document.getElementById('pDf').value,
                 comissao_individual: document.getElementById('pComInd').checked,
                 automacao: { ...projetoDB.automacao, lista: document.getElementById('pLista').value }
             });
@@ -1194,9 +1191,7 @@
                 automacao: { lista: "", msg1: "", msg2: "", msg3: "", msg4: "", index_atual: 0 }
             });
             
-            // CORREÇÃO: Salva como último projeto do usuário logo na criação
             await update(ref(db, `config/ultimo_projeto_usuario`), { [user]: id });
-
             localStorage.setItem('currentProject', id);
             const newUrl = window.location.origin + window.location.pathname + '?id=' + id;
             window.location.href = newUrl;
@@ -1227,7 +1222,6 @@
                         btn.innerHTML = `<b class="text-blue-400 uppercase">${p.escola}</b><br><span class="text-slate-400">${p.cidade}</span><br><span class="text-[8px] opacity-50">Criador: ${p.criador}</span>`;
                         btn.onclick = async () => { 
                             localStorage.setItem('currentProject', key); 
-                            // CORREÇÃO: Salva no banco que este é o projeto ativo do usuário antes de redirecionar
                             await update(ref(db, `config/ultimo_projeto_usuario`), { [user]: key });
                             window.location.href = window.location.origin + window.location.pathname + '?id=' + key; 
                         };
@@ -1262,7 +1256,6 @@
             ]);
             
             window.dadosCompletos = [];
-            
             custosDB = sC.exists() ? sC.val() : { km_valor: 0.7, km_total: 0, hosp_valor: 0, hosp_qtd: 0, alim_valor: 0, alim_qtd: 0, pedagio_total: 0 };
             valesDB = sVales.exists() ? sVales.val() : {};
             
@@ -1303,15 +1296,37 @@
         window.gerarBotoesDatas = (inicio, fim) => {
             const container = document.getElementById('day-selector'); container.innerHTML = "";
             let atual = new Date(inicio + "T00:00:00");
-            while (atual <= new Date(fim + "T00:00:00")) {
+            const dataLimite = new Date(fim + "T00:00:00");
+            const hoje = new Date();
+            hoje.setSeconds(0, 0);
+
+            while (atual <= dataLimite) {
                 const iso = atual.toISOString().split('T')[0];
-                const btn = document.createElement('button'); btn.className = "day-btn text-white";
-                btn.innerText = atual.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-                btn.onclick = () => { 
-                    document.querySelectorAll('.day-btn').forEach(x => x.classList.remove('active')); btn.classList.add('active'); 
-                    document.getElementById('data-selecionada').value = iso; window.carregarHorarios(iso); 
-                };
-                container.appendChild(btn);
+                
+                // CORREÇÃO: Lógica para esconder o dia se não houver mais horários possíveis (Regra das 3 horas)
+                let mostrarDia = true;
+                if (iso === hoje.toISOString().split('T')[0]) {
+                    // Se for hoje, verificamos se o último horário (20:30 ou 17:00 fds) - 3h ainda é possível
+                    const fds = (atual.getDay() % 6 === 0);
+                    const limiteHoras = fds ? 17 : 20.5;
+                    const agoraDecimal = hoje.getHours() + (hoje.getMinutes() / 60);
+                    
+                    if (agoraDecimal + 3 >= limiteHoras) {
+                        mostrarDia = false;
+                    }
+                } else if (atual < hoje && iso !== hoje.toISOString().split('T')[0]) {
+                    mostrarDia = false;
+                }
+
+                if (mostrarDia) {
+                    const btn = document.createElement('button'); btn.className = "day-btn text-white";
+                    btn.innerText = atual.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+                    btn.onclick = () => { 
+                        document.querySelectorAll('.day-btn').forEach(x => x.classList.remove('active')); btn.classList.add('active'); 
+                        document.getElementById('data-selecionada').value = iso; window.carregarHorarios(iso); 
+                    };
+                    container.appendChild(btn);
+                }
                 atual.setDate(atual.getDate() + 1);
             }
         };
@@ -1321,11 +1336,26 @@
             const snap = await get(ref(db, `dados/${projId}/agendamentos/${iso}`));
             const ag = snap.exists() ? snap.val() : {};
             selectH.innerHTML = '<option value="">Selecione o Horário</option>';
-            const fds = (new Date(iso + "T00:00:00").getDay() % 6 === 0);
+            
+            const hoje = new Date();
+            const dataSelecionada = new Date(iso + "T00:00:00");
+            const fds = (dataSelecionada.getDay() % 6 === 0);
+            
+            // CORREÇÃO: Implementação da Regra das 3 Horas
             for (let h = 9; h <= (fds ? 17 : 20.5); h += 0.5) {
-                const hh = Math.floor(h).toString().padStart(2, '0'); const mm = (h % 1 === 0) ? '00' : '30';
+                const hh = Math.floor(h).toString().padStart(2, '0'); 
+                const mm = (h % 1 === 0) ? '00' : '30';
                 const format = `${hh}:${mm}`;
-                if (Object.values(ag).filter(a => a.horario === format).length < 2) selectH.innerHTML += `<option value="${format}">${format}</option>`;
+
+                // Se for hoje, aplica a regra das 3 horas
+                if (iso === hoje.toISOString().split('T')[0]) {
+                    const agoraDecimal = hoje.getHours() + (hoje.getMinutes() / 60);
+                    if (h < agoraDecimal + 3) continue; // Pula horários proibidos
+                }
+
+                if (Object.values(ag).filter(a => a.horario === format).length < 2) {
+                    selectH.innerHTML += `<option value="${format}">${format}</option>`;
+                }
             }
         };
 
