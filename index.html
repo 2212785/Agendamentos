@@ -376,10 +376,68 @@
         const urlParams = new URLSearchParams(window.location.search);
         const idDaUrl = urlParams.get('id');
 
+        // onValue(ref(db, "config/projeto_ativo"), async (snap) => {
+        //     await realizarMigracaoEstrutura(); 
+        //     
+        //     const globalId = snap.val();
+        //     projId = idDaUrl || localStorage.getItem('currentProject') || globalId;
+        //     
+        //     if (projId) {
+        //         const pS = await get(ref(db, `projetos/${projId}`));
+        //         if (pS.exists()) {
+        //             projetoDB = pS.val();
+        //             
+        //             const userLogado = localStorage.getItem('userType');
+        //             const isAdmin = localStorage.getItem('isAdmin') === 'true';
+        //             if(!isAdmin && userLogado && projetoDB.criador !== userLogado && idDaUrl) {
+        //                 alert("Acesso Negado: Este projeto pertence a outro usuário.");
+        //                 window.location.href = window.location.origin + window.location.pathname;
+        //                 return;
+        //             }
+        // 
+        //             document.getElementById('escola-titulo').innerText = projetoDB.escola || "Projeto";
+        //             document.getElementById('sub-escola').innerText = projetoDB.cidade || "Cidade";
+        //             if (projetoDB.data_inicio) window.gerarBotoesDatas(projetoDB.data_inicio, projetoDB.data_fim);
+        //             window.carregarRelatorio();
+        //             
+        //             const user = localStorage.getItem('userType');
+        //             if(user) {
+        //                 document.getElementById('user-display').innerText = `| ${user}`;
+        //                 document.getElementById('controles-admin').classList.remove('hidden');
+        //             }
+        // 
+        //             onValue(ref(db, `projetos/${projId}/bot`), (botSnap) => {
+        //                 const led = document.getElementById('bot-led');
+        //                 const txt = document.getElementById('bot-status-text');
+        //                 const botData = botSnap.val();
+        //                 if (botData && (botData.status === 'Online' || botData.status === 'online')) {
+        //                     led.className = 'led-bot led-online';
+        //                     txt.innerText = 'Bot Ativo';
+        //                 } else {
+        //                     led.className = 'led-bot led-offline';
+        //                     txt.innerText = 'Bot Offline';
+        //                 }
+        //             });
+        //         }
+        //     }
+        // });
+
         onValue(ref(db, "config/projeto_ativo"), async (snap) => {
             await realizarMigracaoEstrutura(); 
             
             const globalId = snap.val();
+            const userLogado = localStorage.getItem('userType');
+            
+            // BUSCA PROJETO ATIVO SE NÃO HOUVER ID NA URL E ESTIVER LOGADO
+            if (!idDaUrl && userLogado) {
+                const snapUltimo = await get(ref(db, `config/ultimo_projeto_usuario/${userLogado}`));
+                if (snapUltimo.exists()) {
+                    const idUltimo = snapUltimo.val();
+                    window.location.href = window.location.origin + window.location.pathname + '?id=' + idUltimo;
+                    return;
+                }
+            }
+
             projId = idDaUrl || localStorage.getItem('currentProject') || globalId;
             
             if (projId) {
@@ -387,7 +445,6 @@
                 if (pS.exists()) {
                     projetoDB = pS.val();
                     
-                    const userLogado = localStorage.getItem('userType');
                     const isAdmin = localStorage.getItem('isAdmin') === 'true';
                     if(!isAdmin && userLogado && projetoDB.criador !== userLogado && idDaUrl) {
                         alert("Acesso Negado: Este projeto pertence a outro usuário.");
@@ -400,10 +457,11 @@
                     if (projetoDB.data_inicio) window.gerarBotoesDatas(projetoDB.data_inicio, projetoDB.data_fim);
                     window.carregarRelatorio();
                     
-                    const user = localStorage.getItem('userType');
-                    if(user) {
-                        document.getElementById('user-display').innerText = `| ${user}`;
+                    if(userLogado) {
+                        document.getElementById('user-display').innerText = `| ${userLogado}`;
                         document.getElementById('controles-admin').classList.remove('hidden');
+                        // Salva como último projeto operado
+                        update(ref(db, `config/ultimo_projeto_usuario`), { [userLogado]: projId });
                     }
 
                     onValue(ref(db, `projetos/${projId}/bot`), (botSnap) => {
@@ -454,7 +512,8 @@
         window.efetuarLogout = () => {
             localStorage.removeItem('userType');
             localStorage.removeItem('isAdmin');
-            location.reload();
+            localStorage.removeItem('currentProject'); // Limpa o projeto atual no logout
+            location.href = window.location.origin + window.location.pathname; // Recarrega limpo
         };
 
         window.confirmarLogin = async () => {
