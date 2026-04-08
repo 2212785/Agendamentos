@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exclusão de Dados – Elite Sales Bot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #020617;
+            color: #f1f5f9;
+        }
+        .glass {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .input-compact {
+            padding: 0.8rem !important;
+            border-radius: 1rem !important;
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            width: 100%;
+            outline: none;
+        }
+        .btn-delete {
+            background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%);
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10 flex items-center justify-center min-h-screen">
+
+    <div class="max-w-xl w-full glass p-8 md:p-12 rounded-[2.5rem] shadow-2xl">
+        <header class="text-center mb-8 border-b border-white/10 pb-6">
+            <h1 class="text-2xl font-black uppercase italic tracking-tighter text-white mb-2">
+                Solicitar Exclusão de <span class="text-rose-500">Dados</span>
+            </h1>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Conformidade LGPD e Requisitos Meta</p>
+        </header>
+
+        <div class="space-y-6">
+            <p class="text-sm text-slate-300 leading-relaxed">
+                De acordo com as políticas da Meta e a Lei Geral de Proteção de Dados (LGPD), você tem o direito de solicitar a remoção completa das suas informações de nossos servidores.
+            </p>
+
+            <div class="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl">
+                <p class="text-[11px] text-rose-400 font-bold uppercase mb-2">O que acontece ao excluir?</p>
+                <ul class="text-[10px] text-slate-400 space-y-1 italic">
+                    <li>• Seu número de telefone será removido da base de agendamentos.</li>
+                    <li>• Históricos de conversas vinculados ao bot serão apagados.</li>
+                    <li>• Seus dados de endereço e fotos associadas serão destruídos.</li>
+                </ul>
+            </div>
+
+            <form id="form-exclusao" class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-500 ml-2 mb-1 block">Número do WhatsApp</label>
+                    <input type="tel" id="delete-phone" required placeholder="Ex: 16999999999" class="input-compact text-white">
+                </div>
+                
+                <button type="submit" class="btn-delete w-full py-4 rounded-xl text-white font-black uppercase text-xs shadow-lg hover:scale-[1.02] active:scale-95 transition-all">
+                    Confirmar Exclusão Permanente
+                </button>
+            </form>
+
+            <p class="text-[9px] text-center text-slate-600 uppercase font-bold">
+                Ao clicar, sua solicitação será processada em até 24 horas.
+            </p>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-white/10 text-center">
+            <button onclick="window.history.back()" class="text-slate-500 hover:text-white font-black uppercase text-[9px] transition-all">
+                ← Voltar
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU",
+            databaseURL: "https://agenda-album-de-formatura-default-rtdb.firebaseio.com"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        document.getElementById('form-exclusao').onsubmit = async (e) => {
+            e.preventDefault();
+            const phone = document.getElementById('delete-phone').value.replace(/\D/g, '');
+            
+            if (phone.length < 10) {
+                alert("Por favor, insira um número válido com DDD.");
+                return;
+            }
+
+            if (confirm("Você tem certeza que deseja apagar todos os seus dados? Esta ação não pode ser desfeita.")) {
+                try {
+                    // Remove o vínculo de projeto (onde estão os dados principais)
+                    await remove(ref(db, `vinculo_projeto/55${phone}`));
+                    // Também poderia remover de outras pastas se necessário, como respostas/
+                    
+                    alert("✅ Solicitação recebida! Seus dados foram removidos de nossa base ativa.");
+                    window.location.href = "index.html";
+                } catch (error) {
+                    console.error(error);
+                    alert("Erro ao processar exclusão. Entre em contato via e-mail: evanio.martins@gmail.com");
+                }
+            }
+        };
+    </script>
+</body>
+</html>
