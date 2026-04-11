@@ -513,33 +513,97 @@
             const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
             const dataHoje = new Date().toISOString().split('T')[0];
             
+            // f.innerHTML = `
+            //     <h3 class="text-emerald-400 font-black text-xs uppercase mb-4 text-center">Venda Avulsa (S/ Agendamento)</h3>
+            //     <input type="text" id="av_nome" placeholder="Nome do Formando" class="input-compact mb-2">
+            //     <input type="date" id="av_data" value="${dataHoje}" class="input-compact mb-2">
+            //     <input type="text" id="av_num" placeholder="Nº Álbum" class="input-compact mb-2">
+            //     <input type="number" id="av_valor" placeholder="Valor Total" class="input-compact mb-2">
+            //     <select id="av_vend" class="input-compact mb-4">
+            //         <option value="Evanio">Evanio</option>
+            //         <option value="Willian">Willian</option>
+            //     </select>
+            //     <button onclick="window.salvarAvulso()" class="btn-primary w-full py-4 rounded-xl font-black uppercase text-xs">Registrar Avulso</button>
+            // `;
+
+            // CORREÇÃO: Adicionada lógica de tipo de lançamento (Venda/NQ) e formas de pagamento
             f.innerHTML = `
-                <h3 class="text-emerald-400 font-black text-xs uppercase mb-4 text-center">Venda Avulsa (S/ Agendamento)</h3>
-                <input type="text" id="av_nome" placeholder="Nome do Formando" class="input-compact mb-2">
-                <input type="date" id="av_data" value="${dataHoje}" class="input-compact mb-2">
-                <input type="text" id="av_num" placeholder="Nº Álbum" class="input-compact mb-2">
-                <input type="number" id="av_valor" placeholder="Valor Total" class="input-compact mb-2">
-                <select id="av_vend" class="input-compact mb-4">
-                    <option value="Evanio">Evanio</option>
-                    <option value="Willian">Willian</option>
-                </select>
-                <button onclick="window.salvarAvulso()" class="btn-primary w-full py-4 rounded-xl font-black uppercase text-xs">Registrar Avulso</button>
+                <h3 class="text-emerald-400 font-black text-xs uppercase mb-4 text-center">Lançamento Avulso</h3>
+                <div class="space-y-3">
+                    <select id="av_res" class="input-compact mb-2" onchange="window.toggleAvulsoPagamentos(this.value)">
+                        <option value="Venda">VENDA ✅</option>
+                        <option value="NQ">NQ ❌</option>
+                    </select>
+                    <input type="text" id="av_nome" placeholder="Nome do Formando" class="input-compact mb-2">
+                    <input type="date" id="av_data" value="${dataHoje}" class="input-compact mb-2">
+                    <div id="av_venda_fields" class="space-y-3">
+                        <input type="text" id="av_num" placeholder="Nº Álbum" class="input-compact mb-2">
+                        <input type="number" id="av_valor" placeholder="Valor Total" class="input-compact mb-2">
+                        <div id="av-pags-container" class="space-y-2"></div>
+                        <button onclick="window.addAvulsoPagamentoLinha()" class="text-[10px] font-bold text-blue-400 uppercase">+ Forma de Pagamento</button>
+                    </div>
+                    <select id="av_vend" class="input-compact mb-4">
+                        <option value="Evanio">Evanio</option>
+                        <option value="Willian">Willian</option>
+                    </select>
+                    <button onclick="window.salvarAvulso()" class="btn-primary w-full py-4 rounded-xl font-black uppercase text-xs">Gravar Lançamento</button>
+                </div>
             `;
+            window.addAvulsoPagamentoLinha();
+        };
+
+        window.toggleAvulsoPagamentos = (val) => {
+            const fields = document.getElementById('av_venda_fields');
+            if(val === 'NQ') fields.classList.add('hidden');
+            else fields.classList.remove('hidden');
+        };
+
+        window.addAvulsoPagamentoLinha = () => {
+            const c = document.getElementById('av-pags-container');
+            const d = document.createElement('div');
+            d.className = "flex gap-2";
+            d.innerHTML = `
+                <select class="av-p-tipo input-compact text-[10px] text-white">
+                    <option>Pix Entrada</option>
+                    <option>Pix</option>
+                    <option>Cartão Crédito</option>
+                    <option>Cartão Débito</option>
+                    <option>Boleto</option>
+                </select>
+                <input type="number" class="av-p-valor input-compact text-[10px] text-white" placeholder="Valor">`;
+            c.appendChild(d);
         };
 
         window.salvarAvulso = async () => {
+            const res = document.getElementById('av_res').value;
             const n = document.getElementById('av_nome').value;
             const d = document.getElementById('av_data').value;
-            const v = document.getElementById('av_valor').value;
-            const alb = document.getElementById('av_num').value;
             const vend = document.getElementById('av_vend').value;
 
-            if(!n || !d || !v) return alert("Preencha Nome, Data e Valor!");
+            if(!n || !d) return alert("Preencha Nome e Data!");
+
+            let dados = { nome_formando: n, data: d, vendedor: vend, resultado: res };
+
+            if(res === 'Venda') {
+                const v = document.getElementById('av_valor').value;
+                const alb = document.getElementById('av_num').value;
+                if(!v) return alert("Informe o Valor Total!");
+                
+                const pagamentos = [];
+                document.querySelectorAll('#av-pags-container > div').forEach(div => {
+                    const tipo = div.querySelector('.av-p-tipo').value;
+                    const valor = div.querySelector('.av-p-valor').value;
+                    if (valor) pagamentos.push({ tipo, valor });
+                });
+
+                dados.valor = v;
+                dados.num_album = alb;
+                dados.pagamentos = pagamentos;
+            }
+
             const id = `AV-${Date.now()}`;
-            await set(ref(db, `vendas/${projId}/avulsos/${d}/${id}`), {
-                nome_formando: n, data: d, valor: v, num_album: alb, vendedor: vend, resultado: "Venda"
-            });
-            alert("Venda Avulsa Gravada!");
+            await set(ref(db, `vendas/${projId}/avulsos/${d}/${id}`), dados);
+            alert("Lançamento Avulso Gravado!");
             location.reload();
         };
 
@@ -1284,7 +1348,7 @@
             const cont = document.getElementById('lista-visitas'); cont.innerHTML = '';
             const fD = document.getElementById('filtro-data-logistica').value;
             // let list = fD ? window.dadosCompletos.filter(i => i.data === fD) : window.dadosCompletos;
-            
+
             // CORREÇÃO: Listagem ordenada cronologicamente (Data e Horário)
             let list = fD ? window.dadosCompletos.filter(i => i.data === fD) : [...window.dadosCompletos];
             
