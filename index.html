@@ -1,4 +1,4 @@
-<!DOCTYPE html>    
+<!DOCTYPE html>      
 <html lang="pt-BR">
 
 <head>
@@ -513,20 +513,6 @@
             const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
             const dataHoje = new Date().toISOString().split('T')[0];
             
-            // f.innerHTML = `
-            //     <h3 class="text-emerald-400 font-black text-xs uppercase mb-4 text-center">Venda Avulsa (S/ Agendamento)</h3>
-            //     <input type="text" id="av_nome" placeholder="Nome do Formando" class="input-compact mb-2">
-            //     <input type="date" id="av_data" value="${dataHoje}" class="input-compact mb-2">
-            //     <input type="text" id="av_num" placeholder="Nº Álbum" class="input-compact mb-2">
-            //     <input type="number" id="av_valor" placeholder="Valor Total" class="input-compact mb-2">
-            //     <select id="av_vend" class="input-compact mb-4">
-            //         <option value="Evanio">Evanio</option>
-            //         <option value="Willian">Willian</option>
-            //     </select>
-            //     <button onclick="window.salvarAvulso()" class="btn-primary w-full py-4 rounded-xl font-black uppercase text-xs">Registrar Avulso</button>
-            // `;
-
-            // CORREÇÃO: Adicionada lógica de tipo de lançamento (Venda/NQ) e formas de pagamento
             f.innerHTML = `
                 <h3 class="text-emerald-400 font-black text-xs uppercase mb-4 text-center">Lançamento Avulso</h3>
                 <div class="space-y-3">
@@ -690,17 +676,17 @@
                 return window.dispararProximoAPI();
             }
 
-            const name = dados[0].trim();
+            const nome = dados[0].trim();
             const fone = dados[1].trim().replace(/\D/g, '');
 
             try {
-                document.getElementById('status-automacao').innerText = `Enviando para: ${name}...`;
+                document.getElementById('status-automacao').innerText = `Enviando para: ${nome}...`;
                 const response = await fetch("https://agendamentos-4zxv.onrender.com/disparar-template", {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         telefone: fone,
-                        nome_formando: name,
+                        nome_formando: nome,
                         escola: projetoDB.escola || "Escola",
                         projeto_id: projId,
                         usuario: localStorage.getItem('userType') || 'Evanio' // Enviando quem está disparando
@@ -1057,7 +1043,7 @@
 
         window.renderExtrato = (list) => {
             const agrupadoVendas = {};
-            const agrupadoNQs = {}; // Agrupamento corrigido para NQs
+            const agrupadoNQs = {}; 
 
             list.forEach(i => {
                 const data = i.data || "Sem Data";
@@ -1068,13 +1054,37 @@
                     if (!agrupadoVendas[data][vendedor]) agrupadoVendas[data][vendedor] = [];
                     agrupadoVendas[data][vendedor].push(i);
                 } else if (i.resultado === "NQ") {
-                    // CORREÇÃO: Tabela de NQs agora agrupa igual às Vendas
                     if (!agrupadoNQs[data]) agrupadoNQs[data] = {};
                     if (!agrupadoNQs[data][vendedor]) agrupadoNQs[data][vendedor] = [];
                     agrupadoNQs[data][vendedor].push(i);
                 }
             });
 
+            // document.getElementById('extrato-tabela').innerHTML = Object.keys(agrupadoVendas)
+            //     .sort((a,b)=> b.localeCompare(a))
+            //     .map(data => {
+            //         const dataBR = data.split('-').reverse().join('/');
+            //         return `
+            //         <div class="mb-4">
+            //             <div class="text-sm font-black text-white mb-2 border-b border-white/10 pb-1">📅 ${dataBR}</div>
+            //             ${Object.keys(agrupadoVendas[data]).map(vendName => `
+            //                 <div class="ml-2 mb-3">
+            //                     <div class="text-xs font-bold text-blue-400 mb-1">👤 ${vendName}</div>
+            //                     ${agrupadoVendas[data][vendName].map(i => `
+            //                         <div class="flex justify-between py-1 border-b border-white/5 text-white">
+            //                             <div class="flex flex-col">
+            //                                 <span class="text-[10px] font-bold">${i.nome_formando}</span>
+            //                                 <span class="text-[8px] text-slate-500 uppercase">Alb: ${i.num_album||'S/N'} | Com: ${fBR(i.venda_comissao)}</span>
+            //                             </div>
+            //                             <b class="text-[10px] text-emerald-400">${fBR(i.valor)}</b>
+            //                         </div>
+            //                     `).join('')}
+            //                 </div>
+            //             `).join('')}
+            //         </div>`;
+            //     }).join('');
+
+            // CORREÇÃO: Renderização detalhada de vendas com formas de pagamento e comissão destacada
             document.getElementById('extrato-tabela').innerHTML = Object.keys(agrupadoVendas)
                 .sort((a,b)=> b.localeCompare(a))
                 .map(data => {
@@ -1084,16 +1094,30 @@
                         <div class="text-sm font-black text-white mb-2 border-b border-white/10 pb-1">📅 ${dataBR}</div>
                         ${Object.keys(agrupadoVendas[data]).map(vendName => `
                             <div class="ml-2 mb-3">
-                                <div class="text-xs font-bold text-blue-400 mb-1">👤 ${vendName}</div>
-                                ${agrupadoVendas[data][vendName].map(i => `
-                                    <div class="flex justify-between py-1 border-b border-white/5 text-white">
-                                        <div class="flex flex-col">
-                                            <span class="text-[10px] font-bold">${i.nome_formando}</span>
-                                            <span class="text-[8px] text-slate-500 uppercase">Alb: ${i.num_album||'S/N'} | Com: ${fBR(i.venda_comissao)}</span>
+                                <div class="text-xs font-bold text-blue-400 mb-1 flex justify-between items-center">
+                                    <span>👤 ${vendName}</span>
+                                </div>
+                                ${agrupadoVendas[data][vendName].map(i => {
+                                    // Gera o texto das formas de pagamento
+                                    let txtPagamentos = "S/ INF";
+                                    if (i.pagamentos && i.pagamentos.length > 0) {
+                                        txtPagamentos = i.pagamentos.map(p => `${p.tipo}: ${fBR(p.valor)}`).join(' | ');
+                                    }
+                                    return `
+                                    <div class="py-2 border-b border-white/5 text-white">
+                                        <div class="flex justify-between items-start">
+                                            <div class="flex flex-col">
+                                                <span class="text-[10px] font-bold">${i.nome_formando}</span>
+                                                <span class="text-[8px] text-slate-500 uppercase">Álbum: ${i.num_album||'S/N'}</span>
+                                            </div>
+                                            <b class="text-[10px] text-emerald-400">${fBR(i.valor)}</b>
                                         </div>
-                                        <b class="text-[10px] text-emerald-400">${fBR(i.valor)}</b>
-                                    </div>
-                                `).join('')}
+                                        <div class="mt-1 flex justify-between items-center">
+                                            <span class="text-[7px] text-blue-300 font-bold uppercase italic tracking-tighter">💳 ${txtPagamentos}</span>
+                                            <span class="bg-blue-600/20 text-blue-400 text-[8px] font-black px-2 py-0.5 rounded border border-blue-500/30">COMISSÃO: ${fBR(i.venda_comissao)}</span>
+                                        </div>
+                                    </div>`;
+                                }).join('')}
                             </div>
                         `).join('')}
                     </div>`;
@@ -1347,8 +1371,7 @@
         window.filtrarLogistica = () => {
             const cont = document.getElementById('lista-visitas'); cont.innerHTML = '';
             const fD = document.getElementById('filtro-data-logistica').value;
-            // let list = fD ? window.dadosCompletos.filter(i => i.data === fD) : window.dadosCompletos;
-
+            
             // CORREÇÃO: Listagem ordenada cronologicamente (Data e Horário)
             let list = fD ? window.dadosCompletos.filter(i => i.data === fD) : [...window.dadosCompletos];
             
