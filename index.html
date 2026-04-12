@@ -1,4 +1,4 @@
-<!DOCTYPE html>      
+<!DOCTYPE html>        
 <html lang="pt-BR">
 
 <head>
@@ -319,7 +319,6 @@
         // --- ACÃO GLOBAL DO ENTER ---
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                // CORREÇÃO: Impede o Enter de disparar o botão "Gravar Tudo" se estiver no textarea da lista (pLista)
                 if (document.activeElement && document.activeElement.id === 'pLista') {
                     return; 
                 }
@@ -382,7 +381,6 @@
             const globalId = snap.val();
             const userLogado = localStorage.getItem('userType');
             
-            // BUSCA PROJETO ATIVO SE NÃO HOUVER ID NA URL E ESTIVER LOGADO
             if (!idDaUrl && userLogado) {
                 const snapUltimo = await get(ref(db, `config/ultimo_projeto_usuario/${userLogado}`));
                 if (snapUltimo.exists()) {
@@ -414,7 +412,6 @@
                     if(userLogado) {
                         document.getElementById('user-display').innerText = `| ${userLogado}`;
                         document.getElementById('controles-admin').classList.remove('hidden');
-                        // Salva como último projeto operado
                         update(ref(db, `config/ultimo_projeto_usuario`), { [userLogado]: projId });
                     }
 
@@ -466,8 +463,8 @@
         window.efetuarLogout = () => {
             localStorage.removeItem('userType');
             localStorage.removeItem('isAdmin');
-            localStorage.removeItem('currentProject'); // Limpa o projeto atual no logout
-            location.href = window.location.origin + window.location.pathname; // Recarrega limpo
+            localStorage.removeItem('currentProject'); 
+            location.href = window.location.origin + window.location.pathname; 
         };
 
         window.confirmarLogin = async () => {
@@ -489,7 +486,6 @@
             }
 
             if (loginValido) {
-                // CORREÇÃO: Busca no banco de dados qual foi o último projeto operado pelo usuário para entrar direto nele
                 try {
                     const snapUltimo = await get(ref(db, `config/ultimo_projeto_usuario/${user}`));
                     if (snapUltimo.exists()) {
@@ -633,7 +629,6 @@
         window.iniciarCampanha = async () => {
             if (!projetoDB || !projetoDB.automacao?.lista) return alert("Configure a lista no botão 'Dados Projeto'!");
             
-            // Avisa ao Bot qual é o projeto ativo DESTE usuário no momento
             const user = localStorage.getItem('userType') || 'Evanio';
             await update(ref(db, `config/ultimo_projeto_usuario`), { [user]: projId });
             
@@ -689,7 +684,7 @@
                         nome_formando: nome,
                         escola: projetoDB.escola || "Escola",
                         projeto_id: projId,
-                        usuario: localStorage.getItem('userType') || 'Evanio' // Enviando quem está disparando
+                        usuario: localStorage.getItem('userType') || 'Evanio' 
                     })
                 });
 
@@ -773,10 +768,10 @@
             d.innerHTML = `
                 <select class="p-tipo input-compact text-[10px] text-white">
                     <option>Pix Entrada</option>
+                    <option>Pix</option>
                     <option>Cartão Crédito</option>
                     <option>Cartão Débito</option>
                     <option>Boleto</option>
-                    <option>Pix</option>
                 </select>
                 <input type="number" class="p-valor input-compact text-[10px] text-white" placeholder="Valor">`;
             c.appendChild(d);
@@ -853,7 +848,6 @@
             }
         };
 
-        // --- RELATÓRIOS E BI ---
         window.menuRelatorio = () => {
             document.getElementById('modalGestao').style.display = 'flex';
             document.getElementById('gestao-menu').classList.add('hidden');
@@ -1060,31 +1054,6 @@
                 }
             });
 
-            // document.getElementById('extrato-tabela').innerHTML = Object.keys(agrupadoVendas)
-            //     .sort((a,b)=> b.localeCompare(a))
-            //     .map(data => {
-            //         const dataBR = data.split('-').reverse().join('/');
-            //         return `
-            //         <div class="mb-4">
-            //             <div class="text-sm font-black text-white mb-2 border-b border-white/10 pb-1">📅 ${dataBR}</div>
-            //             ${Object.keys(agrupadoVendas[data]).map(vendName => `
-            //                 <div class="ml-2 mb-3">
-            //                     <div class="text-xs font-bold text-blue-400 mb-1">👤 ${vendName}</div>
-            //                     ${agrupadoVendas[data][vendName].map(i => `
-            //                         <div class="flex justify-between py-1 border-b border-white/5 text-white">
-            //                             <div class="flex flex-col">
-            //                                 <span class="text-[10px] font-bold">${i.nome_formando}</span>
-            //                                 <span class="text-[8px] text-slate-500 uppercase">Alb: ${i.num_album||'S/N'} | Com: ${fBR(i.venda_comissao)}</span>
-            //                             </div>
-            //                             <b class="text-[10px] text-emerald-400">${fBR(i.valor)}</b>
-            //                         </div>
-            //                     `).join('')}
-            //                 </div>
-            //             `).join('')}
-            //         </div>`;
-            //     }).join('');
-
-            // CORREÇÃO: Renderização detalhada de vendas com formas de pagamento e comissão destacada
             document.getElementById('extrato-tabela').innerHTML = Object.keys(agrupadoVendas)
                 .sort((a,b)=> b.localeCompare(a))
                 .map(data => {
@@ -1098,7 +1067,6 @@
                                     <span>👤 ${vendName}</span>
                                 </div>
                                 ${agrupadoVendas[data][vendName].map(i => {
-                                    // Gera o texto das formas de pagamento
                                     let txtPagamentos = "S/ INF";
                                     if (i.pagamentos && i.pagamentos.length > 0) {
                                         txtPagamentos = i.pagamentos.map(p => `${p.tipo}: ${fBR(p.valor)}`).join(' | ');
@@ -1123,7 +1091,6 @@
                     </div>`;
                 }).join('');
 
-            // CORREÇÃO: Renderização de NQs agrupada por Data e Vendedor
             document.getElementById('nq-tabela').innerHTML = Object.keys(agrupadoNQs).length > 0 ? 
                 Object.keys(agrupadoNQs)
                 .sort((a,b)=> b.localeCompare(a))
@@ -1261,7 +1228,7 @@
                 localStorage.removeItem('currentProject');
                 window.location.href = window.location.origin + window.location.pathname;
             } else {
-                alert("Senha incorreta. Operação cancelada.");
+                alert("Senha incorreta. Operation cancelada.");
             }
         };
 
@@ -1347,32 +1314,78 @@
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display='none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
         window.gerenciarItem = (p) => { window.itemPath = p; document.getElementById('modalGestao').style.display='flex'; };
         
+        // window.carregarRelatorio = async () => {
+        //     if(!projId) return;
+        //     const [sA, sV, sC, sVales] = await Promise.all([ 
+        //         get(ref(db, `dados/${projId}/agendamentos`)), 
+        //         get(ref(db, `vendas/${projId}`)), 
+        //         get(ref(db, `custos/${projId}`)), 
+        //         get(ref(db, `vales/${projId}`)) 
+        //     ]);
+        //     
+        //     window.dadosCompletos = [];
+        //     custosDB = sC.exists() ? sC.val() : { km_valor: 0.7, km_total: 0, hosp_valor: 0, hosp_qtd: 0, alim_valor: 0, alim_qtd: 0, pedagio_total: 0 };
+        //     valesDB = sVales.exists() ? sVales.val() : {};
+        //     
+        //     const proc = (p, b) => { if(!p) return; Object.keys(p).forEach(k => { if(p[k].nome_formando) window.dadosCompletos.push({...p[k], path: `${b}/${k}`, id: k}); else Object.keys(p[k]).forEach(sK => window.dadosCompletos.push({...p[k][sK], path: `${b}/${k}/${sK}`, id: sK, data: k})); }); };
+        //     if(sA.exists()) proc(sA.val(), `dados/${projId}/agendamentos`);
+        //     if(sV.exists()) { if(sV.val().agendamentos) proc(sV.val().agendamentos, `vendas/${projId}/agendamentos`); if(sV.val().avulsos) proc(sV.val().avulsos, `vendas/${projId}/avulsos`); }
+        //     
+        //     window.filtrarLogistica(); 
+        //     window.filtrarBI();
+        // };
+
+        // CORREÇÃO: Função carregarRelatorio corrigida para evitar desaparecimento de dados
         window.carregarRelatorio = async () => {
             if(!projId) return;
-            const [sA, sV, sC, sVales] = await Promise.all([ 
-                get(ref(db, `dados/${projId}/agendamentos`)), 
-                get(ref(db, `vendas/${projId}`)), 
-                get(ref(db, `custos/${projId}`)), 
-                get(ref(db, `vales/${projId}`)) 
-            ]);
-            
-            window.dadosCompletos = [];
-            custosDB = sC.exists() ? sC.val() : { km_valor: 0.7, km_total: 0, hosp_valor: 0, hosp_qtd: 0, alim_valor: 0, alim_qtd: 0, pedagio_total: 0 };
-            valesDB = sVales.exists() ? sVales.val() : {};
-            
-            const proc = (p, b) => { if(!p) return; Object.keys(p).forEach(k => { if(p[k].nome_formando) window.dadosCompletos.push({...p[k], path: `${b}/${k}`, id: k}); else Object.keys(p[k]).forEach(sK => window.dadosCompletos.push({...p[k][sK], path: `${b}/${k}/${sK}`, id: sK, data: k})); }); };
-            if(sA.exists()) proc(sA.val(), `dados/${projId}/agendamentos`);
-            if(sV.exists()) { if(sV.val().agendamentos) proc(sV.val().agendamentos, `vendas/${projId}/agendamentos`); if(sV.val().avulsos) proc(sV.val().avulsos, `vendas/${projId}/avulsos`); }
-            
-            window.filtrarLogistica(); 
-            window.filtrarBI();
+            try {
+                const [sA, sV, sC, sVales] = await Promise.all([ 
+                    get(ref(db, `dados/${projId}/agendamentos`)), 
+                    get(ref(db, `vendas/${projId}`)), 
+                    get(ref(db, `custos/${projId}`)), 
+                    get(ref(db, `vales/${projId}`)) 
+                ]);
+                
+                window.dadosCompletos = [];
+                custosDB = sC.exists() ? sC.val() : { km_valor: 0.7, km_total: 0, hosp_valor: 0, hosp_qtd: 0, alim_valor: 0, alim_qtd: 0, pedagio_total: 0 };
+                valesDB = sVales.exists() ? sVales.val() : {};
+                
+                const processarDados = (objeto, base) => {
+                    if(!objeto) return;
+                    Object.keys(objeto).forEach(key => {
+                        const item = objeto[key];
+                        // Se o item tem nome_formando, é um registro direto (venda avulsa ou raiz)
+                        if (item.nome_formando) {
+                            window.dadosCompletos.push({ ...item, path: `${base}/${key}`, id: key });
+                        } else {
+                            // Se não tem nome_formando, é uma pasta de data contendo múltiplos registros
+                            Object.keys(item).forEach(subKey => {
+                                const subItem = item[subKey];
+                                if (subItem && typeof subItem === 'object') {
+                                    window.dadosCompletos.push({ ...subItem, path: `${base}/${key}/${subKey}`, id: subKey, data: key });
+                                }
+                            });
+                        }
+                    });
+                };
+
+                if(sA.exists()) processarDados(sA.val(), `dados/${projId}/agendamentos`);
+                if(sV.exists()) {
+                    const vendas = sV.val();
+                    if(vendas.agendamentos) processarDados(vendas.agendamentos, `vendas/${projId}/agendamentos`);
+                    if(vendas.avulsos) processarDados(vendas.avulsos, `vendas/${projId}/avulsos`);
+                }
+                
+                window.filtrarLogistica(); 
+                window.filtrarBI();
+            } catch (err) {
+                console.error("Erro ao carregar relatório:", err);
+            }
         };
 
         window.filtrarLogistica = () => {
             const cont = document.getElementById('lista-visitas'); cont.innerHTML = '';
             const fD = document.getElementById('filtro-data-logistica').value;
-            
-            // CORREÇÃO: Listagem ordenada cronologicamente (Data e Horário)
             let list = fD ? window.dadosCompletos.filter(i => i.data === fD) : [...window.dadosCompletos];
             
             list.sort((a, b) => {
@@ -1415,15 +1428,11 @@
 
             while (atual <= dataLimite) {
                 const iso = atual.toISOString().split('T')[0];
-                
-                // CORREÇÃO: Lógica para esconder o dia se não houver mais horários possíveis (Regra das 3 horas)
                 let mostrarDia = true;
                 if (iso === hoje.toISOString().split('T')[0]) {
-                    // Se for hoje, verificamos se o último horário (20:30 ou 17:00 fds) - 3h ainda é possível
                     const fds = (atual.getDay() % 6 === 0);
                     const limiteHoras = fds ? 17 : 20.5;
                     const agoraDecimal = hoje.getHours() + (hoje.getMinutes() / 60);
-                    
                     if (agoraDecimal + 3 >= limiteHoras) {
                         mostrarDia = false;
                     }
@@ -1454,23 +1463,17 @@
             const dataSelecionada = new Date(iso + "T00:00:00");
             const fds = (dataSelecionada.getDay() % 6 === 0);
             
-            // CORREÇÃO: Implementação da Regra das 3 Horas
             for (let h = 9; h <= (fds ? 17 : 20.5); h += 0.5) {
                 const hh = Math.floor(h).toString().padStart(2, '0'); 
                 const mm = (h % 1 === 0) ? '00' : '30';
                 const format = `${hh}:${mm}`;
 
-                // Se for hoje, aplica a regra das 3 horas
                 if (iso === hoje.toISOString().split('T')[0]) {
                     const agoraDecimal = hoje.getHours() + (hoje.getMinutes() / 60);
-                    if (h < agoraDecimal + 3) continue; // Pula horários proibidos
+                    if (h < agoraDecimal + 3) continue; 
                 }
 
-                // CORREÇÃO SOLICITADA: Lógica de limite por tipo de comissão
-                // comissao_individual false = dividindo comissão (permite 2)
-                // comissao_individual true = individual (permite 1)
                 const limiteAgendamentos = (projetoDB.comissao_individual === true) ? 1 : 2;
-
                 if (Object.values(ag).filter(a => a.horario === format).length < limiteAgendamentos) {
                     selectH.innerHTML += `<option value="${format}">${format}</option>`;
                 }
