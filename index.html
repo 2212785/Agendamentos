@@ -897,6 +897,7 @@
                 const dKey = i.data || "Sem Data";
                 if (!chartData[dKey]) chartData[dKey] = { v: 0, nq: 0 };
 
+                // GARANTE QUE O VENDEDOR EXISTE NO OBJETO VEND ANTES DE SOMAR
                 if (!vend[vn]) vend[vn] = { v: 0, nq: 0, tot: 0, com: 0, ent: 0 };
 
                 if (i.resultado === "Venda") {
@@ -1056,44 +1057,6 @@
                 }
             });
 
-            // document.getElementById('extrato-tabela').innerHTML = Object.keys(agrupadoVendas)
-            //     .sort((a,b)=> b.localeCompare(a))
-            //     .map(data => {
-            //         const dataBR = data.split('-').reverse().join('/');
-            //         return `
-            //         <div class="mb-4">
-            //             <div class="text-sm font-black text-white mb-2 border-b border-white/10 pb-1">📅 ${dataBR}</div>
-            //             ${Object.keys(agrupadoVendas[data]).map(vendName => `
-            //                 <div class="ml-2 mb-3">
-            //                     <div class="text-xs font-bold text-blue-400 mb-1 flex justify-between items-center">
-                                    <span>👤 ${vendName}</span>
-                                </div>
-                                ${agrupadoVendas[data][vendName].map(i => {
-                                    let txtPagamentos = "S/ INF";
-                                    if (i.pagamentos && i.pagamentos.length > 0) {
-                                        txtPagamentos = i.pagamentos.map(p => `${p.tipo}: ${fBR(p.valor)}`).join(' | ');
-                                    }
-                                    return `
-                                    <div class="py-2 border-b border-white/5 text-white">
-                                        <div class="flex justify-between items-start">
-                                            <div class="flex flex-col">
-                                                <span class="text-[10px] font-bold">${i.nome_formando}</span>
-                                                <span class="text-[8px] text-slate-500 uppercase">Álbum: ${i.num_album||'S/N'}</span>
-                                            </div>
-                                            <b class="text-[10px] text-emerald-400">${fBR(i.valor)}</b>
-                                        </div>
-                                        <div class="mt-1 flex justify-between items-center">
-                                            <span class="text-[7px] text-blue-300 font-bold uppercase italic tracking-tighter">💳 ${txtPagamentos}</span>
-                                            <span class="bg-blue-600/20 text-blue-400 text-[8px] font-black px-2 py-0.5 rounded border border-blue-500/30">COMISSÃO: ${fBR(i.venda_comissao)}</span>
-                                        </div>
-                                    </div>`;
-                                }).join('')}
-                            </div>
-                        `).join('')}
-                    </div>`;
-                }).join('');
-
-            // CORREÇÃO: Renderização detalhada de vendas com formas de pagamento e comissão destacada
             document.getElementById('extrato-tabela').innerHTML = Object.keys(agrupadoVendas)
                 .sort((a,b)=> b.localeCompare(a))
                 .map(data => {
