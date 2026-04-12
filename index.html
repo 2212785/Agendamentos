@@ -897,6 +897,9 @@
                 const dKey = i.data || "Sem Data";
                 if (!chartData[dKey]) chartData[dKey] = { v: 0, nq: 0 };
 
+                // GARANTE QUE O VENDEDOR EXISTE NO OBJETO VEND ANTES DE SOMAR
+                if (!vend[vn]) vend[vn] = { v: 0, nq: 0, tot: 0, com: 0, ent: 0 };
+
                 if (i.resultado === "Venda") {
                     m.v++; m.tot += Number(i.valor) || 0;
                     vend[vn].v++; vend[vn].tot += Number(i.valor) || 0;
@@ -999,7 +1002,7 @@
                 <div class="glass p-2 rounded-xl text-center text-[10px] text-white">PIX<br><b class="text-xs">${fBR(m.pix)}</b></div>
                 <div class="glass p-2 rounded-xl text-center text-emerald-400 text-[10px] font-black border-blue-500/50">COMISSÃO TOTAL<br><b class="text-xs text-blue-400">${fBR(m.com)}</b></div>
                 <div class="glass p-2 rounded-xl text-center text-emerald-400 text-[10px]">CARTÃO<br><b class="text-xs">${fBR(m.cre + m.deb)}</b></div>
-                <div class="glass p-2 rounded-xl text-center border-rose-500/30 text-rose-500 text-[10px]">TOTAL VALES<br><b class="text-xs">${fBR(totalValesEvanio + totalValesWillian + vend.Evanio.ent + vend.Willian.ent)}</b></div>
+                <div class="glass p-2 rounded-xl text-center border-rose-500/30 text-rose-500 text-[10px]">TOTAL VALES<br><b class="text-xs">${fBR(totalValesEvanio + totalValesWillian + (vend.Evanio?.ent || 0) + (vend.Willian?.ent || 0))}</b></div>
                 <div class="glass p-2 rounded-xl text-center border-blue-500/30 text-blue-400 text-[10px]">REEMB. TOTAL<br><b class="text-xs">${fBR(rI)}</b></div>
                 <div class="glass p-2 rounded-xl text-center text-[10px] text-white uppercase">Boleto<br><b class="text-xs">${fBR(m.bol)}</b></div>`;
             
@@ -1010,22 +1013,22 @@
                     <div class="bg-blue-600/10 border border-blue-500/20 p-8 rounded-[2.5rem] text-white relative overflow-hidden">
                         <p class="text-3xl font-black text-blue-400 uppercase mb-8 border-b border-blue-500/20 pb-4 text-center italic tracking-tighter">EVANIO MARTINS</p>
                         <div class="text-lg space-y-6 font-semibold">
-                            <div class="flex justify-between items-center">Comissão: <b class="text-2xl text-blue-200">+ ${fBR(vend.Evanio.com)}</b></div>
+                            <div class="flex justify-between items-center">Comissão: <b class="text-2xl text-blue-200">+ ${fBR(vend.Evanio?.com || 0)}</b></div>
                             <div class="flex justify-between items-center">Reembolso: <b class="text-2xl text-blue-200">+ ${fBR(isIndividual ? (userLogado === 'Evanio' ? rI : 0) : rI)}</b></div>
-                            <div class="flex justify-between items-center text-rose-400">Vales/PD: <b class="text-2xl font-black">- ${fBR(totalValesEvanio + vend.Evanio.ent)}</b></div>
+                            <div class="flex justify-between items-center text-rose-400">Vales/PD: <b class="text-2xl font-black">- ${fBR(totalValesEvanio + (vend.Evanio?.ent || 0))}</b></div>
                             <div class="text-2xl font-black pt-8 border-t-4 border-white/10 mt-4 flex justify-between items-center bg-emerald-900/40 p-6 rounded-3xl shadow-xl uppercase italic">
-                                Saldo Final: <span class="text-5xl text-emerald-400 drop-shadow-lg font-black">${fBR(vend.Evanio.com + (isIndividual ? (userLogado === 'Evanio' ? rI : 0) : rI) - totalValesEvanio - vend.Evanio.ent)}</span>
+                                Saldo Final: <span class="text-5xl text-emerald-400 drop-shadow-lg font-black">${fBR((vend.Evanio?.com || 0) + (isIndividual ? (userLogado === 'Evanio' ? rI : 0) : rI) - totalValesEvanio - (vend.Evanio?.ent || 0))}</span>
                             </div>
                         </div>
                     </div>
                     <div class="bg-cyan-600/10 border border-cyan-500/20 p-8 rounded-[2.5rem] text-white relative overflow-hidden">
                         <p class="text-3xl font-black text-cyan-400 uppercase mb-8 border-b border-cyan-500/20 pb-4 text-center italic tracking-tighter">WILLIAN SEGURA</p>
                         <div class="text-lg space-y-6 font-semibold">
-                            <div class="flex justify-between items-center">Comissão: <b class="text-2xl text-cyan-200">+ ${fBR(vend.Willian.com)}</b></div>
+                            <div class="flex justify-between items-center">Comissão: <b class="text-2xl text-cyan-200">+ ${fBR(vend.Willian?.com || 0)}</b></div>
                             <div class="flex justify-between items-center">Reembolso: <b class="text-2xl text-cyan-200">+ ${fBR(isIndividual ? (userLogado === 'Willian' ? rI : 0) : rI)}</b></div>
-                            <div class="flex justify-between items-center text-rose-400">Vales/PD: <b class="text-2xl font-black">- ${fBR(totalValesWillian + vend.Willian.ent)}</b></div>
+                            <div class="flex justify-between items-center text-rose-400">Vales/PD: <b class="text-2xl font-black">- ${fBR(totalValesWillian + (vend.Willian?.ent || 0))}</b></div>
                             <div class="text-2xl font-black pt-8 border-t-4 border-white/10 mt-4 flex justify-between items-center bg-emerald-900/40 p-6 rounded-3xl shadow-xl uppercase italic">
-                                Saldo Final: <span class="text-5xl text-emerald-400 drop-shadow-lg font-black">${fBR(vend.Willian.com + (isIndividual ? (userLogado === 'Willian' ? rI : 0) : rI) - totalValesWillian - vend.Willian.ent)}</span>
+                                Saldo Final: <span class="text-5xl text-emerald-400 drop-shadow-lg font-black">${fBR((vend.Willian?.com || 0) + (isIndividual ? (userLogado === 'Willian' ? rI : 0) : rI) - totalValesWillian - (vend.Willian?.ent || 0))}</span>
                             </div>
                         </div>
                     </div>
@@ -1314,28 +1317,6 @@
         window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display='none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
         window.gerenciarItem = (p) => { window.itemPath = p; document.getElementById('modalGestao').style.display='flex'; };
         
-        // window.carregarRelatorio = async () => {
-        //     if(!projId) return;
-        //     const [sA, sV, sC, sVales] = await Promise.all([ 
-        //         get(ref(db, `dados/${projId}/agendamentos`)), 
-        //         get(ref(db, `vendas/${projId}`)), 
-        //         get(ref(db, `custos/${projId}`)), 
-        //         get(ref(db, `vales/${projId}`)) 
-        //     ]);
-        //     
-        //     window.dadosCompletos = [];
-        //     custosDB = sC.exists() ? sC.val() : { km_valor: 0.7, km_total: 0, hosp_valor: 0, hosp_qtd: 0, alim_valor: 0, alim_qtd: 0, pedagio_total: 0 };
-        //     valesDB = sVales.exists() ? sVales.val() : {};
-        //     
-        //     const proc = (p, b) => { if(!p) return; Object.keys(p).forEach(k => { if(p[k].nome_formando) window.dadosCompletos.push({...p[k], path: `${b}/${k}`, id: k}); else Object.keys(p[k]).forEach(sK => window.dadosCompletos.push({...p[k][sK], path: `${b}/${k}/${sK}`, id: sK, data: k})); }); };
-        //     if(sA.exists()) proc(sA.val(), `dados/${projId}/agendamentos`);
-        //     if(sV.exists()) { if(sV.val().agendamentos) proc(sV.val().agendamentos, `vendas/${projId}/agendamentos`); if(sV.val().avulsos) proc(sV.val().avulsos, `vendas/${projId}/avulsos`); }
-        //     
-        //     window.filtrarLogistica(); 
-        //     window.filtrarBI();
-        // };
-
-        // CORREÇÃO: Função carregarRelatorio corrigida para evitar desaparecimento de dados
         window.carregarRelatorio = async () => {
             if(!projId) return;
             try {
@@ -1354,11 +1335,9 @@
                     if(!objeto) return;
                     Object.keys(objeto).forEach(key => {
                         const item = objeto[key];
-                        // Se o item tem nome_formando, é um registro direto (venda avulsa ou raiz)
                         if (item.nome_formando) {
                             window.dadosCompletos.push({ ...item, path: `${base}/${key}`, id: key });
                         } else {
-                            // Se não tem nome_formando, é uma pasta de data contendo múltiplos registros
                             Object.keys(item).forEach(subKey => {
                                 const subItem = item[subKey];
                                 if (subItem && typeof subItem === 'object') {
