@@ -1457,7 +1457,11 @@
             const n = document.getElementById('nome').value; const t = document.getElementById('telefone').value; const h = document.getElementById('horario').value; const ed = document.getElementById('endereco').value;
             const zapAviso = (projetoDB.criador === "Willian") ? "16988722130" : "16992590916";
             await set(ref(db, `dados/${projId}/agendamentos/${dt}/AG-${Date.now()}`), { nome_formando: n, telefone: t, endereco: ed, horario: h, resultado: "Pendente" });
-            const msg = `✅ *NOVA VISITA* \n\n🎓 *Formando:* ${n}\n📅 *Data:* ${dt.split('-').reverse().join('/')}\n⏰ *Horário:* ${h}\n📍 *Endereço:* ${ed}\n📱 *WhatsApp:* ${t}`;
+            
+            // --- AJUSTE SOLICITADO: INCLUSÃO DO NOME DA ESCOLA NA MENSAGEM ---
+            // const msg = `✅ *NOVA VISITA* \n\n🎓 *Formando:* ${n}\n📅 *Data:* ${dt.split('-').reverse().join('/')}\n⏰ *Horário:* ${h}\n📍 *Endereço:* ${ed}\n📱 *WhatsApp:* ${t}`;
+            const msg = `✅ *NOVA VISITA* \n\n🏫 *Escola:* ${projetoDB.escola || 'Não informada'}\n🎓 *Formando:* ${n}\n📅 *Data:* ${dt.split('-').reverse().join('/')}\n⏰ *Horário:* ${h}\n📍 *Endereço:* ${ed}\n📱 *WhatsApp:* ${t}`;
+            
             alert("✅ AGENDADO!"); window.location.href = `https://wa.me/55${zapAviso.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`;
         };
 
