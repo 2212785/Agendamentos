@@ -1,4 +1,4 @@
-<!DOCTYPE html>             
+<!DOCTYPE html>              
 <html lang="pt-BR">
 
 <head>
@@ -1379,6 +1379,14 @@
                 let status = i.resultado || "PENDENTE";
                 let statusColor = status === "Venda" ? "text-emerald-400" : (status === "NQ" ? "text-rose-500" : "text-blue-500");
                 
+                // --- INICIO MELHORIAS SOLICITADAS ---
+                const foneLimpo = i.telefone ? i.telefone.replace(/\D/g, '') : '';
+                const linkZap = foneLimpo ? `https://wa.me/55${foneLimpo}` : '#';
+                const enderecoURL = encodeURIComponent(i.endereco || '');
+                const linkGoogle = `https://www.google.com/maps/search/?api=1&query=${enderecoURL}`;
+                const linkWaze = `https://waze.com/ul?q=${enderecoURL}&navigate=yes`;
+                // --- FIM MELHORIAS SOLICITADAS ---
+
                 cont.innerHTML += `
                 <div class="glass p-4 rounded-3xl mb-3 border border-white/5">
                     <div class="flex justify-between items-start">
@@ -1391,8 +1399,21 @@
                             <span class="text-[10px] text-white uppercase font-black">${i.nome_formando}</span>
                         </div>
                     </div>
+                    
+                    <div class="mt-2">
+                        <a href="${linkZap}" target="_blank" class="text-emerald-400 text-[11px] font-black uppercase flex items-center gap-1 italic">
+                            📱 WHATSAPP: ${i.telefone || 'S/N'} 🚀
+                        </a>
+                    </div>
+
                     <div class="text-[13px] mt-2 text-slate-300 font-semibold italic">${i.endereco||'S/E'}</div>
-                    <button onclick="window.gerenciarItemAdmin('${i.path}')" class="btn-primary w-full py-3 rounded-xl mt-3 text-[10px] font-black uppercase">Gerenciar</button>
+                    
+                    <div class="grid grid-cols-2 gap-2 mt-3">
+                        <a href="${linkGoogle}" target="_blank" class="bg-blue-600/20 border border-blue-500/30 text-center py-2 rounded-xl text-[9px] font-black text-blue-400 uppercase">Google Maps</a>
+                        <a href="${linkWaze}" target="_blank" class="bg-amber-600/20 border border-amber-500/30 text-center py-2 rounded-xl text-[9px] font-black text-amber-500 uppercase">Waze</a>
+                    </div>
+
+                    <button onclick="window.gerenciarItemAdmin('${i.path}')" class="btn-primary w-full py-3 rounded-xl mt-3 text-[10px] font-black uppercase">Gerenciar / Editar</button>
                 </div>`;
             });
         };
@@ -1406,13 +1427,13 @@
             const f = document.getElementById('gestao-form');
             f.classList.add('hidden');
             
-            // Adiciona a opção de reagendamento direto no menu de gestão se for Admin
+            // Adiciona a opção de alteração direta no menu de gestão
             const menu = document.getElementById('gestao-menu');
             if(!document.getElementById('btn-admin-reagendar')) {
                 const btnReagendar = document.createElement('button');
                 btnReagendar.id = 'btn-admin-reagendar';
                 btnReagendar.className = 'bg-blue-600/20 border border-blue-500/30 p-3 rounded-2xl text-blue-400 font-black uppercase text-[10px]';
-                btnReagendar.innerText = 'Alterar Data/Hora (ADMIN)';
+                btnReagendar.innerText = 'Alterar Visita (DATA/HORA/ENDEREÇO)';
                 btnReagendar.onclick = () => window.fluxoAlterarAdmin();
                 menu.appendChild(btnReagendar);
             }
@@ -1423,67 +1444,87 @@
             document.getElementById('gestao-menu').classList.add('hidden');
             f.classList.remove('hidden');
             
+            const itemOriginal = window.dadosCompletos.find(i => i.path === window.itemPath);
+
             f.innerHTML = `
                 <div class="space-y-3">
-                    <h3 class="text-blue-400 font-black text-xs uppercase text-center mb-2">Reagendamento Autônomo</h3>
-                    <p class="text-[8px] text-slate-500 uppercase font-bold ml-1">Selecione a Nova Data</p>
-                    <input type="date" id="nova_data_admin" class="input-compact text-white" onchange="window.carregarHorariosAdmin()">
-                    <p class="text-[8px] text-slate-500 uppercase font-bold ml-1">Selecione o Novo Horário</p>
+                    <h3 class="text-blue-400 font-black text-xs uppercase text-center mb-2">Editar Dados Visita</h3>
+                    
+                    <p class="text-[8px] text-slate-500 uppercase font-bold ml-1">Data</p>
+                    <input type="date" id="nova_data_admin" value="${itemOriginal.data}" class="input-compact text-white" onchange="window.carregarHorariosAdmin()">
+                    
+                    <p class="text-[8px] text-slate-500 uppercase font-bold ml-1">Horário</p>
                     <select id="novo_horario_admin" class="input-compact text-white">
-                        <option value="">Selecione o Dia Primeiro</option>
+                        <option value="${itemOriginal.horario}">${itemOriginal.horario}</option>
                     </select>
-                    <button onclick="window.confirmarReagendamentoAdmin()" class="btn-primary w-full py-4 rounded-xl font-black uppercase text-xs">Confirmar Reagendamento</button>
+                    
+                    <p class="text-[8px] text-slate-500 uppercase font-bold ml-1">Endereço</p>
+                    <textarea id="novo_endereco_admin" class="input-compact text-white" rows="2">${itemOriginal.endereco}</textarea>
+
+                    <button onclick="window.confirmarReagendamentoAdmin()" class="btn-primary w-full py-4 rounded-xl font-black uppercase text-xs">Salvar Alterações no Firebase</button>
+                    <button onclick="window.fecharModalGestao()" class="bg-slate-700 w-full py-3 rounded-xl font-black uppercase text-[10px]">Cancelar</button>
                 </div>
             `;
+            window.carregarHorariosAdmin();
         };
 
         window.carregarHorariosAdmin = () => {
             const selectH = document.getElementById('novo_horario_admin');
-            selectH.innerHTML = '<option value="">Carregando...</option>';
+            const valorAtual = selectH.value;
+            selectH.innerHTML = '<option value="">Selecione o Horário</option>';
             
-            // ADMIN POSSUI AUTONOMIA TOTAL: Lista todos os horários sem travas de antecedência
-            let html = '<option value="">Selecione o Horário</option>';
-            for (let h = 9; h <= 23.5; h += 0.5) {
+            for (let h = 8; h <= 23.5; h += 0.5) {
                 const hh = Math.floor(h).toString().padStart(2, '0'); 
                 const mm = (h % 1 === 0) ? '00' : '30';
                 const format = `${hh}:${mm}`;
-                html += `<option value="${format}">${format}</option>`;
+                const selected = format === valorAtual ? 'selected' : '';
+                selectH.innerHTML += `<option value="${format}" ${selected}>${format}</option>`;
             }
-            selectH.innerHTML = html;
         };
 
         window.confirmarReagendamentoAdmin = async () => {
             const novaData = document.getElementById('nova_data_admin').value;
             const novoHorario = document.getElementById('novo_horario_admin').value;
+            const novoEndereco = document.getElementById('novo_endereco_admin').value;
             
-            if(!novaData || !novoHorario) return alert("Selecione data e horário!");
+            if(!novaData || !novoHorario || !novoEndereco) return alert("Preencha todos os campos!");
 
             try {
                 const itemOriginal = window.dadosCompletos.find(i => i.path === window.itemPath);
                 if (!itemOriginal) return alert("Erro ao localizar registro.");
 
-                // Prepara o novo caminho (se mudar a data, o ID deve ser recriado ou mantido sob a nova pasta)
                 const basePasta = window.itemPath.split('/').slice(0, -2).join('/');
-                const novoId = itemOriginal.id || `AG-${Date.now()}`;
-                const novoPath = `${basePasta}/${novaData}/${novoId}`;
+                const idOriginal = itemOriginal.id;
 
-                // Salva na nova posição com os dados atualizados
-                await set(ref(db, novoPath), { 
-                    ...itemOriginal, 
-                    data: novaData, 
-                    horario: novoHorario,
-                    obs_admin: `Reagendado por Admin em ${new Date().toLocaleString()}`
-                });
+                // Se mudou a data, precisamos mover o nó no Firebase
+                if (itemOriginal.data !== novaData) {
+                    const novoPath = `${basePasta}/${novaData}/${idOriginal}`;
+                    
+                    await set(ref(db, novoPath), { 
+                        ...itemOriginal, 
+                        data: novaData, 
+                        horario: novoHorario,
+                        endereco: novoEndereco,
+                        editado_em: new Date().toLocaleString()
+                    });
 
-                // Remove da posição antiga
-                await remove(ref(db, window.itemPath));
+                    // Remove da posição antiga (comentado por segurança em testes, mas habilitado aqui conforme pedido)
+                    await remove(ref(db, window.itemPath));
+                } else {
+                    // Se apenas mudou hora ou endereço, faz update normal
+                    await update(ref(db, window.itemPath), { 
+                        horario: novoHorario,
+                        endereco: novoEndereco,
+                        editado_em: new Date().toLocaleString()
+                    });
+                }
 
-                alert("✅ Reagendamento realizado com sucesso (Autonomia Admin)!");
+                alert("✅ Dados atualizados com sucesso no Firebase!");
                 window.fecharModalGestao();
                 window.carregarRelatorio();
             } catch (e) {
                 console.error(e);
-                alert("Erro ao reagendar.");
+                alert("Erro ao salvar alterações.");
             }
         };
 
@@ -1530,7 +1571,6 @@
 
                 if (iso === hoje.toISOString().split('T')[0]) {
                     const agoraDecimal = hoje.getHours() + (hoje.getMinutes() / 60);
-                    // REGRA DAS 3 HORAS PARA O CLIENTE
                     if (h < agoraDecimal + 3) continue; 
                 }
 
@@ -1569,8 +1609,16 @@
             }
         };
         
-        // Mantém as referências originais de gestão funcionando
-        window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display='none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
+        // window.fecharModalGestao original mantido para compatibilidade global
+        window.fecharModalGestao = () => { 
+            document.getElementById('modalGestao').style.display='none'; 
+            document.getElementById('gestao-menu').classList.remove('hidden'); 
+            document.getElementById('gestao-form').classList.add('hidden'); 
+            
+            // Limpeza do botão dinâmico para não duplicar ao reabrir
+            const btn = document.getElementById('btn-admin-reagendar');
+            if(btn) btn.remove();
+        };
 
     </script>
 </body>
