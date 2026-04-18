@@ -1,10 +1,10 @@
-<!DOCTYPE html>                
+<!DOCTYPE html>                 
 <html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elite Sales Master - v28.02 PLATINUM</title>
+    <title>Elite Sales Master - v28.03 PLATINUM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -153,6 +153,16 @@
         }
         input:checked + .slider { background-color: #3b82f6; }
         input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Melhoria v28.03 - Efeito de iluminação para o número do álbum */
+        .glow-album-venda {
+            text-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
+            border: 1px solid rgba(59, 130, 246, 0.5);
+        }
+        .glow-album-nq {
+            text-shadow: 0 0 8px rgba(244, 63, 94, 0.8);
+            border: 1px solid rgba(244, 63, 94, 0.5);
+        }
     </style>
 </head>
 
@@ -814,7 +824,6 @@
             const isAdmin = localStorage.getItem('isAdmin') === 'true';
             if(!isAdmin && projetoDB.criador !== user) return alert("Apenas o criador do projeto pode marcar NQ.");
 
-            // Melhoria v28.02: Adicionado campo para Número do Álbum no NQ agendado
             const albumNQ = prompt("Número do Álbum (NQ):", "");
             const v = prompt("Vendedor do NQ (Evanio/Willian):", "Willian");
             const dtNQ = prompt("Confirmar Data do NQ (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
@@ -1079,7 +1088,7 @@
                                         <div class="flex justify-between items-start">
                                             <div class="flex flex-col">
                                                 <span class="text-[10px] font-bold">${i.nome_formando}</span>
-                                                <span class="text-[9px] text-blue-400 font-black uppercase tracking-tighter bg-blue-400/10 px-1 rounded inline-block w-max mt-1">ÁLBUM: ${i.num_album||'S/N'}</span>
+                                                <span class="text-[12px] text-blue-400 font-black uppercase tracking-widest bg-blue-500/20 px-3 py-1 rounded-full w-max mt-2 glow-album-venda italic">ÁLBUM: ${i.num_album||'S/N'}</span>
                                             </div>
                                             <b class="text-[10px] text-emerald-400">${fBR(i.valor)}</b>
                                         </div>
@@ -1111,7 +1120,7 @@
                                             <span class="text-[10px] font-bold text-white">${i.nome_formando}</span>
                                             <span class="text-[9px] font-black text-rose-500 uppercase">NQ</span>
                                         </div>
-                                        <span class="text-[8px] text-rose-400 font-black uppercase tracking-tighter mt-1">ÁLBUM: ${i.num_album || 'S/N'}</span>
+                                        <span class="text-[11px] text-rose-400 font-black uppercase tracking-widest bg-rose-500/20 px-3 py-1 rounded-full w-max mt-2 glow-album-nq italic">ÁLBUM: ${i.num_album || 'S/N'}</span>
                                     </div>
                                 `).join('')}
                             </div>
