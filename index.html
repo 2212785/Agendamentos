@@ -163,6 +163,16 @@
             text-shadow: 0 0 8px rgba(244, 63, 94, 0.8);
             border: 1px solid rgba(244, 63, 94, 0.5);
         }
+
+        /* Animação para a mensagem de instrução */
+        @keyframes pulse-alert {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .pulse-text {
+            animation: pulse-alert 2s infinite ease-in-out;
+        }
     </style>
 </head>
 
@@ -202,6 +212,11 @@
             <div class="glass p-6 rounded-[2.5rem] w-full max-w-sm text-center">
                 <h2 id="escola-titulo" class="text-xl font-extrabold uppercase text-blue-400 leading-none italic">AGUARDE...</h2>
                 <h3 id="sub-escola" class="text-[9px] font-bold text-slate-500 mb-4 uppercase italic">CONECTANDO</h3>
+                
+                <div class="bg-amber-500/10 border border-amber-500/30 p-2 rounded-xl mb-3 pulse-text">
+                    <p class="text-[10px] font-black text-amber-400 uppercase italic">⚠️ Passo 1: Escolha a DATA abaixo primeiro</p>
+                </div>
+
                 <div class="grid grid-cols-2 gap-1 mb-3" id="day-selector"></div>
                 <form id="form-agendamento" class="space-y-2">
                     <input type="hidden" id="data-selecionada">
