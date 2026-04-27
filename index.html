@@ -1,4 +1,4 @@
-<!DOCTYPE html>                 
+<!DOCTYPE html>                  
 <html lang="pt-BR">
 
 <head>
@@ -76,11 +76,21 @@
             font-size: 10px;
             font-weight: 800;
             color: white;
+            /* Início da animação de piscar azul para evidenciar as datas */
+            animation: blink-blue 2s infinite ease-in-out;
+        }
+
+        @keyframes blink-blue {
+            0%, 100% { border-color: rgba(255, 255, 255, 0.1); box-shadow: 0 0 0px rgba(59, 130, 246, 0); }
+            50% { border-color: rgba(59, 130, 246, 0.8); box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
         }
 
         .day-btn.active {
             background: #3b82f6 !important;
             border-color: #60a5fa !important;
+            /* Quando ativa, para de piscar para mostrar fixação */
+            animation: none; 
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
         }
 
         .label-custo {
@@ -154,7 +164,6 @@
         input:checked + .slider { background-color: #3b82f6; }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* Melhoria v28.03 - Efeito de iluminação para o número do álbum */
         .glow-album-venda {
             text-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
             border: 1px solid rgba(59, 130, 246, 0.5);
@@ -164,7 +173,6 @@
             border: 1px solid rgba(244, 63, 94, 0.5);
         }
 
-        /* Animação para a mensagem de instrução */
         @keyframes pulse-alert {
             0% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.05); opacity: 0.8; }
@@ -1444,8 +1452,6 @@
             });
         };
 
-        // --- FUNÇÕES DE GESTÃO EXCLUSIVAS PARA ADMIN (COM AUTONOMIA TOTAL) ---
-
         window.gerenciarItemAdmin = (p) => {
             window.itemPath = p;
             document.getElementById('modalGestao').style.display = 'flex';
@@ -1557,6 +1563,8 @@
             const hoje = new Date();
             hoje.setSeconds(0, 0);
 
+            let primeiraDataDisponivel = null;
+
             while (atual <= dataLimite) {
                 const iso = atual.toISOString().split('T')[0];
                 let mostrarDia = true;
@@ -1566,8 +1574,12 @@
                 }
 
                 if (mostrarDia) {
+                    // Armazena a primeira data futura disponível para marcação automática
+                    if (!primeiraDataDisponivel) primeiraDataDisponivel = iso;
+
                     const btn = document.createElement('button'); btn.className = "day-btn text-white";
                     btn.innerText = atual.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+                    btn.setAttribute('data-iso', iso); // Auxiliar para busca automática
                     btn.onclick = () => { 
                         document.querySelectorAll('.day-btn').forEach(x => x.classList.remove('active')); btn.classList.add('active'); 
                         document.getElementById('data-selecionada').value = iso; window.carregarHorarios(iso); 
@@ -1575,6 +1587,14 @@
                     container.appendChild(btn);
                 }
                 atual.setDate(atual.getDate() + 1);
+            }
+
+            // Ação Automática: Marcar a data mais próxima e carregar horários
+            if (primeiraDataDisponivel) {
+                setTimeout(() => {
+                    const btnProx = document.querySelector(`.day-btn[data-iso="${primeiraDataDisponivel}"]`);
+                    if (btnProx) btnProx.click();
+                }, 500);
             }
         };
 
