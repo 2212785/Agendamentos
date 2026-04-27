@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>  
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -12,17 +12,18 @@
         .app-container { background: #f0f2f5; width: 100%; max-width: 1600px; height: 95vh; display: flex; box-shadow: 0 6px 18px rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden; }
 
         /* Coluna Esquerda */
-        .sidebar { width: 35%; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; min-width: 300px; }
+        .sidebar { width: 35%; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; min-width: 350px; }
         .sidebar-header { background: #f0f2f5; padding: 15px; font-weight: bold; color: #075e54; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; min-height: 65px; }
         .contact-list { flex: 1; overflow-y: auto; background: #fff; }
         
-        .contact-item { padding: 15px; border-bottom: 1px solid #f2f2f2; cursor: pointer; display: flex; align-items: center; transition: 0.2s; border-left: 4px solid transparent; position: relative; }
+        .contact-item { padding: 12px 15px; border-bottom: 1px solid #f2f2f2; cursor: pointer; display: flex; align-items: center; transition: 0.2s; border-left: 4px solid transparent; position: relative; }
         .contact-item:hover { background: #f5f6f6; }
         .contact-item.active { background: #ebebeb; border-left: 4px solid #075e54; }
         
         .contact-details { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .contact-info { display: flex; justify-content: space-between; margin-bottom: 5px; }
-        .contact-phone { font-weight: 600; color: #111; }
+        .contact-info { display: flex; justify-content: space-between; margin-bottom: 3px; }
+        .contact-phone { font-weight: 600; color: #111; font-size: 0.95em; }
+        .contact-project { font-size: 0.75em; color: #075e54; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; }
         .contact-time { font-size: 0.75em; color: #667781; }
         .contact-last-msg { font-size: 0.85em; color: #667781; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -35,7 +36,10 @@
 
         /* Coluna Direita */
         .main-chat { flex: 1; display: flex; flex-direction: column; background: #e5ddd5 url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
-        .chat-header { background: #f0f2f5; padding: 10px 20px; display: flex; align-items: center; border-bottom: 1px solid #ddd; height: 60px; font-weight: bold; color: #333; }
+        .chat-header { background: #f0f2f5; padding: 10px 20px; display: flex; flex-direction: column; border-bottom: 1px solid #ddd; min-height: 70px; justify-content: center; color: #333; }
+        .chat-header .header-title { font-weight: bold; font-size: 1.1em; display: flex; align-items: center; gap: 10px; }
+        .chat-header .header-subtitle { font-size: 0.8em; color: #667781; margin-top: 2px; }
+
         .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 8px; scroll-behavior: smooth; }
         
         .balao { max-width: 65%; padding: 8px 12px; border-radius: 8px; font-size: 0.9em; position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; line-height: 1.4; }
@@ -70,7 +74,7 @@
     <div class="main-chat" id="main-chat">
         <div class="empty-state">
             <h3>Selecione uma conversa</h3>
-            <p>Painel Elite v28 - Monitoramento Unificado.</p>
+            <p>Painel Elite v29 - Monitoramento por Projeto.</p>
         </div>
     </div>
 </div>
@@ -86,8 +90,8 @@
     
     let conversaAtiva = null;
     let conversasUnificadas = {}; 
+    let infoProjetos = {};
 
-    // Pega o usuário e garante a primeira letra maiúscula (Case Sensitive do Firebase)
     const urlParams = new URLSearchParams(window.location.search);
     let userRaw = urlParams.get('user') || localStorage.getItem('userType') || 'Evanio';
     const usuarioLogado = userRaw.charAt(0).toUpperCase() + userRaw.slice(1).toLowerCase();
@@ -99,6 +103,12 @@
         if (limpo.length > 11) return limpo.slice(-11);
         return limpo;
     }
+
+    // Carrega vínculos para saber nomes de projetos/alunos
+    db.ref('vinculo_projeto').on('value', (snapshot) => {
+        infoProjetos = snapshot.val() || {};
+        renderizarContatos(); 
+    });
 
     // Escuta as respostas do usuário logado
     db.ref('respostas/' + usuarioLogado).on('value', (snapshot) => {
@@ -123,28 +133,42 @@
 
     function renderizarContatos() {
         const listContainer = document.getElementById('contact-list');
+        if(!listContainer) return;
         listContainer.innerHTML = "";
         
         const listaParaOrdenada = Object.keys(conversasUnificadas).map(phone => {
             const msgs = conversasUnificadas[phone].mensagens;
             const ids = Object.keys(msgs).sort();
             const lastId = ids[ids.length - 1];
-            return { phone, lastTimestamp: lastId, lastMsg: msgs[lastId] };
+            
+            // Busca dados do projeto vinculados ao número
+            const dadosProj = infoProjetos[phone] || infoProjetos["55"+phone] || infoProjetos["55"+phone.slice(-11)] || {};
+
+            return { 
+                phone, 
+                lastTimestamp: lastId, 
+                lastMsg: msgs[lastId],
+                escola: dadosProj.escola || "Projeto Não Identificado",
+                nome: dadosProj.nome || "Formando"
+            };
         });
 
+        // Ordenação Cronológica (mais recente primeiro na lista)
         listaParaOrdenada.sort((a, b) => b.lastTimestamp - a.lastTimestamp);
 
         listaParaOrdenada.forEach(contato => {
             const item = document.createElement('div');
             item.className = `contact-item ${conversaAtiva === contato.phone ? 'active' : ''}`;
             
-            const horaFull = contato.lastMsg.data || "";
-            const horaExibicao = horaFull.includes(' ') ? horaFull.split(' ')[1] : horaFull;
+            const dataMsg = contato.lastMsg.data || "";
+            // Pega apenas a hora se for hoje, senão mostra data completa
+            const horaExibicao = dataMsg.includes(',') ? dataMsg.split(',')[1].trim() : dataMsg;
 
             item.innerHTML = `
                 <div class="contact-details" onclick="abrirConversa('${contato.phone}')">
+                    <div class="contact-project">${contato.escola}</div>
                     <div class="contact-info">
-                        <span class="contact-phone">${contato.phone}</span>
+                        <span class="contact-phone">${contato.nome} (${contato.phone})</span>
                         <span class="contact-time">${horaExibicao}</span>
                     </div>
                     <div class="contact-last-msg">${contato.lastMsg.mensagem || "[Mensagem]"}</div>
@@ -161,8 +185,6 @@
         conversaAtiva = phone;
         atualizarJanelaChat(phone);
         document.querySelectorAll('.contact-item').forEach(i => i.classList.remove('active'));
-        const activeItem = Array.from(document.querySelectorAll('.contact-phone')).find(el => el.innerText === phone);
-        if(activeItem) activeItem.closest('.contact-item').classList.add('active');
     }
 
     function atualizarJanelaChat(phone) {
@@ -170,8 +192,19 @@
         const data = conversasUnificadas[phone];
         if (!data) return;
 
+        const dadosProj = infoProjetos[phone] || infoProjetos["55"+phone] || {};
+        const nomeAluno = dadosProj.nome || "Formando";
+        const nomeEscola = dadosProj.escola || "Escola não identificada";
+
         const sortedIds = Object.keys(data.mensagens).sort();
-        let chatHtml = `<div class="chat-header">📱 ${phone}</div><div class="chat-messages" id="chat-messages">`;
+        
+        // Header com Nome do Projeto e Formando
+        let chatHtml = `
+            <div class="chat-header">
+                <div class="header-title">👤 ${nomeAluno} - ${phone}</div>
+                <div class="header-subtitle">🏫 Projeto: ${nomeEscola}</div>
+            </div>
+            <div class="chat-messages" id="chat-messages">`;
 
         sortedIds.forEach(id => {
             const m = data.mensagens[id];
