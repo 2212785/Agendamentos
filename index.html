@@ -76,7 +76,6 @@
             font-size: 10px;
             font-weight: 800;
             color: white;
-            /* Início da animação de piscar azul intenso para evidenciar as datas */
             animation: blink-blue 1.5s infinite ease-in-out;
         }
 
@@ -88,7 +87,6 @@
         .day-btn.active {
             background: #3b82f6 !important;
             border-color: #60a5fa !important;
-            /* Quando ativa, para de piscar para mostrar fixação */
             animation: none; 
             box-shadow: 0 0 20px rgba(59, 130, 246, 0.7);
         }
@@ -410,7 +408,9 @@
 
         // --- INICIALIZAÇÃO MULTIPROJETO DINÂMICA ---
         const urlParams = new URLSearchParams(window.location.search);
-        const idDaUrl = urlParams.get('id');
+        // CORREÇÃO: Pega o ID e remove qualquer hífen extra do final caso exista
+        let rawId = urlParams.get('id');
+        const idDaUrl = rawId ? rawId.replace(/-$/, "") : null;
 
         onValue(ref(db, "config/projeto_ativo"), async (snap) => {
             await realizarMigracaoEstrutura(); 
@@ -1153,7 +1153,7 @@
                             </div>
                         `).join('')}
                     </div>`;
-                }).join(''); : '<p class="text-[10px] text-slate-600 italic">Nenhum NQ registrado.</p>';
+                }).join('') : '<p class="text-[10px] text-slate-600 italic">Nenhum NQ registrado.</p>';
         };
 
         window.updateChart = (data) => {
@@ -1578,12 +1578,11 @@
                 }
 
                 if (mostrarDia) {
-                    // Armazena a primeira data futura disponível para marcação automática
                     if (!primeiraDataDisponivel) primeiraDataDisponivel = iso;
 
                     const btn = document.createElement('button'); btn.className = "day-btn text-white";
                     btn.innerText = atual.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-                    btn.setAttribute('data-iso', iso); // Auxiliar para busca automática
+                    btn.setAttribute('data-iso', iso);
                     btn.onclick = () => { 
                         document.querySelectorAll('.day-btn').forEach(x => x.classList.remove('active')); btn.classList.add('active'); 
                         document.getElementById('data-selecionada').value = iso; window.carregarHorarios(iso); 
@@ -1593,7 +1592,6 @@
                 atual.setDate(atual.getDate() + 1);
             }
 
-            // Ação Automática: Marcar a data mais próxima e carregar horários proativamente
             if (primeiraDataDisponivel) {
                 setTimeout(() => {
                     const btnProx = document.querySelector(`.day-btn[data-iso="${primeiraDataDisponivel}"]`);
