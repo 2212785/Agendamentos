@@ -1,4 +1,4 @@
-<!DOCTYPE html>                    
+<!DOCTYPE html>                       
 <html lang="pt-BR">
 
 <head>
@@ -1618,7 +1618,11 @@
                     if (h < agoraDecimal + 3) continue; 
                 }
 
+                // --- Lógica de Disponibilidade v28.04 ---
+                // Se comissão individual for true, limite é 1. Se for dividida (false), limite é 2.
+                // const limiteAgendamentos = 2; // Original
                 const limiteAgendamentos = (projetoDB.comissao_individual === true) ? 1 : 2;
+                
                 if (Object.values(ag).filter(a => a.horario === format).length < limiteAgendamentos) {
                     selectH.innerHTML += `<option value="${format}">${format}</option>`;
                 }
