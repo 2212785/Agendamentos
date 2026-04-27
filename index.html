@@ -1,4 +1,4 @@
-<!DOCTYPE html>                  
+<!DOCTYPE html>                    
 <html lang="pt-BR">
 
 <head>
@@ -69,20 +69,20 @@
 
         .day-btn {
             background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
             cursor: pointer;
             padding: 12px;
             border-radius: 15px;
             font-size: 10px;
             font-weight: 800;
             color: white;
-            /* Início da animação de piscar azul para evidenciar as datas */
-            animation: blink-blue 2s infinite ease-in-out;
+            /* Início da animação de piscar azul intenso para evidenciar as datas */
+            animation: blink-blue 1.5s infinite ease-in-out;
         }
 
         @keyframes blink-blue {
             0%, 100% { border-color: rgba(255, 255, 255, 0.1); box-shadow: 0 0 0px rgba(59, 130, 246, 0); }
-            50% { border-color: rgba(59, 130, 246, 0.8); box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
+            50% { border-color: rgba(59, 130, 246, 1); box-shadow: 0 0 15px rgba(59, 130, 246, 0.8); }
         }
 
         .day-btn.active {
@@ -90,7 +90,7 @@
             border-color: #60a5fa !important;
             /* Quando ativa, para de piscar para mostrar fixação */
             animation: none; 
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.7);
         }
 
         .label-custo {
@@ -175,7 +175,7 @@
 
         @keyframes pulse-alert {
             0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.8; }
+            50% { transform: scale(1.02); opacity: 0.9; }
             100% { transform: scale(1); opacity: 1; }
         }
         .pulse-text {
@@ -217,12 +217,16 @@
             </div>
         </header>
         <div class="flex-grow flex items-center justify-center p-4">
-            <div class="glass p-6 rounded-[2.5rem] w-full max-w-sm text-center">
+            <div class="glass p-6 rounded-[2.5rem] w-full max-w-sm text-center border-t-4 border-blue-500">
                 <h2 id="escola-titulo" class="text-xl font-extrabold uppercase text-blue-400 leading-none italic">AGUARDE...</h2>
                 <h3 id="sub-escola" class="text-[9px] font-bold text-slate-500 mb-4 uppercase italic">CONECTANDO</h3>
                 
-                <div class="bg-amber-500/10 border border-amber-500/30 p-2 rounded-xl mb-3 pulse-text">
-                    <p class="text-[10px] font-black text-amber-400 uppercase italic">⚠️ Passo 1: Escolha a DATA abaixo primeiro</p>
+                <div class="bg-blue-600/20 border-2 border-blue-500 p-4 rounded-3xl mb-4 pulse-text">
+                    <p class="text-xs font-black text-white uppercase leading-tight">
+                        📢 ATENÇÃO:<br>
+                        PRIMEIRO <span class="text-blue-400 underline">CLIQUE NA DATA</span> ABAIXO,<br>
+                        DEPOIS PREENCHA SEUS DADOS.
+                    </p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-1 mb-3" id="day-selector"></div>
@@ -1149,7 +1153,7 @@
                             </div>
                         `).join('')}
                     </div>`;
-                }).join('') : '<p class="text-[10px] text-slate-600 italic">Nenhum NQ registrado.</p>';
+                }).join(''); : '<p class="text-[10px] text-slate-600 italic">Nenhum NQ registrado.</p>';
         };
 
         window.updateChart = (data) => {
@@ -1589,12 +1593,12 @@
                 atual.setDate(atual.getDate() + 1);
             }
 
-            // Ação Automática: Marcar a data mais próxima e carregar horários
+            // Ação Automática: Marcar a data mais próxima e carregar horários proativamente
             if (primeiraDataDisponivel) {
                 setTimeout(() => {
                     const btnProx = document.querySelector(`.day-btn[data-iso="${primeiraDataDisponivel}"]`);
                     if (btnProx) btnProx.click();
-                }, 500);
+                }, 600);
             }
         };
 
