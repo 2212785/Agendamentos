@@ -1,4 +1,4 @@
-<!DOCTYPE html>                        
+<!DOCTYPE html>                         
 <html lang="pt-BR">
 
 <head>
@@ -1575,35 +1575,69 @@
 
             let primeiraDataDisponivel = null;
 
-            while (atual <= dataLimite) {
+            // --- MELHORIA: Função interna para checar se a data tem horários válidos (Regra das 3 horas) ---
+            const checarDisponibilidadeData = async (iso) => {
+                const snap = await get(ref(db, `dados/${projId}/agendamentos/${iso}`));
+                const ag = snap.exists() ? snap.val() : {};
+                const now = new Date();
+                const limiteAgendamentos = (projetoDB.comissao_individual === true) ? 1 : 2;
+
+                for (let h = 9; h <= 21; h += 0.5) {
+                    const hh = Math.floor(h).toString().padStart(2, '0');
+                    const mm = (h % 1 === 0) ? '00' : '30';
+                    const format = `${hh}:${mm}`;
+
+                    // Regra das 3 horas se for hoje
+                    if (iso === now.toISOString().split('T')[0]) {
+                        const agoraDecimal = now.getHours() + (now.getMinutes() / 60);
+                        if (h < agoraDecimal + 3) continue;
+                    }
+
+                    // Checa se há vaga
+                    if (Object.values(ag).filter(a => a.horario === format).length < limiteAgendamentos) {
+                        return true; // Encontrou pelo menos um horário
+                    }
+                }
+                return false; // Nenhum horário disponível nesta data
+            };
+
+            const processarProximoDia = async () => {
+                if (atual > dataLimite) {
+                    if (primeiraDataDisponivel) {
+                        setTimeout(() => {
+                            const btnProx = document.querySelector(`.day-btn[data-iso="${primeiraDataDisponivel}"]`);
+                            if (btnProx) btnProx.click();
+                        }, 600);
+                    }
+                    return;
+                }
+
                 const iso = atual.toISOString().split('T')[0];
-                let mostrarDia = true;
                 const hojeIso = hoje.toISOString().split('T')[0];
-                if (iso < hojeIso) {
-                    mostrarDia = false;
-                }
 
-                if (mostrarDia) {
-                    if (!primeiraDataDisponivel) primeiraDataDisponivel = iso;
+                if (iso >= hojeIso) {
+                    // --- MELHORIA: Só cria o botão se a data tiver horários válidos ---
+                    const disponivel = await checarDisponibilidadeData(iso);
+                    if (disponivel) {
+                        if (!primeiraDataDisponivel) primeiraDataDisponivel = iso;
 
-                    const btn = document.createElement('button'); btn.className = "day-btn text-white";
-                    btn.innerText = atual.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-                    btn.setAttribute('data-iso', iso);
-                    btn.onclick = () => { 
-                        document.querySelectorAll('.day-btn').forEach(x => x.classList.remove('active')); btn.classList.add('active'); 
-                        document.getElementById('data-selecionada').value = iso; window.carregarHorarios(iso); 
-                    };
-                    container.appendChild(btn);
+                        const btn = document.createElement('button'); 
+                        btn.className = "day-btn text-white";
+                        btn.innerText = atual.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                        btn.setAttribute('data-iso', iso);
+                        btn.onclick = () => {
+                            document.querySelectorAll('.day-btn').forEach(x => x.classList.remove('active')); btn.classList.add('active');
+                            document.getElementById('data-selecionada').value = iso; window.carregarHorarios(iso);
+                        };
+                        container.appendChild(btn);
+                    }
                 }
+                
                 atual.setDate(atual.getDate() + 1);
-            }
+                processarProximoDia();
+            };
 
-            if (primeiraDataDisponivel) {
-                setTimeout(() => {
-                    const btnProx = document.querySelector(`.day-btn[data-iso="${primeiraDataDisponivel}"]`);
-                    if (btnProx) btnProx.click();
-                }, 600);
-            }
+            processarProximoDia();
         };
 
         window.carregarHorarios = async (iso) => {
@@ -1619,14 +1653,15 @@
                 const mm = (h % 1 === 0) ? '00' : '30';
                 const format = `${hh}:${mm}`;
 
+                // --- MELHORIA: REGRA DAS 3 HORAS ---
+                // Se a data selecionada for hoje, verifica se o horário da vaga (h) é menor que (HoraAtual + 3)
                 if (iso === hoje.toISOString().split('T')[0]) {
                     const agoraDecimal = hoje.getHours() + (hoje.getMinutes() / 60);
-                    if (h < agoraDecimal + 3) continue; 
+                    if (h < agoraDecimal + 3) continue; // Pula horários que não respeitam a regra de 3 horas de antecedência
                 }
 
                 // --- Lógica de Disponibilidade v28.04 ---
                 // Se comissão individual for true, limite é 1. Se for dividida (false), limite é 2.
-                // const limiteAgendamentos = 2; // Original
                 const limiteAgendamentos = (projetoDB.comissao_individual === true) ? 1 : 2;
                 
                 if (Object.values(ag).filter(a => a.horario === format).length < limiteAgendamentos) {
