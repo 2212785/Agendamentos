@@ -1582,7 +1582,14 @@
                 const now = new Date();
                 const limiteAgendamentos = (projetoDB.comissao_individual === true) ? 1 : 2;
 
-                for (let h = 9; h <= 21; h += 0.5) {
+                // --- CORREÇÃO DE LIMITES POR DIA ---
+                const dateObj = new Date(iso + "T00:00:00");
+                const dayOfWeek = dateObj.getDay(); // 0 = Domingo, 6 = Sábado
+                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                const maxHour = isWeekend ? 18 : 20;
+
+                // for (let h = 9; h <= 21; h += 0.5) { // Original
+                for (let h = 9; h <= maxHour; h += 0.5) {
                     const hh = Math.floor(h).toString().padStart(2, '0');
                     const mm = (h % 1 === 0) ? '00' : '30';
                     const format = `${hh}:${mm}`;
@@ -1648,7 +1655,14 @@
             
             const hoje = new Date();
             
-            for (let h = 9; h <= 21; h += 0.5) { 
+            // --- CORREÇÃO DE LIMITES POR DIA ---
+            const dateObj = new Date(iso + "T00:00:00");
+            const dayOfWeek = dateObj.getDay(); // 0 = Domingo, 6 = Sábado
+            const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+            const maxHour = isWeekend ? 18 : 20;
+
+            // for (let h = 9; h <= 21; h += 0.5) { // Original
+            for (let h = 9; h <= maxHour; h += 0.5) { 
                 const hh = Math.floor(h).toString().padStart(2, '0'); 
                 const mm = (h % 1 === 0) ? '00' : '30';
                 const format = `${hh}:${mm}`;
