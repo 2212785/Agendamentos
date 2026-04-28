@@ -1,4 +1,4 @@
-<!DOCTYPE html>                       
+<!DOCTYPE html>                        
 <html lang="pt-BR">
 
 <head>
@@ -1468,7 +1468,7 @@
                 const btnReagendar = document.createElement('button');
                 btnReagendar.id = 'btn-admin-reagendar';
                 btnReagendar.className = 'bg-blue-600/20 border border-blue-500/30 p-3 rounded-2xl text-blue-400 font-black uppercase text-[10px]';
-                btnReagendar.innerText = 'Alterar Visita (DATA/HORA/ENDEREÇO)';
+                btnReagendar.innerText = 'Alterar Visita (NOME/DATA/HORA/ENDEREÇO)';
                 btnReagendar.onclick = () => window.fluxoAlterarAdmin();
                 menu.appendChild(btnReagendar);
             }
@@ -1484,6 +1484,9 @@
             f.innerHTML = `
                 <div class="space-y-3">
                     <h3 class="text-blue-400 font-black text-xs uppercase text-center mb-2">Editar Dados Visita</h3>
+
+                    <p class="text-[8px] text-slate-500 uppercase font-bold ml-1">Nome do Formando</p>
+                    <input type="text" id="novo_nome_admin" value="${itemOriginal.nome_formando}" class="input-compact text-white">
                     
                     <p class="text-[8px] text-slate-500 uppercase font-bold ml-1">Data</p>
                     <input type="date" id="nova_data_admin" value="${itemOriginal.data}" class="input-compact text-white" onchange="window.carregarHorariosAdmin()">
@@ -1518,11 +1521,12 @@
         };
 
         window.confirmarReagendamentoAdmin = async () => {
+            const novoNome = document.getElementById('novo_nome_admin').value;
             const novaData = document.getElementById('nova_data_admin').value;
             const novoHorario = document.getElementById('novo_horario_admin').value;
             const novoEndereco = document.getElementById('novo_endereco_admin').value;
             
-            if(!novaData || !novoHorario || !novoEndereco) return alert("Preencha todos os campos!");
+            if(!novoNome || !novaData || !novoHorario || !novoEndereco) return alert("Preencha todos os campos!");
 
             try {
                 const itemOriginal = window.dadosCompletos.find(i => i.path === window.itemPath);
@@ -1536,6 +1540,7 @@
                     
                     await set(ref(db, novoPath), { 
                         ...itemOriginal, 
+                        nome_formando: novoNome,
                         data: novaData, 
                         horario: novoHorario,
                         endereco: novoEndereco,
@@ -1545,6 +1550,7 @@
                     await remove(ref(db, window.itemPath));
                 } else {
                     await update(ref(db, window.itemPath), { 
+                        nome_formando: novoNome,
                         horario: novoHorario,
                         endereco: novoEndereco,
                         editado_em: new Date().toLocaleString()
