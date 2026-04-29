@@ -408,7 +408,6 @@
 
         // --- INICIALIZAÇÃO MULTIPROJETO DINÂMICA ---
         const urlParams = new URLSearchParams(window.location.search);
-        // CORREÇÃO: Pega o ID e remove qualquer hífen extra do final caso exista
         let rawId = urlParams.get('id');
         const idDaUrl = rawId ? rawId.replace(/-$/, "") : null;
 
@@ -598,7 +597,7 @@
             const n = document.getElementById('av_nome').value;
             const d = document.getElementById('av_data').value;
             const vend = document.getElementById('av_vend').value;
-            const alb = document.getElementById('av_num').value; // Melhoria v28.02
+            const alb = document.getElementById('av_num').value;
 
             if(!n || !d) return alert("Preencha Nome e Data!");
 
@@ -1422,7 +1421,7 @@
                 const foneLimpo = i.telefone ? i.telefone.replace(/\D/g, '') : '';
                 const linkZap = foneLimpo ? `https://wa.me/55${foneLimpo}` : '#';
                 const enderecoURL = encodeURIComponent(i.endereco || '');
-                const linkGoogle = `https://www.google.com/maps/search/?api=1&query=${enderecoURL}`; // Corrigido URL de busca v28.04
+                const linkGoogle = `https://www.google.com/maps/search/?api=1&query=${enderecoURL}`;
                 const linkWaze = `https://waze.com/ul?q=${enderecoURL}&navigate=yes`;
 
                 cont.innerHTML += `
@@ -1570,21 +1569,20 @@
             const container = document.getElementById('day-selector'); container.innerHTML = "";
             let atual = new Date(inicio + "T00:00:00");
             const dataLimite = new Date(fim + "T00:00:00");
-            const hoje = new Date();
-            hoje.setSeconds(0, 0);
+            
+            // MELHORIA v28.04: Cálculo rigoroso de hoje para evitar sumiço de datas à noite
+            const agora = new Date();
+            const hojeIso = agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0') + '-' + String(agora.getDate()).padStart(2, '0');
 
             let primeiraDataDisponivel = null;
 
-            // --- MELHORIA: Função interna para checar se a data tem horários válidos (Regra das 3 horas) ---
             const checarDisponibilidadeData = async (iso) => {
                 const snap = await get(ref(db, `dados/${projId}/agendamentos/${iso}`));
                 const ag = snap.exists() ? snap.val() : {};
-                const now = new Date();
                 const limiteAgendamentos = (projetoDB.comissao_individual === true) ? 1 : 2;
 
-                // --- CORREÇÃO DE LIMITES POR DIA ---
                 const dateObj = new Date(iso + "T00:00:00");
-                const dayOfWeek = dateObj.getDay(); // 0 = Domingo, 6 = Sábado
+                const dayOfWeek = dateObj.getDay(); 
                 const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
                 const maxHour = isWeekend ? 18 : 20;
 
@@ -1593,19 +1591,17 @@
                     const mm = (h % 1 === 0) ? '00' : '30';
                     const format = `${hh}:${mm}`;
 
-                    // --- CORREÇÃO v28.04: Regra das 3 horas APENAS se for hoje ---
-                    // if (iso === now.toISOString().split('T')[0]) { // Anterior
-                    if (iso === now.toISOString().split('T')[0]) {
-                        const agoraDecimal = now.getHours() + (now.getMinutes() / 60);
+                    // Regra das 3 horas
+                    if (iso === hojeIso) {
+                        const agoraDecimal = agora.getHours() + (agora.getMinutes() / 60);
                         if (h < agoraDecimal + 3) continue;
                     }
 
-                    // Checa se há vaga
                     if (Object.values(ag).filter(a => a.horario === format).length < limiteAgendamentos) {
-                        return true; // Encontrou pelo menos um horário
+                        return true; 
                     }
                 }
-                return false; // Nenhum horário disponível nesta data
+                return false; 
             };
 
             const processarProximoDia = async () => {
@@ -1620,9 +1616,7 @@
                 }
 
                 const iso = atual.toISOString().split('T')[0];
-                const hojeIso = hoje.toISOString().split('T')[0];
 
-                // --- CORREÇÃO v28.04: Garante que datas futuras (amanhã+) não sejam ocultadas pela trava de hoje ---
                 if (iso >= hojeIso) {
                     const disponivel = await checarDisponibilidadeData(iso);
                     if (disponivel) {
@@ -1653,11 +1647,11 @@
             const ag = snap.exists() ? snap.val() : {};
             selectH.innerHTML = '<option value="">Selecione o Horário</option>';
             
-            const hoje = new Date();
+            const agora = new Date();
+            const hojeIso = agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0') + '-' + String(agora.getDate()).padStart(2, '0');
             
-            // --- CORREÇÃO DE LIMITES POR DIA ---
             const dateObj = new Date(iso + "T00:00:00");
-            const dayOfWeek = dateObj.getDay(); // 0 = Domingo, 6 = Sábado
+            const dayOfWeek = dateObj.getDay(); 
             const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
             const maxHour = isWeekend ? 18 : 20;
 
@@ -1666,13 +1660,11 @@
                 const mm = (h % 1 === 0) ? '00' : '30';
                 const format = `${hh}:${mm}`;
 
-                // --- MELHORIA: REGRA DAS 3 HORAS ---
-                if (iso === hoje.toISOString().split('T')[0]) {
-                    const agoraDecimal = hoje.getHours() + (hoje.getMinutes() / 60);
+                if (iso === hojeIso) {
+                    const agoraDecimal = agora.getHours() + (agora.getMinutes() / 60);
                     if (h < agoraDecimal + 3) continue; 
                 }
 
-                // --- Lógica de Disponibilidade v28.04 ---
                 const limiteAgendamentos = (projetoDB.comissao_individual === true) ? 1 : 2;
                 
                 if (Object.values(ag).filter(a => a.horario === format).length < limiteAgendamentos) {
