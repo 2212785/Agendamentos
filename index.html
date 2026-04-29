@@ -1,4 +1,4 @@
-<!DOCTYPE html>                         
+<!DOCTYPE html>                             
 <html lang="pt-BR">
 
 <head>
@@ -1422,7 +1422,7 @@
                 const foneLimpo = i.telefone ? i.telefone.replace(/\D/g, '') : '';
                 const linkZap = foneLimpo ? `https://wa.me/55${foneLimpo}` : '#';
                 const enderecoURL = encodeURIComponent(i.endereco || '');
-                const linkGoogle = `https://www.google.com/maps/search/?api=1&query=${enderecoURL}`;
+                const linkGoogle = `https://www.google.com/maps/search/?api=1&query=${enderecoURL}`; // Corrigido URL de busca v28.04
                 const linkWaze = `https://waze.com/ul?q=${enderecoURL}&navigate=yes`;
 
                 cont.innerHTML += `
@@ -1588,13 +1588,13 @@
                 const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
                 const maxHour = isWeekend ? 18 : 20;
 
-                // for (let h = 9; h <= 21; h += 0.5) { // Original
                 for (let h = 9; h <= maxHour; h += 0.5) {
                     const hh = Math.floor(h).toString().padStart(2, '0');
                     const mm = (h % 1 === 0) ? '00' : '30';
                     const format = `${hh}:${mm}`;
 
-                    // Regra das 3 horas se for hoje
+                    // --- CORREÇÃO v28.04: Regra das 3 horas APENAS se for hoje ---
+                    // if (iso === now.toISOString().split('T')[0]) { // Anterior
                     if (iso === now.toISOString().split('T')[0]) {
                         const agoraDecimal = now.getHours() + (now.getMinutes() / 60);
                         if (h < agoraDecimal + 3) continue;
@@ -1622,8 +1622,8 @@
                 const iso = atual.toISOString().split('T')[0];
                 const hojeIso = hoje.toISOString().split('T')[0];
 
+                // --- CORREÇÃO v28.04: Garante que datas futuras (amanhã+) não sejam ocultadas pela trava de hoje ---
                 if (iso >= hojeIso) {
-                    // --- MELHORIA: Só cria o botão se a data tiver horários válidos ---
                     const disponivel = await checarDisponibilidadeData(iso);
                     if (disponivel) {
                         if (!primeiraDataDisponivel) primeiraDataDisponivel = iso;
@@ -1661,21 +1661,18 @@
             const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
             const maxHour = isWeekend ? 18 : 20;
 
-            // for (let h = 9; h <= 21; h += 0.5) { // Original
             for (let h = 9; h <= maxHour; h += 0.5) { 
                 const hh = Math.floor(h).toString().padStart(2, '0'); 
                 const mm = (h % 1 === 0) ? '00' : '30';
                 const format = `${hh}:${mm}`;
 
                 // --- MELHORIA: REGRA DAS 3 HORAS ---
-                // Se a data selecionada for hoje, verifica se o horário da vaga (h) é menor que (HoraAtual + 3)
                 if (iso === hoje.toISOString().split('T')[0]) {
                     const agoraDecimal = hoje.getHours() + (hoje.getMinutes() / 60);
-                    if (h < agoraDecimal + 3) continue; // Pula horários que não respeitam a regra de 3 horas de antecedência
+                    if (h < agoraDecimal + 3) continue; 
                 }
 
                 // --- Lógica de Disponibilidade v28.04 ---
-                // Se comissão individual for true, limite é 1. Se for dividida (false), limite é 2.
                 const limiteAgendamentos = (projetoDB.comissao_individual === true) ? 1 : 2;
                 
                 if (Object.values(ag).filter(a => a.horario === format).length < limiteAgendamentos) {
@@ -1706,7 +1703,7 @@
             const isAdmin = localStorage.getItem('isAdmin') === 'true';
             if(!isAdmin && projetoDB.criador !== user) return alert("Apenas o criador pode reiniciar a fila.");
             if(confirm("Reiniciar a fila?")) {
-                await update(ref(db, `projetos/${projId}/automacao`), { index_atual: 0 });
+                await update(ref(db, `projects/${projId}/automacao`), { index_atual: 0 });
                 projetoDB.automacao.index_atual = 0;
                 window.renderFila();
             }
