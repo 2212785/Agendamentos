@@ -397,6 +397,9 @@
                     comissao_individual: false,
                     data_inicio: d.data_inicio || "",
                     data_fim: d.data_fim || "",
+                    // NOVOS CAMPOS v28.05
+                    horario_inicio_primeiro_dia: "17:00",
+                    intervalo_atendimento: 30,
                     automacao: { lista: "", msg1: "", msg2: "", msg3: "", msg4: "" },
                     bot: { status: "offline" }
                 });
@@ -1203,6 +1206,21 @@
                         <div class="space-y-1"><span class="label-custo">Fim Visitas</span><input type="date" id="pDf" value="${p.data_fim}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}></div>
                     </div>
 
+                    <p class="text-[8px] font-black text-slate-500 uppercase ml-2 mt-2">Configurações de Horário</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="space-y-1">
+                            <span class="label-custo">Início Primeiro Dia</span>
+                            <input type="time" id="pHin" value="${p.horario_inicio_primeiro_dia || '17:00'}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="label-custo">Intervalo (Min)</span>
+                            <select id="pInt" class="input-compact" ${!podeSalvar ? 'disabled' : ''}>
+                                <option value="30" ${p.intervalo_atendimento == 30 ? 'selected' : ''}>30 Minutos</option>
+                                <option value="60" ${p.intervalo_atendimento == 60 ? 'selected' : ''}>1 Hora</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="flex justify-between items-center glass p-3 rounded-xl">
                         <span class="text-[10px]">COMISSÃO INDIVIDUAL</span>
                         <label class="switch"><input type="checkbox" id="pComInd" ${p.comissao_individual ? 'checked' : ''} ${!podeSalvar ? 'disabled' : ''}><span class="slider"></span></label>
@@ -1233,6 +1251,8 @@
                 escola: document.getElementById('pEsc').value,
                 data_inicio: document.getElementById('pDi').value,
                 data_fim: document.getElementById('pDf').value,
+                horario_inicio_primeiro_dia: document.getElementById('pHin').value,
+                intervalo_atendimento: parseInt(document.getElementById('pInt').value),
                 comissao_individual: document.getElementById('pComInd').checked,
                 automacao: { ...projetoDB.automacao, lista: document.getElementById('pLista').value }
             });
@@ -1281,7 +1301,17 @@
                 <h3 class="text-emerald-400 font-black text-xs uppercase mb-4 text-center">Novo Projeto</h3>
                 <input type="text" id="pC" placeholder="Cidade" class="input-compact mb-2">
                 <input type="text" id="pS" placeholder="Escola" class="input-compact mb-2">
-                <div class="flex gap-2 mb-4"><input type="date" id="pSt" class="input-compact flex-grow"><input type="date" id="pEd" class="input-compact flex-grow"></div>
+                <div class="flex gap-2 mb-2"><input type="date" id="pSt" class="input-compact flex-grow"><input type="date" id="pEd" class="input-compact flex-grow"></div>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <div class="space-y-1"><span class="label-custo">Início 1º Dia</span><input type="time" id="pHin_new" value="17:00" class="input-compact"></div>
+                    <div class="space-y-1">
+                        <span class="label-custo">Intervalo</span>
+                        <select id="pInt_new" class="input-compact">
+                            <option value="30">30 Minutos</option>
+                            <option value="60">1 Hora</option>
+                        </select>
+                    </div>
+                </div>
                 <button onclick="window.salvarNovoProjeto()" class="btn-primary w-full py-4 rounded-xl font-black">CRIAR</button>`;
         };
 
@@ -1295,7 +1325,10 @@
             
             await set(ref(db, `projetos/${id}`), {
                 cidade: cid, escola: sch, criador: user,
-                data_inicio: document.getElementById('pSt').value, data_fim: document.getElementById('pEd').value,
+                data_inicio: document.getElementById('pSt').value, 
+                data_fim: document.getElementById('pEd').value,
+                horario_inicio_primeiro_dia: document.getElementById('pHin_new').value,
+                intervalo_atendimento: parseInt(document.getElementById('pInt_new').value),
                 comissao_individual: true,
                 automacao: { lista: "", msg1: "", msg2: "", msg3: "", msg4: "" }
             });
@@ -1510,7 +1543,11 @@
             const valorAtual = selectH.value;
             selectH.innerHTML = '<option value="">Selecione o Horário</option>';
             
-            for (let h = 8; h <= 23.5; h += 0.5) {
+            // MELHORIA v28.05: Segue o intervalo do projeto na edição administrativa
+            const intervalo = projetoDB.intervalo_atendimento || 30;
+            const step = intervalo / 60;
+
+            for (let h = 8; h <= 23.5; h += step) {
                 const hh = Math.floor(h).toString().padStart(2, '0'); 
                 const mm = (h % 1 === 0) ? '00' : '30';
                 const format = `${hh}:${mm}`;
@@ -1586,7 +1623,16 @@
                 const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
                 const maxHour = isWeekend ? 18 : 20;
 
-                for (let h = 9; h <= maxHour; h += 0.5) {
+                // MELHORIA v28.05: Considera horário de início e intervalo
+                const intervalo = projetoDB.intervalo_atendimento || 30;
+                const step = intervalo / 60;
+                let hStart = 9;
+                if (iso === projetoDB.data_inicio && projetoDB.horario_inicio_primeiro_dia) {
+                    const parts = projetoDB.horario_inicio_primeiro_dia.split(':');
+                    hStart = parseInt(parts[0]) + (parseInt(parts[1])/60);
+                }
+
+                for (let h = hStart; h <= maxHour; h += step) {
                     const hh = Math.floor(h).toString().padStart(2, '0');
                     const mm = (h % 1 === 0) ? '00' : '30';
                     const format = `${hh}:${mm}`;
@@ -1655,7 +1701,18 @@
             const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
             const maxHour = isWeekend ? 18 : 20;
 
-            for (let h = 9; h <= maxHour; h += 0.5) { 
+            // MELHORIA v28.05: Configurações de Horário Inicial e Intervalo
+            const intervalo = projetoDB.intervalo_atendimento || 30;
+            const step = intervalo / 60;
+            let hStart = 9;
+
+            // Se for o primeiro dia do projeto, usa o horário de início definido
+            if (iso === projetoDB.data_inicio && projetoDB.horario_inicio_primeiro_dia) {
+                const parts = projetoDB.horario_inicio_primeiro_dia.split(':');
+                hStart = parseInt(parts[0]) + (parseInt(parts[1])/60);
+            }
+
+            for (let h = hStart; h <= maxHour; h += step) { 
                 const hh = Math.floor(h).toString().padStart(2, '0'); 
                 const mm = (h % 1 === 0) ? '00' : '30';
                 const format = `${hh}:${mm}`;
