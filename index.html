@@ -1297,6 +1297,7 @@
             document.getElementById('modalGestao').style.display = 'flex';
             document.getElementById('gestao-menu').classList.add('hidden');
             const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
+            // <button onclick="window.salvarNovoProjeto()" class="btn-primary w-full py-4 rounded-xl font-black">CRIAR</button>`;
             f.innerHTML = `
                 <h3 class="text-emerald-400 font-black text-xs uppercase mb-4 text-center">Novo Projeto</h3>
                 <input type="text" id="pC" placeholder="Cidade" class="input-compact mb-2">
@@ -1312,31 +1313,39 @@
                         </select>
                     </div>
                 </div>
-                <button onclick="window.salvarNovoProjeto()" class="btn-primary w-full py-4 rounded-xl font-black">CRIAR</button>`;
+                <button type="button" id="btn-submit-novo-projeto" onclick="window.salvarNovoProjeto()" class="btn-primary w-full py-4 rounded-xl font-black">CRIAR NOVO PROJETO</button>`;
         };
 
+        // window.salvarNovoProjeto = async () => { ... }
         window.salvarNovoProjeto = async () => {
             const sch = document.getElementById('pS').value;
             const cid = document.getElementById('pC').value;
             if(!sch || !cid) return alert("Preencha Cidade e Escola!");
             
-            const id = sch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
+            const id = sch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '-');
             const user = localStorage.getItem('userType') || 'Evanio';
             
-            await set(ref(db, `projetos/${id}`), {
-                cidade: cid, escola: sch, criador: user,
-                data_inicio: document.getElementById('pSt').value, 
-                data_fim: document.getElementById('pEd').value,
-                horario_inicio_primeiro_dia: document.getElementById('pHin_new').value,
-                intervalo_atendimento: parseInt(document.getElementById('pInt_new').value),
-                comissao_individual: true,
-                automacao: { lista: "", msg1: "", msg2: "", msg3: "", msg4: "" }
-            });
-            
-            await update(ref(db, `config/ultimo_projeto_usuario`), { [user]: id });
-            localStorage.setItem('currentProject', id);
-            const newUrl = window.location.origin + window.location.pathname + '?id=' + id;
-            window.location.href = newUrl;
+            try {
+                await set(ref(db, `projetos/${id}`), {
+                    cidade: cid, escola: sch, criador: user,
+                    data_inicio: document.getElementById('pSt').value, 
+                    data_fim: document.getElementById('pEd').value,
+                    horario_inicio_primeiro_dia: document.getElementById('pHin_new').value,
+                    intervalo_atendimento: parseInt(document.getElementById('pInt_new').value),
+                    comissao_individual: true,
+                    automacao: { lista: "", index_atual: 0, msg1: "", msg2: "", msg3: "", msg4: "" },
+                    bot: { status: "offline" }
+                });
+                
+                await update(ref(db, `config/ultimo_projeto_usuario`), { [user]: id });
+                localStorage.setItem('currentProject', id);
+                alert("Projeto Criado com Sucesso!");
+                const newUrl = window.location.origin + window.location.pathname + '?id=' + id;
+                window.location.href = newUrl;
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao criar projeto no banco de dados.");
+            }
         };
 
         window.consultarProjetosAnteriores = async () => {
@@ -1543,7 +1552,6 @@
             const valorAtual = selectH.value;
             selectH.innerHTML = '<option value="">Selecione o Horário</option>';
             
-            // MELHORIA v28.05: Segue o intervalo do projeto na edição administrativa
             const intervalo = projetoDB.intervalo_atendimento || 30;
             const step = intervalo / 60;
 
@@ -1607,7 +1615,6 @@
             let atual = new Date(inicio + "T00:00:00");
             const dataLimite = new Date(fim + "T00:00:00");
             
-            // MELHORIA v28.04: Cálculo rigoroso de hoje para evitar sumiço de datas à noite
             const agora = new Date();
             const hojeIso = agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0') + '-' + String(agora.getDate()).padStart(2, '0');
 
@@ -1623,7 +1630,6 @@
                 const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
                 const maxHour = isWeekend ? 18 : 20;
 
-                // MELHORIA v28.05: Considera horário de início e intervalo
                 const intervalo = projetoDB.intervalo_atendimento || 30;
                 const step = intervalo / 60;
                 let hStart = 9;
@@ -1637,7 +1643,6 @@
                     const mm = (h % 1 === 0) ? '00' : '30';
                     const format = `${hh}:${mm}`;
 
-                    // Regra das 3 horas
                     if (iso === hojeIso) {
                         const agoraDecimal = agora.getHours() + (agora.getMinutes() / 60);
                         if (h < agoraDecimal + 3) continue;
@@ -1701,12 +1706,10 @@
             const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
             const maxHour = isWeekend ? 18 : 20;
 
-            // MELHORIA v28.05: Configurações de Horário Inicial e Intervalo
             const intervalo = projetoDB.intervalo_atendimento || 30;
             const step = intervalo / 60;
             let hStart = 9;
 
-            // Se for o primeiro dia do projeto, usa o horário de início definido
             if (iso === projetoDB.data_inicio && projetoDB.horario_inicio_primeiro_dia) {
                 const parts = projetoDB.horario_inicio_primeiro_dia.split(':');
                 hStart = parseInt(parts[0]) + (parseInt(parts[1])/60);
@@ -1752,7 +1755,8 @@
             const isAdmin = localStorage.getItem('isAdmin') === 'true';
             if(!isAdmin && projetoDB.criador !== user) return alert("Apenas o criador pode reiniciar a fila.");
             if(confirm("Reiniciar a fila?")) {
-                await update(ref(db, `projects/${projId}/automacao`), { index_atual: 0 });
+                // await update(ref(db, `projects/${projId}/automacao`), { index_atual: 0 });
+                await update(ref(db, `projetos/${projId}/automacao`), { index_atual: 0 });
                 projetoDB.automacao.index_atual = 0;
                 window.renderFila();
             }
