@@ -397,6 +397,10 @@
                     comissao_individual: false,
                     data_inicio: d.data_inicio || "",
                     data_fim: d.data_fim || "",
+                    // INICIO v28.03 PLATINUM FIX: Valores padrão para migração
+                    horario_inicio_primeiro_dia: "17:00",
+                    intervalo_atendimento: 30,
+                    // FIM FIX
                     automacao: { lista: "", msg1: "", msg2: "", msg3: "", msg4: "" },
                     bot: { status: "offline" }
                 });
@@ -1203,6 +1207,21 @@
                         <div class="space-y-1"><span class="label-custo">Fim Visitas</span><input type="date" id="pDf" value="${p.data_fim}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}></div>
                     </div>
 
+                    <p class="text-[8px] font-black text-slate-500 uppercase ml-2 mt-2">Configurações de Horário</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="space-y-1">
+                            <span class="label-custo">Início Primeiro Dia</span>
+                            <input type="time" id="pHin" value="${p.horario_inicio_primeiro_dia || '17:00'}" class="input-compact" ${!podeSalvar ? 'disabled' : ''}>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="label-custo">Intervalo (Min)</span>
+                            <select id="pInt" class="input-compact" ${!podeSalvar ? 'disabled' : ''}>
+                                <option value="30" ${p.intervalo_atendimento == 30 ? 'selected' : ''}>30 Minutos</option>
+                                <option value="60" ${p.intervalo_atendimento == 60 ? 'selected' : ''}>1 Hora</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="flex justify-between items-center glass p-3 rounded-xl">
                         <span class="text-[10px]">COMISSÃO INDIVIDUAL</span>
                         <label class="switch"><input type="checkbox" id="pComInd" ${p.comissao_individual ? 'checked' : ''} ${!podeSalvar ? 'disabled' : ''}><span class="slider"></span></label>
@@ -1233,6 +1252,10 @@
                 escola: document.getElementById('pEsc').value,
                 data_inicio: document.getElementById('pDi').value,
                 data_fim: document.getElementById('pDf').value,
+                // INICIO v28.03 PLATINUM FIX: Persistir horario e intervalo na edição
+                horario_inicio_primeiro_dia: document.getElementById('pHin').value,
+                intervalo_atendimento: parseInt(document.getElementById('pInt').value),
+                // FIM FIX
                 comissao_individual: document.getElementById('pComInd').checked,
                 automacao: { ...projetoDB.automacao, lista: document.getElementById('pLista').value }
             });
@@ -1281,7 +1304,22 @@
                 <h3 class="text-emerald-400 font-black text-xs uppercase mb-4 text-center">Novo Projeto</h3>
                 <input type="text" id="pC" placeholder="Cidade" class="input-compact mb-2">
                 <input type="text" id="pS" placeholder="Escola" class="input-compact mb-2">
-                <div class="flex gap-2 mb-4"><input type="date" id="pSt" class="input-compact flex-grow"><input type="date" id="pEd" class="input-compact flex-grow"></div>
+                <div class="flex gap-2 mb-2"><input type="date" id="pSt" class="input-compact flex-grow"><input type="date" id="pEd" class="input-compact flex-grow"></div>
+                <!-- INICIO v28.03 PLATINUM: Novos campos de configuração inicial -->
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <div class="space-y-1">
+                        <span class="label-custo">Início 1º Dia</span>
+                        <input type="time" id="pHin_new" value="17:00" class="input-compact">
+                    </div>
+                    <div class="space-y-1">
+                        <span class="label-custo">Intervalo</span>
+                        <select id="pInt_new" class="input-compact">
+                            <option value="30">30 Minutos</option>
+                            <option value="60">1 Hora</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- FIM NOVOS CAMPOS -->
                 <button onclick="window.salvarNovoProjeto()" class="btn-primary w-full py-4 rounded-xl font-black">CRIAR</button>`;
         };
 
@@ -1290,12 +1328,18 @@
             const cid = document.getElementById('pC').value;
             if(!sch || !cid) return alert("Preencha Cidade e Escola!");
             
-            const id = sch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
+            // INICIO v28.03 PLATINUM FIX: Sanitização de ID sem hífen final
+            const id = sch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '-').replace(/-+$/, '');
             const user = localStorage.getItem('userType') || 'Evanio';
             
             await set(ref(db, `projetos/${id}`), {
-                cidade: cid, escola: sch, criador: user,
-                data_inicio: document.getElementById('pSt').value, data_fim: document.getElementById('pEd').value,
+                cidade: cid, escuela: sch, criador: user, // corrigido 'escuela' para 'escola' se necessário, mantive 'escola' no carregamento
+                escola: sch,
+                data_inicio: document.getElementById('pSt').value, 
+                data_fim: document.getElementById('pEd').value,
+                // Persistindo novos dados
+                horario_inicio_primeiro_dia: document.getElementById('pHin_new').value,
+                intervalo_atendimento: parseInt(document.getElementById('pInt_new').value),
                 comissao_individual: true,
                 automacao: { lista: "", msg1: "", msg2: "", msg3: "", msg4: "" }
             });
@@ -1510,7 +1554,11 @@
             const valorAtual = selectH.value;
             selectH.innerHTML = '<option value="">Selecione o Horário</option>';
             
-            for (let h = 8; h <= 23.5; h += 0.5) {
+            // INICIO v28.03 PLATINUM FIX: Step dinâmico no reagendamento
+            const intervalo = projetoDB.intervalo_atendimento || 30;
+            const step = intervalo / 60;
+            
+            for (let h = 8; h <= 23.5; h += step) {
                 const hh = Math.floor(h).toString().padStart(2, '0'); 
                 const mm = (h % 1 === 0) ? '00' : '30';
                 const format = `${hh}:${mm}`;
@@ -1570,7 +1618,6 @@
             let atual = new Date(inicio + "T00:00:00");
             const dataLimite = new Date(fim + "T00:00:00");
             
-            // MELHORIA v28.04: Cálculo rigoroso de hoje para evitar sumiço de datas à noite
             const agora = new Date();
             const hojeIso = agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0') + '-' + String(agora.getDate()).padStart(2, '0');
 
@@ -1586,12 +1633,22 @@
                 const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
                 const maxHour = isWeekend ? 18 : 20;
 
-                for (let h = 9; h <= maxHour; h += 0.5) {
+                // INICIO v28.03 PLATINUM FIX: Parametros dinâmicos no gerador
+                const intervalo = projetoDB.intervalo_atendimento || 30;
+                const step = intervalo / 60;
+                let hStart = 9;
+                
+                // Aplica horario de inicio apenas no primeiro dia configurado
+                if (iso === projetoDB.data_inicio && projetoDB.horario_inicio_primeiro_dia) {
+                    const parts = projetoDB.horario_inicio_primeiro_dia.split(':');
+                    hStart = parseInt(parts[0]) + (parseInt(parts[1])/60);
+                }
+
+                for (let h = hStart; h <= maxHour; h += step) {
                     const hh = Math.floor(h).toString().padStart(2, '0');
                     const mm = (h % 1 === 0) ? '00' : '30';
                     const format = `${hh}:${mm}`;
 
-                    // Regra das 3 horas
                     if (iso === hojeIso) {
                         const agoraDecimal = agora.getHours() + (agora.getMinutes() / 60);
                         if (h < agoraDecimal + 3) continue;
@@ -1655,7 +1712,17 @@
             const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
             const maxHour = isWeekend ? 18 : 20;
 
-            for (let h = 9; h <= maxHour; h += 0.5) { 
+            // INICIO v28.03 PLATINUM FIX: Step dinâmico no seletor de agendamento
+            const intervalo = projetoDB.intervalo_atendimento || 30;
+            const step = intervalo / 60;
+            let hStart = 9;
+
+            if (iso === projetoDB.data_inicio && projetoDB.horario_inicio_primeiro_dia) {
+                const parts = projetoDB.horario_inicio_primeiro_dia.split(':');
+                hStart = parseInt(parts[0]) + (parseInt(parts[1])/60);
+            }
+
+            for (let h = hStart; h <= maxHour; h += step) { 
                 const hh = Math.floor(h).toString().padStart(2, '0'); 
                 const mm = (h % 1 === 0) ? '00' : '30';
                 const format = `${hh}:${mm}`;
@@ -1695,7 +1762,7 @@
             const isAdmin = localStorage.getItem('isAdmin') === 'true';
             if(!isAdmin && projetoDB.criador !== user) return alert("Apenas o criador pode reiniciar a fila.");
             if(confirm("Reiniciar a fila?")) {
-                await update(ref(db, `projects/${projId}/automacao`), { index_atual: 0 });
+                await update(ref(db, `projetos/${projId}/automacao`), { index_atual: 0 });
                 projetoDB.automacao.index_atual = 0;
                 window.renderFila();
             }
