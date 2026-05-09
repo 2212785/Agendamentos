@@ -325,61 +325,70 @@
     </section>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, get, set, remove, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, get, set, remove, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU",
-            databaseURL: "https://agenda-album-de-formatura-default-rtdb.firebaseio.com"
-        };
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+    const firebaseConfig = {
+        apiKey: "AIzaSyANz1gbAi3PIGwS1-RzOIXF6SUZvS2U0mU",
+        databaseURL: "https://agenda-album-de-formatura-default-rtdb.firebaseio.com"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-        const fBR = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
-        let projId = "";
-        window.dadosCompletos = [];
-        let custosDB = {
-            km_valor: 0.7,
-            km_total: 0,
-            hosp_valor: 0,
-            hosp_qtd: 0,
-            alim_valor: 0,
-            alim_qtd: 0,
-            pedagio_total: 0
-        };
-        let valesDB = {};
-        let projetoDB = {};
-        let weeklyChart = null;
+    const fBR = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0);
+    let projId = "";
+    window.dadosCompletos = [];
+    let custosDB = {
+        km_valor: 0.7,
+        km_total: 0,
+        hosp_valor: 0,
+        hosp_qtd: 0,
+        alim_valor: 0,
+        alim_qtd: 0,
+        pedagio_total: 0
+    };
+    let valesDB = {};
+    let projetoDB = {};
+    let weeklyChart = null;
 
-        // --- ACÃO GLOBAL DO ENTER ---
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                if (document.activeElement && document.activeElement.id === 'pLista') {
-                    return; 
-                }
+    // --- ACÃO GLOBAL DO ENTER ---
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            // Evita que o Enter dispare ações enquanto digita na lista da automação
+            if (document.activeElement && document.activeElement.id === 'pLista') return; 
 
-                const btnLogin = document.getElementById('btn-confirmar-login');
-                if (btnLogin && document.getElementById('modalGestao').style.display === 'flex') {
-                    return btnLogin.click();
-                }
-                const btnAcaoForm = document.querySelector('#gestao-form button.btn-primary');
-                if (btnAcaoForm && !btnAcaoForm.closest('.hidden')) {
-                    return btnAcaoForm.click();
-                }
-                const btnAgendar = document.getElementById('btn-agendar-visita');
-                if (btnAgendar && document.activeElement.closest('#form-agendamento')) {
-                    return btnAgendar.click();
-                }
+            const modalGestao = document.getElementById('modalGestao');
+            const isModalOpen = modalGestao && modalGestao.style.display === 'flex';
+
+            const btnLogin = document.getElementById('btn-confirmar-login');
+            if (btnLogin && isModalOpen) {
+                e.preventDefault();
+                return btnLogin.click();
             }
-        });
 
-        // --- MIGRACAO DE ESTRUTURA REVISADA ---
-        const realizarMigracaoEstrutura = async () => {
+            const btnAcaoForm = document.querySelector('#gestao-form button.btn-primary');
+            if (btnAcaoForm && !btnAcaoForm.closest('.hidden')) {
+                e.preventDefault();
+                return btnAcaoForm.click();
+            }
+
+            const btnAgendar = document.getElementById('btn-agendar-visita');
+            if (btnAgendar && document.activeElement.closest('#form-agendamento')) {
+                e.preventDefault();
+                return btnAgendar.click();
+            }
+        }
+    });
+
+    // --- MIGRACAO DE ESTRUTURA REVISADA ---
+    const realizarMigracaoEstrutura = async () => {
+        try {
             const snapRaiz = await get(ref(db, "guaratingueta-guilherme"));
             if (snapRaiz.exists()) {
-                console.log("Migrando estrutura completa de Dr. Guilherme Filippo...");
+                console.log("Migrando estrutura...");
                 const d = snapRaiz.val();
                 
+                // Migra custos
                 await set(ref(db, `custos/guaratingueta-guilherme`), {
                     alim_qtd: d.alim_qtd || 0,
                     alim_valor: d.alim_valor || 0,
@@ -390,6 +399,7 @@
                     pedagio_total: d.pedagio_total || 0
                 });
 
+                // Migra projeto
                 await set(ref(db, `projetos/guaratingueta-guilherme`), {
                     cidade: d.cidade || "Guaratinguetá",
                     escola: d.escola || "Dr. Guilherme Filippo",
@@ -399,106 +409,118 @@
                     data_fim: d.data_fim || "",
                     horario_inicio_primeiro_dia: "17:00",
                     intervalo_atendimento: 30,
-                    automacao: { lista: "", msg1: "", msg2: "", msg3: "", msg4: "" },
+                    automacao: { lista: "", index_atual: 0, msg1: "", msg2: "", msg3: "", msg4: "" },
                     bot: { status: "offline" }
                 });
 
                 await remove(ref(db, "guaratingueta-guilherme"));
-                console.log("Migração de estrutura v28 concluída com sucesso!");
+                console.log("Migração concluída.");
             }
-        };
+        } catch (err) {
+            console.error("Erro na migração:", err);
+        }
+    };
 
-        // --- INICIALIZAÇÃO MULTIPROJETO DINÂMICA ---
-        const urlParams = new URLSearchParams(window.location.search);
-        let rawId = urlParams.get('id');
-        // CORREÇÃO: Sanitização de ID da URL
-        const idDaUrl = rawId ? rawId.replace(/-$/, "") : null;
+    // --- INICIALIZAÇÃO MULTIPROJETO DINÂMICA ---
+    const urlParams = new URLSearchParams(window.location.search);
+    let rawId = urlParams.get('id');
+    // Sanitização para evitar caracteres residuais
+    const idDaUrl = rawId ? rawId.trim().replace(/-$/, "") : null;
 
-        onValue(ref(db, "config/projeto_ativo"), async (snap) => {
-            await realizarMigracaoEstrutura(); 
-            
-            const globalId = snap.val();
-            const userLogado = localStorage.getItem('userType');
-            
-            if (!idDaUrl && userLogado) {
-                const snapUltimo = await get(ref(db, `config/ultimo_projeto_usuario/${userLogado}`));
-                if (snapUltimo.exists()) {
-                    const idUltimo = snapUltimo.val();
-                    window.location.href = window.location.origin + window.location.pathname + '?id=' + idUltimo;
-                    return;
-                }
-            }
-
-            // CORREÇÃO: Garante que o projId seja o id da URL se ele existir, senão localStorage, senão global
-            projId = idDaUrl || localStorage.getItem('currentProject') || globalId;
-            
-            if (projId) {
-                const pS = await get(ref(db, `projetos/${projId}`));
-                if (pS.exists()) {
-                    projetoDB = pS.val();
-                    
-                    const isAdmin = localStorage.getItem('isAdmin') === 'true';
-                    if(!isAdmin && userLogado && projetoDB.criador !== userLogado && idDaUrl) {
-                        alert("Acesso Negado: Este projeto pertence a outro usuário.");
-                        window.location.href = window.location.origin + window.location.pathname;
-                        return;
-                    }
-
-                    document.getElementById('escola-titulo').innerText = projetoDB.escola || "Projeto";
-                    document.getElementById('sub-escola').innerText = projetoDB.cidade || "Cidade";
-                    if (projetoDB.data_inicio) window.gerarBotoesDatas(projetoDB.data_inicio, projetoDB.data_fim);
-                    window.carregarRelatorio();
-                    
-                    if(userLogado) {
-                        document.getElementById('user-display').innerText = `| ${userLogado}`;
-                        document.getElementById('controles-admin').classList.remove('hidden');
-                        update(ref(db, `config/ultimo_projeto_usuario`), { [userLogado]: projId });
-                        // CORREÇÃO: Sincroniza localStorage com o projeto atual encontrado
-                        localStorage.setItem('currentProject', projId);
-                    }
-
-                    onValue(ref(db, `projetos/${projId}/bot`), (botSnap) => {
-                        const led = document.getElementById('bot-led');
-                        const txt = document.getElementById('bot-status-text');
-                        const botData = botSnap.val();
-                        if (botData && (botData.status === 'Online' || botData.status === 'online')) {
-                            led.className = 'led-bot led-online';
-                            txt.innerText = 'Bot Ativo';
-                        } else {
-                            led.className = 'led-bot led-offline';
-                            txt.innerText = 'Bot Offline';
-                        }
-                    });
-                } else {
-                    // CORREÇÃO: Se projId existe mas não foi achado no banco (ex: deletado), limpa e reseta
-                    console.error("Projeto não encontrado no Firebase: " + projId);
-                    if(idDaUrl) {
-                        alert("Atenção: Projeto não localizado no banco de dados.");
-                        window.location.href = window.location.origin + window.location.pathname;
-                    }
-                }
-            }
-        });
-
-        // --- LOGIN E PERMISSÕES ---
-        window.acessoAdmin = () => {
-            if (localStorage.getItem('userType')) {
-                document.getElementById('modalGestao').style.display = 'flex';
-                document.getElementById('gestao-menu').classList.add('hidden');
-                const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
-                f.innerHTML = `
-                    <h3 class="text-blue-400 font-black text-xs uppercase mb-4 text-center">Menu Administrativo</h3>
-                    <button onclick="window.switchView('view-logistica'); window.fecharModalGestao();" class="btn-primary w-full py-4 rounded-xl text-[10px] font-black uppercase mb-2">Painel Logística</button>
-                    <button onclick="window.efetuarLogout()" class="bg-rose-600 w-full py-4 rounded-xl text-[10px] font-black uppercase">Sair / Deslogar</button>
-                `;
+    // Escuta mudanças no projeto ativo global
+    onValue(ref(db, "config/projeto_ativo"), async (snap) => {
+        await realizarMigracaoEstrutura(); 
+        
+        const globalId = snap.val();
+        const userLogado = localStorage.getItem('userType');
+        
+        // Redirecionamento inteligente: Se não tem ID na URL, mas usuário está logado, busca o último dele
+        if (!idDaUrl && userLogado) {
+            const snapUltimo = await get(ref(db, `config/ultimo_projeto_usuario/${userLogado}`));
+            if (snapUltimo.exists()) {
+                const idUltimo = snapUltimo.val();
+                window.location.href = `${window.location.origin}${window.location.pathname}?id=${idUltimo}`;
                 return;
             }
-            
-            document.getElementById('modalGestao').style.display = 'flex';
-            document.getElementById('gestao-menu').classList.add('hidden');
-            const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
-            
-            f.innerHTML = `
+        }
+
+        // Define o ID final a ser usado
+        projId = idDaUrl || localStorage.getItem('currentProject') || globalId;
+        
+        if (projId) {
+            const pS = await get(ref(db, `projetos/${projId}`));
+            if (pS.exists()) {
+                projetoDB = pS.val();
+                
+                const isAdmin = localStorage.getItem('isAdmin') === 'true';
+                // Bloqueio de segurança se o projeto não pertencer ao usuário (e não for admin)
+                if(!isAdmin && userLogado && projetoDB.criador !== userLogado && idDaUrl) {
+                    alert("Acesso Negado: Este projeto pertence a outro usuário.");
+                    window.location.href = `${window.location.origin}${window.location.pathname}`;
+                    return;
+                }
+
+                // Atualiza UI
+                const escolaTitulo = document.getElementById('escola-titulo');
+                const subEscola = document.getElementById('sub-escola');
+                if(escolaTitulo) escolaTitulo.innerText = projetoDB.escola || "Projeto";
+                if(subEscola) subEscola.innerText = projetoDB.cidade || "Cidade";
+
+                if (projetoDB.data_inicio && typeof window.gerarBotoesDatas === "function") {
+                    window.gerarBotoesDatas(projetoDB.data_inicio, projetoDB.data_fim);
+                }
+                
+                if (typeof window.carregarRelatorio === "function") window.carregarRelatorio();
+                
+                if(userLogado) {
+                    const userDisplay = document.getElementById('user-display');
+                    const controlesAdmin = document.getElementById('controles-admin');
+                    if(userDisplay) userDisplay.innerText = `| ${userLogado}`;
+                    if(controlesAdmin) controlesAdmin.classList.remove('hidden');
+                    
+                    update(ref(db, `config/ultimo_projeto_usuario`), { [userLogado]: projId });
+                    localStorage.setItem('currentProject', projId);
+                }
+
+                // Status do Bot em tempo real
+                onValue(ref(db, `projetos/${projId}/bot`), (botSnap) => {
+                    const led = document.getElementById('bot-led');
+                    const txt = document.getElementById('bot-status-text');
+                    if(!led || !txt) return;
+
+                    const botData = botSnap.val();
+                    const isOnline = botData && (botData.status?.toLowerCase() === 'online');
+                    
+                    led.className = isOnline ? 'led-bot led-online' : 'led-bot led-offline';
+                    txt.innerText = isOnline ? 'Bot Ativo' : 'Bot Offline';
+                });
+            } else {
+                console.warn("Projeto selecionado não existe no banco.");
+            }
+        }
+    });
+
+    // --- LOGIN E PERMISSÕES ---
+    window.acessoAdmin = () => {
+        const userType = localStorage.getItem('userType');
+        const modal = document.getElementById('modalGestao');
+        const menu = document.getElementById('gestao-menu');
+        const form = document.getElementById('gestao-form');
+
+        if(!modal || !menu || !form) return;
+
+        modal.style.display = 'flex';
+        menu.classList.add('hidden');
+        form.classList.remove('hidden');
+
+        if (userType) {
+            form.innerHTML = `
+                <h3 class="text-blue-400 font-black text-xs uppercase mb-4 text-center">Menu Administrativo</h3>
+                <button onclick="window.switchView('view-logistica'); window.fecharModalGestao();" class="btn-primary w-full py-4 rounded-xl text-[10px] font-black uppercase mb-2">Painel Logística</button>
+                <button onclick="window.efetuarLogout()" class="bg-rose-600 w-full py-4 rounded-xl text-[10px] font-black uppercase">Sair / Deslogar</button>
+            `;
+        } else {
+            form.innerHTML = `
                 <h3 class="text-blue-400 font-black text-xs uppercase mb-4 text-center">Acesso Restrito</h3>
                 <select id="login-user" class="input-compact mb-2">
                     <option value="Evanio">Evanio</option>
@@ -507,49 +529,49 @@
                 <input type="password" id="login-pass" placeholder="Senha" class="input-compact mb-4 text-white">
                 <button id="btn-confirmar-login" onclick="window.confirmarLogin()" class="btn-primary w-full py-4 rounded-xl text-[10px] font-black uppercase">Entrar</button>
             `;
-        };
+        }
+    };
 
-        window.efetuarLogout = () => {
-            localStorage.removeItem('userType');
-            localStorage.removeItem('isAdmin');
-            localStorage.removeItem('currentProject'); 
-            location.href = window.location.origin + window.location.pathname; 
-        };
+    window.efetuarLogout = () => {
+        localStorage.clear(); // Limpa tudo para garantir
+        location.href = `${window.location.origin}${window.location.pathname}`; 
+    };
 
-        window.confirmarLogin = async () => {
-            const user = document.getElementById('login-user').value;
-            const pass = document.getElementById('login-pass').value;
+    window.confirmarLogin = async () => {
+        const user = document.getElementById('login-user')?.value;
+        const pass = document.getElementById('login-pass')?.value;
 
-            let loginValido = false;
-            if (user === "Evanio" && pass === "elite") {
-                localStorage.setItem('userType', 'Evanio');
-                localStorage.setItem('isAdmin', 'true');
-                loginValido = true;
-            } else if (user === "Willian" && pass === "2025") {
-                localStorage.setItem('userType', 'Willian');
-                localStorage.setItem('isAdmin', 'false');
-                loginValido = true;
-            } else {
-                alert("Senha Incorreta!");
-                return;
-            }
+        let loginValido = false;
+        if (user === "Evanio" && pass === "elite") {
+            localStorage.setItem('userType', 'Evanio');
+            localStorage.setItem('isAdmin', 'true');
+            loginValido = true;
+        } else if (user === "Willian" && pass === "2025") {
+            localStorage.setItem('userType', 'Willian');
+            localStorage.setItem('isAdmin', 'false');
+            loginValido = true;
+        } else {
+            alert("Senha Incorreta!");
+            return;
+        }
 
-            if (loginValido) {
-                try {
-                    const snapUltimo = await get(ref(db, `config/ultimo_projeto_usuario/${user}`));
-                    if (snapUltimo.exists()) {
-                        const idUltimo = snapUltimo.val();
-                        localStorage.setItem('currentProject', idUltimo);
-                        window.location.href = window.location.origin + window.location.pathname + '?id=' + idUltimo;
-                    } else {
-                        window.fecharModalGestao();
-                        location.reload();
-                    }
-                } catch (e) {
+        if (loginValido) {
+            try {
+                const snapUltimo = await get(ref(db, `config/ultimo_projeto_usuario/${user}`));
+                if (snapUltimo.exists()) {
+                    const idUltimo = snapUltimo.val();
+                    localStorage.setItem('currentProject', idUltimo);
+                    window.location.href = `${window.location.origin}${window.location.pathname}?id=${idUltimo}`;
+                } else {
+                    window.fecharModalGestao();
                     location.reload();
                 }
+            } catch (e) {
+                console.error(e);
+                location.reload();
             }
-        };
+        }
+    };
 
         // --- AVULSOS E VALES ---
         window.abrirAvulso = () => {
