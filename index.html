@@ -397,7 +397,6 @@
                     comissao_individual: false,
                     data_inicio: d.data_inicio || "",
                     data_fim: d.data_fim || "",
-                    // NOVOS CAMPOS v28.05
                     horario_inicio_primeiro_dia: "17:00",
                     intervalo_atendimento: 30,
                     automacao: { lista: "", msg1: "", msg2: "", msg3: "", msg4: "" },
@@ -1297,7 +1296,6 @@
             document.getElementById('modalGestao').style.display = 'flex';
             document.getElementById('gestao-menu').classList.add('hidden');
             const f = document.getElementById('gestao-form'); f.classList.remove('hidden');
-            // <button onclick="window.salvarNovoProjeto()" class="btn-primary w-full py-4 rounded-xl font-black">CRIAR</button>`;
             f.innerHTML = `
                 <h3 class="text-emerald-400 font-black text-xs uppercase mb-4 text-center">Novo Projeto</h3>
                 <input type="text" id="pC" placeholder="Cidade" class="input-compact mb-2">
@@ -1313,7 +1311,7 @@
                         </select>
                     </div>
                 </div>
-                <button type="button" id="btn-submit-novo-projeto" onclick="window.salvarNovoProjeto()" class="btn-primary w-full py-4 rounded-xl font-black">CRIAR NOVO PROJETO</button>`;
+                <button type="button" onclick="window.salvarNovoProjeto()" class="btn-primary w-full py-4 rounded-xl font-black">CRIAR PROJETO</button>`;
         };
 
         // window.salvarNovoProjeto = async () => { ... }
@@ -1322,6 +1320,7 @@
             const cid = document.getElementById('pC').value;
             if(!sch || !cid) return alert("Preencha Cidade e Escola!");
             
+            // CORREÇÃO DE CONEXÃO: Sanitização e tratamento de gravação
             const id = sch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '-');
             const user = localStorage.getItem('userType') || 'Evanio';
             
@@ -1337,14 +1336,17 @@
                     bot: { status: "offline" }
                 });
                 
+                await update(ref(db, `config`), { projeto_ativo: id });
                 await update(ref(db, `config/ultimo_projeto_usuario`), { [user]: id });
+                
                 localStorage.setItem('currentProject', id);
-                alert("Projeto Criado com Sucesso!");
+                alert("✅ PROJETO CRIADO E CONECTADO!");
+                
                 const newUrl = window.location.origin + window.location.pathname + '?id=' + id;
                 window.location.href = newUrl;
             } catch (e) {
-                console.error(e);
-                alert("Erro ao criar projeto no banco de dados.");
+                console.error("Erro ao conectar ao Firebase:", e);
+                alert("Falha na conexão com o Banco de Dados.");
             }
         };
 
@@ -1394,7 +1396,14 @@
             if (v === 'view-automacao') window.renderFila(); 
         };
         
-        window.fecharModalGestao = () => { document.getElementById('modalGestao').style.display='none'; document.getElementById('gestao-menu').classList.remove('hidden'); document.getElementById('gestao-form').classList.add('hidden'); };
+        window.fecharModalGestao = () => { 
+            document.getElementById('modalGestao').style.display='none'; 
+            document.getElementById('gestao-menu').classList.remove('hidden'); 
+            document.getElementById('gestao-form').classList.add('hidden'); 
+            const btn = document.getElementById('btn-admin-reagendar');
+            if(btn) btn.remove();
+        };
+        
         window.gerenciarItem = (p) => { window.itemPath = p; document.getElementById('modalGestao').style.display='flex'; };
         
         window.carregarRelatorio = async () => {
@@ -1459,7 +1468,6 @@
             list.forEach(i => {
                 let status = i.resultado || "PENDENTE";
                 let statusColor = status === "Venda" ? "text-emerald-400" : (status === "NQ" ? "text-rose-500" : "text-blue-500");
-                
                 const foneLimpo = i.telefone ? i.telefone.replace(/\D/g, '') : '';
                 const linkZap = foneLimpo ? `https://wa.me/55${foneLimpo}` : '#';
                 const enderecoURL = encodeURIComponent(i.endereco || '');
@@ -1478,20 +1486,16 @@
                             <span class="text-[10px] text-white uppercase font-black">${i.nome_formando}</span>
                         </div>
                     </div>
-                    
                     <div class="mt-2">
                         <a href="${linkZap}" target="_blank" class="text-emerald-400 text-[11px] font-black uppercase flex items-center gap-1 italic">
                             📱 WHATSAPP: ${i.telefone || 'S/N'} 🚀
                         </a>
                     </div>
-
                     <div class="text-[13px] mt-2 text-slate-300 font-semibold italic">${i.endereco||'S/E'}</div>
-                    
                     <div class="grid grid-cols-2 gap-2 mt-3">
                         <a href="${linkGoogle}" target="_blank" class="bg-blue-600/20 border border-blue-500/30 text-center py-2 rounded-xl text-[9px] font-black text-blue-400 uppercase">Google Maps</a>
                         <a href="${linkWaze}" target="_blank" class="bg-amber-600/20 border border-amber-500/30 text-center py-2 rounded-xl text-[9px] font-black text-amber-500 uppercase">Waze</a>
                     </div>
-
                     <button onclick="window.gerenciarItemAdmin('${i.path}')" class="btn-primary w-full py-3 rounded-xl mt-3 text-[10px] font-black uppercase">Gerenciar / Editar</button>
                 </div>`;
             });
@@ -1503,7 +1507,6 @@
             document.getElementById('gestao-menu').classList.remove('hidden');
             const f = document.getElementById('gestao-form');
             f.classList.add('hidden');
-            
             const menu = document.getElementById('gestao-menu');
             if(!document.getElementById('btn-admin-reagendar')) {
                 const btnReagendar = document.createElement('button');
@@ -1519,31 +1522,23 @@
             const f = document.getElementById('gestao-form');
             document.getElementById('gestao-menu').classList.add('hidden');
             f.classList.remove('hidden');
-            
             const itemOriginal = window.dadosCompletos.find(i => i.path === window.itemPath);
-
             f.innerHTML = `
                 <div class="space-y-3">
                     <h3 class="text-blue-400 font-black text-xs uppercase text-center mb-2">Editar Dados Visita</h3>
-
                     <p class="text-[8px] text-slate-500 uppercase font-bold ml-1">Nome do Formando</p>
                     <input type="text" id="novo_nome_admin" value="${itemOriginal.nome_formando}" class="input-compact text-white">
-                    
                     <p class="text-[8px] text-slate-500 uppercase font-bold ml-1">Data</p>
                     <input type="date" id="nova_data_admin" value="${itemOriginal.data}" class="input-compact text-white" onchange="window.carregarHorariosAdmin()">
-                    
                     <p class="text-[8px] text-slate-500 uppercase font-bold ml-1">Horário</p>
                     <select id="novo_horario_admin" class="input-compact text-white">
                         <option value="${itemOriginal.horario}">${itemOriginal.horario}</option>
                     </select>
-                    
                     <p class="text-[8px] text-slate-500 uppercase font-bold ml-1">Endereço</p>
                     <textarea id="novo_endereco_admin" class="input-compact text-white" rows="2">${itemOriginal.endereco}</textarea>
-
                     <button onclick="window.confirmarReagendamentoAdmin()" class="btn-primary w-full py-4 rounded-xl font-black uppercase text-xs">Salvar Alterações no Firebase</button>
                     <button onclick="window.fecharModalGestao()" class="bg-slate-700 w-full py-3 rounded-xl font-black uppercase text-[10px]">Cancelar</button>
-                </div>
-            `;
+                </div>`;
             window.carregarHorariosAdmin();
         };
 
@@ -1551,10 +1546,8 @@
             const selectH = document.getElementById('novo_horario_admin');
             const valorAtual = selectH.value;
             selectH.innerHTML = '<option value="">Selecione o Horário</option>';
-            
             const intervalo = projetoDB.intervalo_atendimento || 30;
             const step = intervalo / 60;
-
             for (let h = 8; h <= 23.5; h += step) {
                 const hh = Math.floor(h).toString().padStart(2, '0'); 
                 const mm = (h % 1 === 0) ? '00' : '30';
@@ -1569,38 +1562,26 @@
             const novaData = document.getElementById('nova_data_admin').value;
             const novoHorario = document.getElementById('novo_horario_admin').value;
             const novoEndereco = document.getElementById('novo_endereco_admin').value;
-            
             if(!novoNome || !novaData || !novoHorario || !novoEndereco) return alert("Preencha todos os campos!");
-
             try {
                 const itemOriginal = window.dadosCompletos.find(i => i.path === window.itemPath);
                 if (!itemOriginal) return alert("Erro ao localizar registro.");
-
                 const basePasta = window.itemPath.split('/').slice(0, -2).join('/');
                 const idOriginal = itemOriginal.id;
-
                 if (itemOriginal.data !== novaData) {
                     const novoPath = `${basePasta}/${novaData}/${idOriginal}`;
-                    
                     await set(ref(db, novoPath), { 
-                        ...itemOriginal, 
-                        nome_formando: novoNome,
-                        data: novaData, 
-                        horario: novoHorario,
-                        endereco: novoEndereco,
-                        editado_em: new Date().toLocaleString()
+                        ...itemOriginal, nome_formando: novoNome,
+                        data: novaData, horario: novoHorario,
+                        endereco: novoEndereco, editado_em: new Date().toLocaleString()
                     });
-
                     await remove(ref(db, window.itemPath));
                 } else {
                     await update(ref(db, window.itemPath), { 
-                        nome_formando: novoNome,
-                        horario: novoHorario,
-                        endereco: novoEndereco,
-                        editado_em: new Date().toLocaleString()
+                        nome_formando: novoNome, horario: novoHorario,
+                        endereco: novoEndereco, editado_em: new Date().toLocaleString()
                     });
                 }
-
                 alert("✅ Dados atualizados com sucesso no Firebase!");
                 window.fecharModalGestao();
                 window.carregarRelatorio();
@@ -1614,22 +1595,17 @@
             const container = document.getElementById('day-selector'); container.innerHTML = "";
             let atual = new Date(inicio + "T00:00:00");
             const dataLimite = new Date(fim + "T00:00:00");
-            
             const agora = new Date();
             const hojeIso = agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0') + '-' + String(agora.getDate()).padStart(2, '0');
-
             let primeiraDataDisponivel = null;
-
             const checarDisponibilidadeData = async (iso) => {
                 const snap = await get(ref(db, `dados/${projId}/agendamentos/${iso}`));
                 const ag = snap.exists() ? snap.val() : {};
                 const limiteAgendamentos = (projetoDB.comissao_individual === true) ? 1 : 2;
-
                 const dateObj = new Date(iso + "T00:00:00");
                 const dayOfWeek = dateObj.getDay(); 
                 const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
                 const maxHour = isWeekend ? 18 : 20;
-
                 const intervalo = projetoDB.intervalo_atendimento || 30;
                 const step = intervalo / 60;
                 let hStart = 9;
@@ -1637,24 +1613,18 @@
                     const parts = projetoDB.horario_inicio_primeiro_dia.split(':');
                     hStart = parseInt(parts[0]) + (parseInt(parts[1])/60);
                 }
-
                 for (let h = hStart; h <= maxHour; h += step) {
                     const hh = Math.floor(h).toString().padStart(2, '0');
                     const mm = (h % 1 === 0) ? '00' : '30';
                     const format = `${hh}:${mm}`;
-
                     if (iso === hojeIso) {
                         const agoraDecimal = agora.getHours() + (agora.getMinutes() / 60);
                         if (h < agoraDecimal + 3) continue;
                     }
-
-                    if (Object.values(ag).filter(a => a.horario === format).length < limiteAgendamentos) {
-                        return true; 
-                    }
+                    if (Object.values(ag).filter(a => a.horario === format).length < limiteAgendamentos) return true; 
                 }
                 return false; 
             };
-
             const processarProximoDia = async () => {
                 if (atual > dataLimite) {
                     if (primeiraDataDisponivel) {
@@ -1665,14 +1635,11 @@
                     }
                     return;
                 }
-
                 const iso = atual.toISOString().split('T')[0];
-
                 if (iso >= hojeIso) {
                     const disponivel = await checarDisponibilidadeData(iso);
                     if (disponivel) {
                         if (!primeiraDataDisponivel) primeiraDataDisponivel = iso;
-
                         const btn = document.createElement('button'); 
                         btn.className = "day-btn text-white";
                         btn.innerText = atual.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
@@ -1684,11 +1651,9 @@
                         container.appendChild(btn);
                     }
                 }
-                
                 atual.setDate(atual.getDate() + 1);
                 processarProximoDia();
             };
-
             processarProximoDia();
         };
 
@@ -1697,36 +1662,28 @@
             const snap = await get(ref(db, `dados/${projId}/agendamentos/${iso}`));
             const ag = snap.exists() ? snap.val() : {};
             selectH.innerHTML = '<option value="">Selecione o Horário</option>';
-            
             const agora = new Date();
             const hojeIso = agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0') + '-' + String(agora.getDate()).padStart(2, '0');
-            
             const dateObj = new Date(iso + "T00:00:00");
             const dayOfWeek = dateObj.getDay(); 
             const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
             const maxHour = isWeekend ? 18 : 20;
-
             const intervalo = projetoDB.intervalo_atendimento || 30;
             const step = intervalo / 60;
             let hStart = 9;
-
             if (iso === projetoDB.data_inicio && projetoDB.horario_inicio_primeiro_dia) {
                 const parts = projetoDB.horario_inicio_primeiro_dia.split(':');
                 hStart = parseInt(parts[0]) + (parseInt(parts[1])/60);
             }
-
             for (let h = hStart; h <= maxHour; h += step) { 
                 const hh = Math.floor(h).toString().padStart(2, '0'); 
                 const mm = (h % 1 === 0) ? '00' : '30';
                 const format = `${hh}:${mm}`;
-
                 if (iso === hojeIso) {
                     const agoraDecimal = agora.getHours() + (agora.getMinutes() / 60);
                     if (h < agoraDecimal + 3) continue; 
                 }
-
                 const limiteAgendamentos = (projetoDB.comissao_individual === true) ? 1 : 2;
-                
                 if (Object.values(ag).filter(a => a.horario === format).length < limiteAgendamentos) {
                     selectH.innerHTML += `<option value="${format}">${format}</option>`;
                 }
@@ -1742,35 +1699,16 @@
             alert("✅ AGENDADO!"); window.location.href = `https://wa.me/55${zapAviso.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`;
         };
 
-        window.renderFila = () => { 
-            const cont = document.getElementById('lista-fila'); 
-            if (!cont) return; 
-            const lista = projetoDB.automacao?.lista?.split('\n').filter(l => l.trim() !== "") || []; 
-            const atual = projetoDB.automacao?.index_atual || 0; 
-            cont.innerHTML = lista.map((l, i) => `<div class="flex justify-between p-2 rounded-lg ${i < atual ? 'bg-emerald-500/10 text-emerald-500' : 'bg-white/5'}"><span>${i+1}. ${l.split(',')[0].split(';')[0]}</span><b>${i < atual ? 'OK' : 'PENDENTE'}</b></div>`).join(''); 
-        };
-
         window.resetIndex = async () => {
             const user = localStorage.getItem('userType');
             const isAdmin = localStorage.getItem('isAdmin') === 'true';
             if(!isAdmin && projetoDB.criador !== user) return alert("Apenas o criador pode reiniciar a fila.");
             if(confirm("Reiniciar a fila?")) {
-                // await update(ref(db, `projects/${projId}/automacao`), { index_atual: 0 });
                 await update(ref(db, `projetos/${projId}/automacao`), { index_atual: 0 });
                 projetoDB.automacao.index_atual = 0;
                 window.renderFila();
             }
         };
-        
-        window.fecharModalGestao = () => { 
-            document.getElementById('modalGestao').style.display='none'; 
-            document.getElementById('gestao-menu').classList.remove('hidden'); 
-            document.getElementById('gestao-form').classList.add('hidden'); 
-            
-            const btn = document.getElementById('btn-admin-reagendar');
-            if(btn) btn.remove();
-        };
-
     </script>
 </body>
 </html>
