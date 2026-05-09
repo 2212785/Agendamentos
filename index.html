@@ -411,6 +411,7 @@
         // --- INICIALIZAÇÃO MULTIPROJETO DINÂMICA ---
         const urlParams = new URLSearchParams(window.location.search);
         let rawId = urlParams.get('id');
+        // CORREÇÃO: Sanitização de ID da URL
         const idDaUrl = rawId ? rawId.replace(/-$/, "") : null;
 
         onValue(ref(db, "config/projeto_ativo"), async (snap) => {
@@ -428,6 +429,7 @@
                 }
             }
 
+            // CORREÇÃO: Garante que o projId seja o id da URL se ele existir, senão localStorage, senão global
             projId = idDaUrl || localStorage.getItem('currentProject') || globalId;
             
             if (projId) {
@@ -451,6 +453,8 @@
                         document.getElementById('user-display').innerText = `| ${userLogado}`;
                         document.getElementById('controles-admin').classList.remove('hidden');
                         update(ref(db, `config/ultimo_projeto_usuario`), { [userLogado]: projId });
+                        // CORREÇÃO: Sincroniza localStorage com o projeto atual encontrado
+                        localStorage.setItem('currentProject', projId);
                     }
 
                     onValue(ref(db, `projetos/${projId}/bot`), (botSnap) => {
@@ -465,6 +469,13 @@
                             txt.innerText = 'Bot Offline';
                         }
                     });
+                } else {
+                    // CORREÇÃO: Se projId existe mas não foi achado no banco (ex: deletado), limpa e reseta
+                    console.error("Projeto não encontrado no Firebase: " + projId);
+                    if(idDaUrl) {
+                        alert("Atenção: Projeto não localizado no banco de dados.");
+                        window.location.href = window.location.origin + window.location.pathname;
+                    }
                 }
             }
         });
@@ -1314,13 +1325,12 @@
                 <button type="button" onclick="window.salvarNovoProjeto()" class="btn-primary w-full py-4 rounded-xl font-black">CRIAR PROJETO</button>`;
         };
 
-        // window.salvarNovoProjeto = async () => { ... }
         window.salvarNovoProjeto = async () => {
             const sch = document.getElementById('pS').value;
             const cid = document.getElementById('pC').value;
             if(!sch || !cid) return alert("Preencha Cidade e Escola!");
             
-            // CORREÇÃO DE CONEXÃO: Sanitização e tratamento de gravação
+            // CORREÇÃO: Sanitização de ID para evitar falha de conexão no Firebase
             const id = sch.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '-');
             const user = localStorage.getItem('userType') || 'Evanio';
             
