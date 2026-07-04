@@ -142,7 +142,7 @@
         }
 
         .switch {
-            position: relative;
+            position: relative; 
             display: inline-block;
             width: 40px;
             height: 20px;
@@ -953,11 +953,16 @@
                             somaPagamentos += vP;
                             const tipo = p.tipo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
+                            // if (tipo.includes("boleto")) {
+                            //     cV += vP * 0.08;
+                            //     m.bol += vP;
+                            // } else {
+                            //     cV += vP * 0.12;
                             if (tipo.includes("boleto")) {
-                                cV += vP * 0.08;
+                                cV += vP * 0.12; // Atualizado v28.03: Boleto 12%
                                 m.bol += vP;
                             } else {
-                                cV += vP * 0.12;
+                                cV += vP * 0.14; // Atualizado v28.03: Pix/Dinheiro/Cartão 14%
                                 if (tipo.includes("pix")) {
                                     m.pix += vP;
                                     totalPixIncorporadoVale += vP;
@@ -970,7 +975,8 @@
 
                     const restante = valorTotalVenda - somaPagamentos;
                     if (restante > 0) {
-                        cV += restante * 0.08;
+                        // cV += restante * 0.08;
+                        cV += restante * 0.12; // Atualizado v28.03: Restante (Boleto) 12%
                         m.bol += restante;
                     }
                     
@@ -989,7 +995,7 @@
                     m.com += cV;
                     i.total_pix_din = totalPixIncorporadoVale;
 
-                } else if (i.resultado === "NQ") { 
+                } else if (i.resultado === "NQ") {
                     m.nq++; vend[vn].nq++; chartData[dKey].nq++; 
                 }
             });
@@ -1607,7 +1613,7 @@
                         const agoraDecimal = agora.getHours() + (agora.getMinutes() / 60);
                         if (h < agoraDecimal + 3) continue;
                     }
-                    if (Object.values(ag).filter(a => a.horario === format).length < limiteAgendamentos) return true; 
+                    if (Object.values(ag).filter(a => a.horario === format).length < limiteAgendamentos) return true;
                 }
                 return false; 
             };
@@ -1676,7 +1682,6 @@
             }
         };
 
-        // INICIO CORREÇÃO: ENVIO DE WHATSAPP NO AGENDAMENTO
         document.getElementById('form-agendamento').onsubmit = async (e) => {
             e.preventDefault(); 
             const dt = document.getElementById('data-selecionada').value; 
@@ -1686,9 +1691,43 @@
             const t = document.getElementById('telefone').value; 
             const h = document.getElementById('horario').value; 
             const ed = document.getElementById('endereco').value;
+
+            // --- TRAVAS DE SEGURANÇA v28.03 PLATINUM ---
+            const n_clean = n.toLowerCase().trim();
+            const t_clean = t.replace(/\D/g,'');
+            const ed_clean = ed.toLowerCase().trim();
+
+            // 1. Trava de Duplicidade de Usuário (Nome, Telefone ou Endereço)
+            const duplicado = window.dadosCompletos.find(item => 
+                (item.nome_formando && item.nome_formando.toLowerCase().trim() === n_clean) ||
+                (item.telefone && item.telefone.replace(/\D/g,'') === t_clean) ||
+                (item.endereco && item.endereco.toLowerCase().trim() === ed_clean)
+            );
+
+            if (duplicado) {
+                alert("⚠️ ERRO: Você já possui um agendamento registrado (Nome, Telefone ou Endereço duplicado).");
+                return;
+            }
+
+            // 2. Trava de Horário (Evitar agendamentos simultâneos no mesmo slot)
+            const agendamentosNoHorario = window.dadosCompletos.filter(item => item.data === dt && item.horario === h);
+            const limitePermitido = (projetoDB.comissao_individual === true) ? 1 : 2;
+            if (agendamentosNoHorario.length >= limitePermitido) {
+                alert("⚠️ ERRO: Este horário acabou de ser preenchido. Por favor, escolha outro horário disponível.");
+                window.carregarHorarios(dt);
+                return;
+            }
+            // --- FIM DAS TRAVAS ---
             
             const zapAviso = (projetoDB.criador === "Willian") ? "16988722130" : "16992590916";
             
+            // await set(ref(db, `dados/${projId}/agendamentos/${dt}/AG-${Date.now()}`), { 
+            //     nome_formando: n, 
+            //     telefone: t, 
+            //     endereco: ed, 
+            //     horario: h, 
+            //     resultado: "Pendente" 
+            // });
             await set(ref(db, `dados/${projId}/agendamentos/${dt}/AG-${Date.now()}`), { 
                 nome_formando: n, 
                 telefone: t, 
@@ -1702,7 +1741,6 @@
             alert("✅ AGENDADO COM SUCESSO!"); 
             window.location.href = `https://wa.me/55${zapAviso.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`;
         };
-        // FIM CORREÇÃO
 
         window.renderFila = () => { 
             const cont = document.getElementById('lista-fila'); 
